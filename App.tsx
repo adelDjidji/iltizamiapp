@@ -1,20 +1,34 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StatusBar } from "expo-status-bar";
+import { store, persistor } from "./src/store/store";
+import { PersistGate } from "redux-persist/integration/react";
+import { Provider } from "react-redux";
+import RootStack from "./src/navigation";
+import Colors from "./src/constants/Colors";
+import AppLoading from "expo-app-loading";
+import {
+  useFonts,
+  Cairo_400Regular,
+  Cairo_700Bold,
+} from "@expo-google-fonts/cairo";
+import { AppRegistry } from "react-native";
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+const App = () => {
+  let [fontsLoaded] = useFonts({
+    Cairo_400Regular,
+    Cairo_700Bold,
+  });
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  } else
+    return (
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+            <RootStack />
+          <StatusBar backgroundColor={Colors.primary} style="light" />
+        </PersistGate>
+      </Provider>
+    );
+};
+AppRegistry.registerComponent('iltizam', () => App);
+// export default App;
