@@ -5,6 +5,7 @@ import {
   authReducer,
   TimingReducer,
   SettingsReducer,
+  StatsReducer,
 } from "./reducers";
 import ReduxThunk from "redux-thunk";
 
@@ -16,11 +17,11 @@ const persistConfig = {
 const persisted = (reducer: any) => {
   return persistReducer(persistConfig, reducer);
 };
-
 const appReducer = combineReducers({
   auth: persisted(authReducer),
   prayer: persisted(TimingReducer),
   settings: persisted(SettingsReducer),
+  stats: persisted(StatsReducer),
 });
 
 interface IAction {

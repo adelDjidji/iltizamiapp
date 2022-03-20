@@ -8,9 +8,15 @@ import Stats from "../screens/Stats";
 import { AntDesign } from "@expo/vector-icons";
 import Dashboard from "../screens/Dashboard";
 import Colors from "../constants/Colors";
-import { View, Text } from "react-native";
+import { View, Text, Alert } from "react-native";
 import DrawerScreen from "../screens/DrawerScreen";
 import FormEvaluation from "../screens/FormEvaluation";
+import { Provider, useSelector, useDispatch } from "react-redux";
+import * as Updates from "expo-updates";
+
+import * as SecureStore from "expo-secure-store";
+
+import * as Location from "expo-location";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -96,6 +102,67 @@ const MainStack = () => {
 };
 
 const RootStack = () => {
+  const dispatch = useDispatch();
+
+  const { userPosition } = useSelector((state) => state.settings);
+
+ const verifyPermissions = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Insufficient permissions!",
+        "You need to grant location permissions to use this app.",
+        [{ text: "Okay" }]
+      );
+      return false;
+    }
+    return true;
+  };
+  const getLocationHandler = async () => {
+    let loc = null;
+    const hasPermission = await verifyPermissions();
+    if (!hasPermission) {
+      return;
+    }
+
+    try {
+      const location = await Location.getCurrentPositionAsync({
+        // timeout: 5000,
+      });
+      loc = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      // setPickedLocation(location.coords);
+    } catch (err) {
+      Alert.alert(
+        "Could not fetch location!",
+        "Please try again later or pick a location on the map.",
+        [{ text: "Okay" }]
+      );
+    }
+
+    return loc;
+  };
+  const loadLocation = async () => {
+    let location 
+    let savedPos = await SecureStore.getItemAsync("user-position") || ""
+    if(savedPos!==""){
+      //already exist
+      location= JSON.parse(savedPos)
+    }else{
+      location = await getLocationHandler();
+      await SecureStore.setItemAsync("user-position", JSON.stringify(location))
+    }
+    dispatch({
+      type: "USER_POSITION",
+      payload: location,
+    });
+  }
+  React.useEffect(() => {
+    loadLocation()
+  }, []);
+  
   return (
     <NavigationContainer>
       <MainStack />

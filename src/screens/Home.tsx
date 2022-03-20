@@ -15,6 +15,9 @@ import moment from "moment";
 import Clock from "../components/Clock";
 import SalatItem from "../components/SalatItem";
 import SalatTable from "../components/SalatTable";
+import * as SecureStore from "expo-secure-store";
+
+
 
 const images = [
   "https://images.unsplash.com/photo-1590075865003-e48277faa558?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=387&q=80",
@@ -30,44 +33,7 @@ export default function Home({ navigation }: { navigation: any }) {
 
   const dispatch = useDispatch();
 
-  const verifyPermissions = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Insufficient permissions!",
-        "You need to grant location permissions to use this app.",
-        [{ text: "Okay" }]
-      );
-      return false;
-    }
-    return true;
-  };
-  const getLocationHandler = async () => {
-    let loc = null;
-    const hasPermission = await verifyPermissions();
-    if (!hasPermission) {
-      return;
-    }
-
-    try {
-      const location = await Location.getCurrentPositionAsync({
-        // timeout: 5000,
-      });
-      loc = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
-      // setPickedLocation(location.coords);
-    } catch (err) {
-      Alert.alert(
-        "Could not fetch location!",
-        "Please try again later or pick a location on the map.",
-        [{ text: "Okay" }]
-      );
-    }
-
-    return loc;
-  };
+ 
 
   const loadPrayersTimings = async (location: any) => {
     let month = new Date().getMonth() + 1;
@@ -100,31 +66,14 @@ export default function Home({ navigation }: { navigation: any }) {
       Alert.alert("Error getting ");
     }
   };
+
+
   const loadTimings = async () => {
     setIsFetching(true);
-    let location
-    if(userPosition){
-      location= userPosition
-    }else{
-      location = await getLocationHandler();
-      dispatch({
-        type: "USER_POSITION",
-        payload: location,
-      });
-    }
-    
-    console.log("location = ", location);
-    loadPrayersTimings(location);
+    loadPrayersTimings(userPosition);
     setIsFetching(false);
   };
   useEffect(() => {
-    // dispatch({
-    //   type: "LOAD_DATA",
-    //   payload: {
-    //     current_date: null,
-    //     data: null,
-    //   },
-    // });
     if (
       !data ||
       current_date !== moment(new Date().getTime()).format("DD-MM-YYYY")

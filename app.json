@@ -4,7 +4,7 @@
     "slug": "iltizamiapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/iltizamiIcon.png",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "cover",
@@ -21,9 +21,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/iltizamiIcon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "com.djidjikdadi.iltizamiapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"

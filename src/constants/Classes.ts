@@ -21,6 +21,7 @@ const Classes = StyleSheet.create({
         shadowOpacity: 0.9,
         borderRadius: 10,
         padding: 10,
+        overflow:"hidden"
       }
 });
 export default Classes

@@ -10,13 +10,41 @@ import {
   Cairo_400Regular,
   Cairo_700Bold,
 } from "@expo-google-fonts/cairo";
-import { AppRegistry } from "react-native";
+import { Alert, AppRegistry } from "react-native";
+import { useEffect } from "react";
+import { MenuProvider } from "react-native-popup-menu";
+
 
 const App = () => {
+
   let [fontsLoaded] = useFonts({
     Cairo_400Regular,
     Cairo_700Bold,
   });
+
+  const lookForUpdates = async () => {
+    const updatesResponse = await Updates.checkForUpdateAsync();
+    if (updatesResponse.isAvailable) {
+      Alert.alert("New update available", "", [
+        {
+          text: "install",
+          onPress: async () => {
+            await Updates.fetchUpdateAsync();
+            await Updates.reloadAsync();
+          },
+        },
+        {
+          text: "cancel",
+          onPress: async () => {},
+        },
+      ]);
+    }
+  };
+
+
+  useEffect(() => {
+    // lookForUpdates();
+  }, []);
 
   if (!fontsLoaded) {
     return <AppLoading />;
@@ -24,11 +52,13 @@ const App = () => {
     return (
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
+          <MenuProvider>
             <RootStack />
+          </MenuProvider>
           <StatusBar backgroundColor={Colors.primary} style="light" />
         </PersistGate>
       </Provider>
     );
 };
-AppRegistry.registerComponent('iltizam', () => App);
-// export default App;
+// AppRegistry.registerComponent('main', () => App);
+export default App;

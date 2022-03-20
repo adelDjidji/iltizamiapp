@@ -14,6 +14,7 @@ import Text from "../components/Text";
 import RTLScrollView from "../components/RTLScrollView";
 import Classes from "../constants/Classes";
 import Colors from "../constants/Colors";
+import { useSelector } from "react-redux";
 
 const CustomHeader = (props) => {
   return (
@@ -82,6 +83,8 @@ const CardButton = ({ icon, title = "", color = "#a2f" }) => {
   );
 };
 export default function Dashboard({ navigation }) {
+  const { userPosition } = useSelector((state) => state.settings);
+
   return (
     <Container navigation={navigation}>
       <ImageBackground
@@ -90,6 +93,7 @@ export default function Dashboard({ navigation }) {
         source={require("../../assets/26080.jpg")}
       >
         <CustomHeader navigation={navigation} />
+
         <View style={Classes.containerCard}>
           <View
             style={{
@@ -140,7 +144,9 @@ export default function Dashboard({ navigation }) {
               />
             }
           />
+          
         </View>
+       
       </ImageBackground>
     </Container>
   );
