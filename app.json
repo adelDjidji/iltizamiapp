@@ -28,6 +28,21 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "sentry-expo"
+    ],
+    "hooks": {
+      "postPublish": [
+        {
+          "file": "sentry-expo/upload-sourcemaps",
+          "config": {
+            "organization": "adel-tech",
+            "project": "iltizami",
+            "authToken": "9c59ef07e9dd4b60bc1ac50da02fd59682a0c4d1f89840998ddfdf4413cbf284"
+          }
+        }
+      ]
     }
   }
 }

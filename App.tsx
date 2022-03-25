@@ -13,9 +13,16 @@ import {
 import { Alert, AppRegistry } from "react-native";
 import { useEffect } from "react";
 import { MenuProvider } from "react-native-popup-menu";
+import * as Sentry from 'sentry-expo';
 
 
 const App = () => {
+
+  Sentry.init({
+    dsn: 'https://118ae08f494c461eac2ae218b3d8ce49@o1173031.ingest.sentry.io/6267923',
+    enableInExpoDevelopment: true,
+    debug: true, // If `true`, Sentry will try to print out useful debugging information if something goes wrong with sending the event. Set it to `false` in production
+  });
 
   let [fontsLoaded] = useFonts({
     Cairo_400Regular,
