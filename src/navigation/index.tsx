@@ -2,7 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createDrawerNavigator } from "@react-navigation/drawer";
 import Home from "../screens/Home";
 import Stats from "../screens/Stats";
 import { AntDesign } from "@expo/vector-icons";
@@ -12,15 +12,21 @@ import { View, Text, Alert } from "react-native";
 import DrawerScreen from "../screens/DrawerScreen";
 import FormEvaluation from "../screens/FormEvaluation";
 import { Provider, useSelector, useDispatch } from "react-redux";
-import * as Updates from "expo-updates";
 
 import * as SecureStore from "expo-secure-store";
 
 import * as Location from "expo-location";
+import ConfigScreen from "../screens/Config";
+import Tasbih from "../screens/Tasbih";
+import Adkar from "../screens/Adkar";
+import CalendarScreen from "../screens/Calendar";
+import AdkarList from "../screens/AdkarList";
+import About from "../screens/About";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
+
 
 function TabsStack() {
   return (
@@ -30,14 +36,13 @@ function TabsStack() {
         headerShown: false,
       }}
       screenOptions={({ navigation, route }) => ({
-        tabBarStyle: { backgroundColor: Colors.primary, borderTopWidth: 0 },
+        tabBarStyle: { backgroundColor: Colors.secondary, borderTopWidth: 0 },
         tabBarShowLabel: false,
-        tabBarIconStyle: {},
-        tabBarInactiveTintColor: Colors.secondary,
+        // tabBarIconStyle: {},
+        tabBarInactiveTintColor: "grey",
         tabBarActiveTintColor: Colors.gold,
         headerTitle: "",
         headerShown: false,
-        // header: () => <CustomHeader navigation={navigation} />,
       })}
     >
       <Tab.Screen
@@ -59,7 +64,7 @@ function TabsStack() {
           },
         })}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Home"
         component={Home}
         options={{
@@ -67,13 +72,23 @@ function TabsStack() {
             <AntDesign name="profile" size={21} color={color} />
           ),
         }}
-      />
+      /> */}
+      
       <Tab.Screen
         name="Stats"
         component={Stats}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
             <AntDesign name="linechart" size={21} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="About"
+        component={About}
+        options={{
+          tabBarIcon: ({ focused, color, size }) => (
+            <AntDesign name="infocirlceo" size={21} color={color} />
           ),
         }}
       />
@@ -87,8 +102,65 @@ const MainStack = () => {
         component={TabsStack}
         name="main"
         options={{ headerShown: false }}
-      ></Stack.Screen>
-      <Stack.Screen component={FormEvaluation} name="form"></Stack.Screen>
+      />
+      <Stack.Screen
+        name="Stats"
+        component={Stats}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        component={FormEvaluation}
+        name="form"
+        options={{
+          title: "دفتر المحاسبة",
+          headerStyle: { backgroundColor: Colors.primary },
+          headerTitleStyle: {
+            color: "white",
+          },
+          headerTintColor: "white",
+        }}
+      />
+      <Stack.Screen
+        component={ConfigScreen}
+        name="config"
+        options={{
+          title: "إعدادات",
+          headerStyle: { backgroundColor: Colors.primary },
+          headerTitleStyle: {
+            color: "white",
+          },
+          headerTintColor: "white",
+        }}
+      />
+      <Stack.Screen
+        component={Tasbih}
+        name="tasbih"
+        options={{
+          title:"",
+          headerShown:false
+        }}
+      />
+      <Stack.Screen
+        component={Adkar}
+        name="adkar"
+        options={{
+          title:"أذكار المسلم"
+        }}
+      />
+      <Stack.Screen
+        component={AdkarList}
+        name="adkar-list"
+        options={{
+          title:""
+        }}
+      />
+      <Stack.Screen
+        component={CalendarScreen}
+        name="calendar"
+        options={{
+          title:""
+        }}
+      />
       {/* <Stack.Screen
         component={() => (
           <Drawer.Navigator initialRouteName="drawer">
@@ -96,7 +168,7 @@ const MainStack = () => {
           </Drawer.Navigator>
         )}
         name="drawer-stack"
-      ></Stack.Screen> */}
+      /> */}
     </Stack.Navigator>
   );
 };
@@ -106,12 +178,12 @@ const RootStack = () => {
 
   const { userPosition } = useSelector((state) => state.settings);
 
- const verifyPermissions = async () => {
+  const verifyPermissions = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
         "Insufficient permissions!",
-        "You need to grant location permissions to use this app.",
+        "You need to grant location permissions to see prayer times.",
         [{ text: "Okay" }]
       );
       return false;
@@ -145,24 +217,24 @@ const RootStack = () => {
     return loc;
   };
   const loadLocation = async () => {
-    let location 
-    let savedPos = await SecureStore.getItemAsync("user-position") || ""
-    if(savedPos!==""){
+    let location;
+    let savedPos = (await SecureStore.getItemAsync("user-position")) || "";
+    if (savedPos !== "") {
       //already exist
-      location= JSON.parse(savedPos)
-    }else{
+      location = JSON.parse(savedPos);
+    } else {
       location = await getLocationHandler();
-      await SecureStore.setItemAsync("user-position", JSON.stringify(location))
+      await SecureStore.setItemAsync("user-position", JSON.stringify(location));
     }
     dispatch({
       type: "USER_POSITION",
       payload: location,
     });
-  }
+  };
   React.useEffect(() => {
-    loadLocation()
+    loadLocation();
   }, []);
-  
+
   return (
     <NavigationContainer>
       <MainStack />

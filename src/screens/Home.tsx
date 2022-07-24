@@ -46,7 +46,6 @@ export default function Home({ navigation }: { navigation: any }) {
     ).format("DD-MM-YYYY")}?latitude=${location?.latitude}&longitude=${
       location?.longitude
     }&method=${defaultMethod}&adjustment=1`;
-    console.log("fetching ------", API_URL);
     try {
       const response = await fetch(API_URL).then((res) => res.json());
       // console.log(response);
@@ -97,10 +96,10 @@ export default function Home({ navigation }: { navigation: any }) {
         <Clock />
         {!isFetching && (
           <View style={styles.dateContainer}>
-            <Text style={styles.dateText}>{data.date.readable}</Text>
+            <Text style={styles.dateText}>{data?.date?.readable}</Text>
             <Text style={styles.dateText}>
-              {data.date.hijri.weekday.ar} {data.date.hijri.day}{" "}
-              {data.date.hijri.month.ar} {data.date.hijri.year}
+              {data?.date?.hijri.weekday.ar} {data?.date?.hijri.day}{" "}
+              {data?.date?.hijri.month.ar} {data?.date?.hijri.year}
             </Text>
           </View>
         )}

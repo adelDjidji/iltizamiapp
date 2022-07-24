@@ -9,7 +9,7 @@ const RTLScrollView = (props) => {
     <ScrollView
       horizontal
       ref={scrollRef}
-      showsHorizontalScrollIndicator={false}
+      showsHorizontalScrollIndicator={props.showsHorizontalScrollIndicator || false}
       onContentSizeChange={scrollToEnd}
       contentContainerStyle={styles.contentContainerStyle}
     >

@@ -1,5 +1,5 @@
 import moment from "moment";
-
+import { Goal } from "../components/GoalsManager";
 const initialAuthState = {
   user: null,
   logged: false,
@@ -35,6 +35,33 @@ export const TimingReducer = (
   }
   return state;
 };
+
+export const GoalsReducer = (
+  state = { goals: [] },
+  action: any
+) => {
+  switch (action.type) {
+    case "ADD_GOAL":
+      return {
+        ...state,
+        goals:[...state.goals, action.payload],
+      };
+    case "CHECK_GOAL":
+      return {
+        ...state,
+        goals:state.goals.map((item:any)=>{
+          if(item?.id===action.payload) return {...item, done:true}
+          else return item
+        }),
+      };
+    case "DELETE_GOAL":
+      return {
+        ...state,
+        goals:state.goals.filter((item:any)=>item.id!==action.payload),
+      };
+  }
+  return state;
+};
 export const SettingsReducer = (
   state = { userPosition: null },
   action: any
@@ -54,28 +81,26 @@ export const StatsReducer = (
 ) => {
   switch (action.type) {
     case "UPDATE_RESULT":
-      console.log("reducer: payload", action.payload);
+      const payloadData = action.payload.data
+      const day= action.payload.day
       // look for current date if exist: update data, else create new record
       let date_exist = !!state.results.find(
-        (el) => el.date === moment().format("YYYY-MM-DD")
+        (el) => el.date === moment(day).format("YYYY-MM-DD")
       );
       let tmp;
       let exist = false;
       tmp = state.results.map(({ date, data }) => {
         let el = { date, data };
-        console.log("compare", date, moment().format("YYYY-MM-DD"));
-        if (date === moment().format("YYYY-MM-DD")) {
+        if (date === moment(day).format("YYYY-MM-DD")) {
           exist = true;
-          console.log("date exisit yes");
-          el.data = action.payload;
+          el.data = payloadData;
         }
         return el;
       });
       if (!exist) {
-        console.log("date new");
         tmp.push({
-          date: moment().format("YYYY-MM-DD"),
-          data: action.payload,
+          date: moment(day).format("YYYY-MM-DD"),
+          data: payloadData,
         });
       }
 

@@ -6,6 +6,7 @@ import {
   TimingReducer,
   SettingsReducer,
   StatsReducer,
+  GoalsReducer
 } from "./reducers";
 import ReduxThunk from "redux-thunk";
 
@@ -22,6 +23,7 @@ const appReducer = combineReducers({
   prayer: persisted(TimingReducer),
   settings: persisted(SettingsReducer),
   stats: persisted(StatsReducer),
+  goals: persisted(GoalsReducer),
 });
 
 interface IAction {

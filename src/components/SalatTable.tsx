@@ -51,10 +51,12 @@ export default function SalatTable({ data }) {
           minDiff = Math.abs(diff);
           signedDiff = diff;
         }
-        return { salat, time, diff, signedDiff, diff_str };
+        return { salat, time, diff:Math.abs(diff), signedDiff, diff_str };
       });
     listData_tmp.splice(4, 1); // remove sunset
     setlistData(listData_tmp);
+    console.log("listData_tmp = ",listData_tmp);
+    console.log("Min diff = ",minDiff);
     setminDiff(minDiff);
   };
   useEffect(() => {
@@ -70,8 +72,8 @@ export default function SalatTable({ data }) {
 
   return (
     <View style={styles.salatsContainer}>
-      <Text bold style={styles.title}>
-        مواقيت الصلاة
+      <Text bold style={styles.title} align="center">
+      🕗 مواقيت الصلاة 
       </Text>
       {!!listData &&
         listData.map(({ salat, time, diff, signedDiff, diff_str }) => {

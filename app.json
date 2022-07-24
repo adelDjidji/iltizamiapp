@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "iltizamiapp",
-    "slug": "iltizamiapp",
-    "version": "1.0.0",
+    "name": "iltizami",
+    "slug": "iltizami",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/iltizamiIcon.png",
     "splash": {
@@ -20,14 +20,16 @@
       "supportsTablet": true
     },
     "android": {
+      "versionCode":3,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/iltizamiIcon.png",
-        "backgroundColor": "#FFFFFF"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF00"
       },
+      "permissions":[],
       "package": "com.djidjikdadi.iltizamiapp"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/iltizamiIcon.png"
     },
     "plugins": [
       "sentry-expo"

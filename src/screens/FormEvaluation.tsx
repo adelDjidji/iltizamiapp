@@ -4,6 +4,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  ToastAndroid,
+  TouchableHighlight,
 } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import Classes from "../constants/Classes";
@@ -11,8 +13,9 @@ import Text from "../components/Text";
 import Colors from "../constants/Colors";
 import { useDispatch, useSelector } from "react-redux";
 import moment from "moment";
-import { AntDesign } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
+import { Ionicons } from "@expo/vector-icons";
+
 import {
   Menu,
   MenuOptions,
@@ -21,6 +24,8 @@ import {
 } from "react-native-popup-menu";
 import { renderers } from "react-native-popup-menu";
 import { Input } from "react-native-elements";
+import { AntDesign } from "@expo/vector-icons";
+
 const { SlideInMenu } = renderers;
 const salatOptions = [
   {
@@ -44,60 +49,61 @@ const salatOptions = [
     label: "قضاء",
   },
 ];
+
 export const Indicators = [
   {
-    title: "مادة الصلاة",
+    title: "🕌 مادة الصلاة",
     id: "0000",
-    color:"black",
+    color: "#e26a00",
     items: [
       {
         id: "0001",
-        title: "الفجر",
+        title: "🌖 الفجر ",
         options: salatOptions,
         weight: 1,
       },
       {
         id: "0002",
-        title: "الظهر",
+        title: "☀️ الظهر ",
         options: salatOptions,
         weight: 1,
       },
       {
         id: "0003",
-        title: "العصر",
+        title: "🌤 العصر ",
         options: salatOptions,
         weight: 1,
       },
       {
         id: "0004",
-        title: "المغرب",
+        title: "🌅 المغرب ",
         options: salatOptions,
         weight: 1,
       },
       {
         id: "0005",
-        title: "العشاء",
+        title: "🌃 العشاء ",
         options: salatOptions,
         weight: 1,
       },
       {
         id: "0006",
-        title: "النوافل",
-        options: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
+        title: "🕋 السنن الرواتب ",
+        options: [],
         weight: 0.7,
       },
       {
         id: "0007",
-        title: "القيام",
-        options: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
+        title: "🌙 القيام ",
+        options: [],
         weight: 1.3,
       },
     ],
   },
   {
-    title: "مادة الأذكار",
+    title: "🤲 مادة الأذكار",
     id: "0100",
-    color:"white",
+    color: "white",
     items: [
       {
         id: "0101",
@@ -132,9 +138,9 @@ export const Indicators = [
     ],
   },
   {
-    title: "مادة القرآن",
+    title: "🕋 مادة القرآن",
     id: "0200",
-    color:"grey",
+    color: "grey",
     items: [
       {
         id: "0201",
@@ -151,9 +157,9 @@ export const Indicators = [
     ],
   },
   {
-    title: "مادة الصيام",
+    title: "🍶 مادة الصيام",
     id: "0300",
-    color:"grey",
+    color: "grey",
     items: [
       {
         id: "0301",
@@ -182,9 +188,9 @@ export const Indicators = [
     ],
   },
   {
-    title: "مادة الصدقات",
+    title: "💰 مادة الصدقات",
     id: "0400",
-    color:"grey",
+    color: "grey",
     items: [
       {
         id: "0401",
@@ -203,7 +209,7 @@ export const Indicators = [
   {
     title: "أعمال أخرى",
     id: "0500",
-    color:"grey",
+    color: "grey",
     items: [
       {
         id: "0501",
@@ -220,18 +226,19 @@ export const Indicators = [
     ],
   },
 ];
+
 type Itype = number[];
 
-export default function FormEvaluation({ navigation }) {
+export default function FormEvaluation({ navigation, route }) {
   const { results } = useSelector((state) => state.stats);
-
+  const day = route.params?.day?.timestamp || new Date().getTime();
   const [tmpData, settmpData] = useState<Itype[]>();
-  const [data, setdata] = useState();
+  // const [data, setdata] = useState();
   const dispatch = useDispatch();
-  const getData = () => {
-    // get array of results for current date
+  const getData = React.useCallback(() => {
+    // get array of results for a date
     const resultsData = results.find(
-      (res) => res.date === moment().format("YYYY-MM-DD")
+      (res) => res.date === moment(day).format("YYYY-MM-DD")
     );
     if (resultsData?.data) return resultsData.data;
     else {
@@ -246,58 +253,51 @@ export default function FormEvaluation({ navigation }) {
       }
       return arr_values;
     }
-  };
+  }, [day]);
 
   useEffect(() => {
     navigation.setOptions({
-      title: "دفتر المحاسبة",
-      //   headerRight: () => (
-      //     <TouchableOpacity
-      //       onPress={save}
-      //       style={{
-      //         flexDirection: "row",
-      //         alignItems: "center",
-      //         justifyContent: "space-between",
-      //         // width: 83,
-      //         backgroundColor: "grey",
-      //         padding: 8,
-      //         borderRadius: 5,
-      //       }}
-      //     >
-      //       <Text style={{ marginRight: 5 }}>حفظ</Text>
-      //       <AntDesign name="checkcircle" size={18} color={Colors.primary} />
-      //     </TouchableOpacity>
-      //   ),
+      headerRight: () => (
+        <View style={{flexDirection:"row-reverse"}}>
+          <TouchableOpacity
+          onPress={() => navigation.push("calendar")}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            // width: 83,
+            backgroundColor: "grey",
+            padding: 8,
+            borderRadius: 5,
+          }}
+        >
+          <AntDesign name="calendar" size={24} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.push("Stats")}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: "grey",
+            padding: 8,
+            borderRadius: 5,
+            marginRight:15
+          }}
+        >
+          <AntDesign name="linechart" size={24} color="white" />
+        </TouchableOpacity>
+        </View>
+      ),
     });
-    // clear()
     let tt = getData();
     settmpData(tt);
-  }, []);
+  }, [route.params]);
 
   useEffect(() => {
     // console.log("results update", results);
   }, [results]);
 
-  //   const init = () => {
-  //     let arr_values: Itype[] = [];
-  //     for (let index = 0; index < Indicators.length; index++) {
-  //       const Indicator = Indicators[index];
-  //       arr_values[index] = [];
-  //       for (let index2 = 0; index2 < Indicator.items.length; index2++) {
-  //         const item = Indicator.items[index2];
-  //         arr_values[index][index2] = 0;
-  //       }
-  //     }
-  //     //   console.log("arrr",arr_values);
-  //     if (!results[0] || !results[0].length)
-  //       dispatch({
-  //         type: "UPDATE_RESULT",
-  //         payload: arr_values,
-  //       });
-  //   };
-  //   React.useEffect(() => {
-  //     // init();
-  //   }, []);
   const [selectedModule, setselectedModule] = useState();
   const [selectedItem, setselectedItem] = useState();
   const handleInput = (val_: string) => {
@@ -308,26 +308,16 @@ export default function FormEvaluation({ navigation }) {
     var tmp = !!tmpData ? tmpData : getData();
     tmp[module][item] = parseInt(val);
     settmpData(tmp);
-    setdata(tmp);
+    // setdata(tmp);
     dispatch({
       type: "UPDATE_RESULT",
-      payload: tmp,
+      payload: { data: tmp, day },
     });
     setselectedModule(null);
     setselectedItem(null);
+    ToastAndroid.show("✅ تم الحفظ ", ToastAndroid.SHORT);
   };
-  const save = () => {
-    console.log("save data tmp", tmpData);
-    dispatch({
-      type: "UPDATE_RESULT",
-      payload: tmpData,
-    });
-  };
-  const clear = () => {
-    dispatch({
-      type: "CLEAR",
-    });
-  };
+
   const SliderSelector = ({ value = 0, onValueChange = (v) => {} }) => {
     const [val, setvalue] = useState(value);
     const handleChange = (v) => {
@@ -361,21 +351,38 @@ export default function FormEvaluation({ navigation }) {
     );
   };
 
+  const [number, setnumber] = useState("");
+
   const [overlayOptions, setoverlayOptions] = useState();
   const [customValue, setcustomValue] = useState<string>();
 
+  const months_ar = [
+    "جانفي",
+    "فيفري",
+    "مارس",
+    "أفريل",
+    "ماي",
+    "جوان",
+    "جويلية",
+    "أوت",
+    "سبتمبر",
+    "أكتوبر",
+    "نوفمبر",
+    "ديسمبر",
+  ];
   if (!tmpData)
-    return (
-      <View>
-        <Text>Loading</Text>
-      </View>
-    );
+    return <View style={{ backgroundColor: Colors.primary }}></View>;
   return (
-    <ScrollView>
-      <Text> تقييم إلتزامي اليومي ليوم </Text>
+    <ScrollView style={{ backgroundColor: Colors.primary }}>
+      <Text color="white" align="center" style={{ marginTop: 20 }}>
+        {" "}
+        تقييم إلتزامي اليومي ليوم{"   "}
+        <Text bold color={Colors.gold}>
+          {new Date(day).getDate()} {months_ar[new Date(day).getMonth()]}{" "}
+          {new Date(day).getFullYear()}
+        </Text>{" "}
+      </Text>
 
-      {/* <Button title={"Clear"} onPress={clear} /> */}
-      {/* <Text> {JSON.stringify(tmpData)} </Text> */}
       {Indicators.map((indicator, index_ind) => {
         return (
           <View key={index_ind + indicator.id} style={Classes.containerCard}>
@@ -390,8 +397,8 @@ export default function FormEvaluation({ navigation }) {
               {tmpData && (
                 <Text bold color={Colors.goldDark}>
                   {(Array.isArray(tmpData[index_ind]) &&
-                    tmpData[index_ind].reduce((acc, cur) => acc + cur)) ||
-                    0}
+                    tmpData[index_ind].reduce((acc, cur) => acc + cur)) +
+                    " نقطة " || 0}{" "}
                 </Text>
               )}
             </View>
@@ -407,16 +414,18 @@ export default function FormEvaluation({ navigation }) {
                     }}
                   >
                     <Menu
-                      name="numbers"
+                      name={"numbers-"}
                       renderer={SlideInMenu}
                       onSelect={(value) => {
-                        console.log("selected =", value);
                         handleInput(value);
+                      }}
+                      onClose={() => {
+                        setselectedModule(null);
+                        setselectedItem(null);
                       }}
                     >
                       <MenuTrigger
                         onPress={() => {
-                          console.log(index_ind, index_item);
                           setselectedModule(index_ind);
                           setselectedItem(index_item);
                           setoverlayOptions(item.options);
@@ -426,27 +435,50 @@ export default function FormEvaluation({ navigation }) {
                             backgroundColor:
                               selectedItem === index_item &&
                               selectedModule === index_ind
-                                ? Colors.gold
+                                ? "#eee"
                                 : "white",
                           },
                         }}
                       >
                         <View style={styles.itemRow}>
-                          <Text>{item.title}</Text>
-                          <Text>{tmpData[index_ind][index_item]}</Text>
+                          <Text
+                            color={
+                              selectedItem === index_item &&
+                              selectedModule === index_ind
+                                ? Colors.goldDark
+                                : "black"
+                            }
+                          >
+                            {item.title}
+                          </Text>
+                          <Text
+                            h2
+                            bold={
+                              selectedItem === index_item &&
+                              selectedModule === index_ind
+                            }
+                          >
+                            {tmpData[index_ind][index_item]}{" "}
+                          </Text>
                         </View>
                       </MenuTrigger>
                       <MenuOptions
                         customStyles={{
                           optionsWrapper: {
-                            backgroundColor: Colors.goldDark,
-                            height: Dimensions.get("window").height / 2,
+                            backgroundColor: Colors.goldLight,
+                            height: overlayOptions?.length
+                              ? overlayOptions?.length * 70
+                              : Dimensions.get("window").height / 1.9, // ,
                             alignItems: "center",
                             justifyContent: "space-around",
                             overflow: "scroll",
+                            borderTopWidth: 5,
+                            borderTopColor: Colors.gold,
+                            borderTopLeftRadius: 20,
+                            borderTopRightRadius: 20,
                           },
                           optionText: {
-                            color: "white",
+                            color: "black",
                             // padding: 15,
                             fontSize: 14,
                             fontFamily: Classes.textReg.fontFamily,
@@ -455,15 +487,16 @@ export default function FormEvaluation({ navigation }) {
                             width: "100%",
                             borderBottomWidth: 1,
                             alignItems: "center",
-
-                            //   justifyContent:"center"
                           },
                           optionsContainer: {
-                            //   height:290
+                            borderTopLeftRadius: 20,
+                            borderTopRightRadius: 20,
+
+                            backgroundColor: "white",
                           },
                         }}
                       >
-                        <ScrollView style={{ width:"100%"}}>
+                        <ScrollView style={{ width: "100%" }}>
                           {!!overlayOptions && !!overlayOptions.length ? (
                             overlayOptions.map((op, indx) => {
                               return typeof op === "object" ? (
@@ -479,8 +512,8 @@ export default function FormEvaluation({ navigation }) {
                                       justifyContent: "space-around",
                                     }}
                                   >
-                                    <Text color="white">{op.label}</Text>
-                                    <Text color="white">{op.value}</Text>
+                                    <Text>{op.label}</Text>
+                                    <Text>{op.value}</Text>
                                   </View>
                                 </MenuOption>
                               ) : (
@@ -492,17 +525,80 @@ export default function FormEvaluation({ navigation }) {
                               );
                             })
                           ) : (
-                            <View style={{ width: 200 }}>
-                              <Input
-                                placeholder="ادخل علامة هنا"
+                            <View style={{ width: 200, alignSelf: "center" }}>
+                              <Text align="right" xs>
+                                {" "}
+                                ادخل العلامة هنا
+                              </Text>
+                              {/* <Input
+                                placeholder=""
                                 onChangeText={(v) => setcustomValue(v)}
-                                style={{ width: "100%", color: "white" }}
+                                style={{ width: "100%", color: "black" }}
                                 leftIcon={{
                                   name: "check",
-                                  color: "white",
+                                  color: "black",
                                   onPress: () => handleInput(customValue + ""),
                                 }}
-                              />
+                              /> */}
+                              <Text>{number}</Text>
+                              <View>
+                                {[
+                                  [1, 2, 3],
+                                  [4, 5, 6],
+                                  [7, 8, 9],
+                                ].map((line, indx) => (
+                                  <View key={indx} style={styles.container}>
+                                    {line.map((item, index) => (
+                                      <TouchableHighlight
+                                        underlayColor={Colors.secondary}
+                                        key={index + "-number"}
+                                        onPress={() =>
+                                          setnumber(number + item + "")
+                                        }
+                                        style={styles.item}
+                                      >
+                                        <Text h1 bold>
+                                          {item}
+                                        </Text>
+                                      </TouchableHighlight>
+                                    ))}
+                                  </View>
+                                ))}
+                              </View>
+                              <View style={styles.container}>
+                              <TouchableOpacity
+                                  onPress={() =>
+                                    setnumber((n) => n.slice(0, -1))
+                                  }
+                                  style={styles.item}
+                                >
+                                  <Ionicons
+                                    name="backspace"
+                                    size={26}
+                                    color="black"
+                                  />
+                                </TouchableOpacity>
+                                <TouchableHighlight
+                                  onPress={() => setnumber(number + "0")}
+                                  style={styles.item}
+                                >
+                                  <Text h1 bold>
+                                    0
+                                  </Text>
+                                </TouchableHighlight>
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    handleInput(number)
+                                  }
+                                  style={styles.item}
+                                >
+                                  <Ionicons
+                                    name="checkmark-circle"
+                                    size={30}
+                                    color="black"
+                                  />
+                                </TouchableOpacity>
+                              </View>
                             </View>
                           )}
                         </ScrollView>
@@ -530,9 +626,21 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
     width: "100%",
     justifyContent: "space-around",
-    height: 30,
-    borderBottomColor: Colors.gold,
+    height: 50,
+    borderBottomColor: "grey",
     borderBottomWidth: 0.2,
     alignItems: "center",
+  },
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  item: {
+    flex: 0.33333,
+    // textAlign:"center",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 60,
   },
 });

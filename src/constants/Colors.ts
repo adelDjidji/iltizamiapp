@@ -6,6 +6,7 @@ const Colors= {
     success:"#2b8b2b",
     danger:"#ba3131",
     goldDark:"#97710e",
+    goldLight:"#97710e10",
     blue:"#04a4de",
     blueDark:"#1e4882",
 }
