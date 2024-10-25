@@ -232,7 +232,7 @@ const RootStack = () => {
     });
   };
   React.useEffect(() => {
-    loadLocation();
+    // loadLocation();
   }, []);
 
   return (

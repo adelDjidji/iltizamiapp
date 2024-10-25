@@ -1,14 +1,37 @@
-import { View, Image, TouchableOpacity } from "react-native";
+import { View, Image, TouchableOpacity, Button, Alert } from "react-native";
 import React from "react";
 import Container from "../components/Container";
 import Text from "../components/Text";
 import Colors from "../constants/Colors";
 import * as Linking from 'expo-linking';
 import Constants from "expo-constants";
+import * as Updates from "expo-updates";
 
 export default function About() {
   const version = Constants.manifest.version;
+  // const ENV = Constants.manifest.extra.ENV_MODE;
 
+  const [updateAvailable, setupdateAvailable] = React.useState(false);
+  const [refreshing, setrefreshing] = React.useState(false);
+
+  React.useEffect(() => {
+    // if (ENV !== "dev" && ENV !== "test") {
+      lookForUpdates();
+    // }
+  }, []);
+
+  const lookForUpdates = async () => {
+    const updatesResponse = await Updates.checkForUpdateAsync();
+    setupdateAvailable(updatesResponse.isAvailable);
+  };
+
+  const handleUpdate = async () => {
+    setrefreshing(true);
+    await Updates.fetchUpdateAsync();
+    await Updates.reloadAsync();
+    Alert.alert("تم تحميل التحديثات بنجاح")
+    setrefreshing(false);
+  };
   return (
     <Container style={{flex:1}}>
       <View
@@ -60,6 +83,9 @@ export default function About() {
       <View style={{ position:"absolute", bottom:0, alignSelf:"center"}}>
         <Text p color="grey"> العديد من المميزات الجديدة قادمة بحول الله</Text>
         <Text align="center"> النسخة: {version}</Text>
+        {
+          updateAvailable && <Button title={refreshing ? "جاري التحميل" :"Update"} onPress={handleUpdate}/>
+        }
       </View>
     </Container>
   );

@@ -72,7 +72,7 @@ export default function Tasbih({ navigation }) {
           />
         </Screen>
       </Animated.ScrollView>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={{ marginBottom: 20 }}
         onPress={() => setvibrationActive(!vibrationActive)}
       >
@@ -81,7 +81,7 @@ export default function Tasbih({ navigation }) {
         ) : (
           <MaterialCommunityIcons name="vibrate-off" size={24} color="white" />
         )}
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </ImageBackground>
   );
 }

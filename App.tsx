@@ -38,11 +38,11 @@ const App = () => {
 
   initializeApp(firebaseConfig);
 
-  const storeExpoToken = async (token:string) => {
+  const storeExpoToken = async (token: string) => {
     const firestore = getFirestore();
 
     await setDoc(doc(firestore, "expoTokens", token), {
-      token:token,
+      token: token,
       lastActive: new Date().toISOString(),
     });
   };
@@ -54,34 +54,35 @@ const App = () => {
   const lookForUpdates = async () => {
     const updatesResponse = await Updates.checkForUpdateAsync();
     if (updatesResponse.isAvailable) {
-      Alert.alert("New update available", "حمل آخر التحديثات", [
-        {
-          text: "install",
-          onPress: async () => {
-            await Updates.fetchUpdateAsync();
-            await Updates.reloadAsync();
-          },
-        },
-        {
-          text: "cancel",
-          onPress: async () => {},
-        },
-      ]);
+      await Updates.fetchUpdateAsync();
+      await Updates.reloadAsync();
+      // Alert.alert("New update available", "حمل آخر التحديثات", [
+      //   {
+      //     text: "install",
+      //     onPress: async () => {
+      //       await Updates.fetchUpdateAsync();
+      //       await Updates.reloadAsync();
+      //     },
+      //   },
+      //   {
+      //     text: "cancel",
+      //     onPress: async () => {},
+      //   },
+      // ]);
     }
   };
 
   const lookForExpoToken = async () => {
     const { status: existingStatus } =
-            await Notifications.getPermissionsAsync();
-          let finalStatus = existingStatus;
-          if (existingStatus !== "granted") {
-            const { status } = await Notifications.requestPermissionsAsync();
-            finalStatus = status;
-          }else{
-            const { data: deviceID } = await Notifications.getExpoPushTokenAsync();
-            storeExpoToken(deviceID);
-          }
-    
+      await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    } else {
+      const { data: deviceID } = await Notifications.getExpoPushTokenAsync();
+      storeExpoToken(deviceID);
+    }
   };
 
   useEffect(() => {
