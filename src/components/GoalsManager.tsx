@@ -7,16 +7,16 @@ import {
   Pressable,
   TextInput,
   Dimensions,
+  ScrollView,
+  Keyboard,
 } from "react-native";
-import React from "react";
+import React, { useState, useCallback, memo, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Classes from "../constants/Classes";
 import Text from "./Text";
 import Colors from "../constants/Colors";
-import RTLScrollView from "./RTLScrollView";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, AntDesign, MaterialIcons } from "@expo/vector-icons";
 import moment from "moment";
-import { AntDesign } from '@expo/vector-icons'; 
 
 export type Goal = {
   id: string;
@@ -24,43 +24,431 @@ export type Goal = {
   done: boolean;
   date: Date;
 };
+
+// Memoized Goal Card component to prevent unnecessary re-renders
+const GoalCard = memo(
+  ({
+    id,
+    title,
+    done,
+    onToggleDone,
+    onToggleDelete,
+    onLongPress,
+  }: {
+    id: string;
+    title: string;
+    done: boolean;
+    onToggleDone: (id: string) => void;
+    onToggleDelete: (id: string) => void;
+    onLongPress: (goal: { id: string; title: string; done: boolean }) => void;
+  }) => {
+    const handleDone = useCallback(() => {
+      onToggleDone(id);
+    }, [id, onToggleDone]);
+
+    const handleDelete = useCallback(() => {
+      onToggleDelete(id);
+    }, [id, onToggleDelete]);
+
+    const handleLongPress = useCallback(() => {
+      onLongPress({ id, title, done });
+    }, [id, title, done, onLongPress]);
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.cardGoal,
+          {
+            borderColor: done ? Colors.success : Colors.gold,
+            backgroundColor: done ? "#f0f8f0" : "#f6f6f6",
+          },
+        ]}
+        onLongPress={handleLongPress}
+        delayLongPress={500}
+      >
+        <Text
+          style={{ lineHeight: 20, marginBottom: 4 }}
+          align="center"
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {title} {done ? "✅" : ""}
+        </Text>
+        {!done ? (
+          <TouchableOpacity onPress={handleDone} style={styles.doneButton}>
+            <Text bold color="white">
+              {"تــم"}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+            <Text bold color="white">
+              {"حذف"}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  }
+);
+
+// Shared Modal component for both Add and Edit operations
+const GoalFormModal = memo(
+  ({
+    visible,
+    onClose,
+    onSubmit,
+    initialValue = "",
+    isEditing = false,
+  }: {
+    visible: boolean;
+    onClose: () => void;
+    onSubmit: (title: string) => void;
+    initialValue?: string;
+    isEditing?: boolean;
+  }) => {
+    const [text, setText] = useState(initialValue);
+
+    // Reset the text input when the modal opens
+    React.useEffect(() => {
+      if (visible) {
+        setText(initialValue);
+      }
+    }, [visible, initialValue]);
+
+    const handleSubmit = useCallback(() => {
+      console.log("clicked");
+      if (text.trim()) {
+        Keyboard.dismiss();
+        onSubmit(text);
+        setText("");
+      }
+    }, [text, onSubmit]);
+
+    return (
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={visible}
+        onRequestClose={onClose}
+      >
+        <Pressable style={styles.modalOverlay} onPress={onClose}>
+          <View
+            style={styles.centeredView}
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>
+                {isEditing ? "تعديل الهدف" : "هدف جديد لهذا اليوم"}
+              </Text>
+              <TextInput
+                style={styles.textInput}
+                onChangeText={setText}
+                value={text}
+                placeholder={"اكتب الهدف باختصار هنا"}
+                multiline={true}
+                maxLength={50}
+                returnKeyType="done"
+                autoFocus={true}
+              />
+              <View style={styles.buttonContainer}>
+                <Pressable
+                  style={[
+                    styles.button,
+                    styles.buttonOpen,
+                    !text.trim() && styles.buttonDisabled,
+                  ]}
+                  disabled={!text.trim()}
+                  onPress={handleSubmit}
+                >
+                  <AntDesign name="check" size={20} color="white" />
+                </Pressable>
+                <Pressable
+                  style={[styles.button, styles.buttonClose]}
+                  onPress={onClose}
+                >
+                  <AntDesign name="close" size={20} color="white" />
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+    );
+  }
+);
+
+export default function GoalsManager() {
+  const { goals } = useSelector((state) => state.goals);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [currentGoal, setCurrentGoal] = useState<{
+    id: string;
+    title: string;
+    done: boolean;
+  } | null>(null);
+  const dispatch = useDispatch();
+
+  // Memoize filtered goals to prevent recalculation on every render
+  const { filtredGoals, filtredGoalsDone } = useMemo(() => {
+    const today = moment(new Date()).format("YYYY-MM-DD");
+    const filtered = (goals || []).filter(
+      (i: Goal) => !!i && moment(i.date).format("YYYY-MM-DD") === today
+    );
+    return {
+      filtredGoals: filtered,
+      filtredGoalsDone: filtered.filter((i: Goal) => i.done),
+    };
+  }, [goals]);
+
+  // Sort goals only once using useMemo
+  const sortedGoals = useMemo(() => {
+    return [...filtredGoals].sort((a, b) =>
+      b.done === a.done ? 0 : b.done ? 1 : -1
+    );
+  }, [filtredGoals]);
+
+  const openModal = useCallback(() => {
+    setModalVisible(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setModalVisible(false);
+  }, []);
+
+  const openEditModal = useCallback(
+    (goal: { id: string; title: string; done: boolean }) => {
+      setCurrentGoal(goal);
+      setEditModalVisible(true);
+    },
+    []
+  );
+
+  const closeEditModal = useCallback(() => {
+    setEditModalVisible(false);
+    setCurrentGoal(null);
+  }, []);
+
+  const handleAdd = useCallback(
+    (title: string) => {
+      dispatch({
+        type: "ADD_GOAL",
+        payload: {
+          id: Date.now().toString(),
+          title,
+          done: false,
+          date: new Date(),
+        },
+      });
+      setModalVisible(false);
+    },
+    [dispatch]
+  );
+
+  const handleEdit = useCallback(
+    (title: string) => {
+      if (currentGoal) {
+        dispatch({
+          type: "EDIT_GOAL",
+          payload: {
+            id: currentGoal.id,
+            title,
+          },
+        });
+        setEditModalVisible(false);
+        setCurrentGoal(null);
+      }
+    },
+    [dispatch, currentGoal]
+  );
+
+  const handleToggleDone = useCallback(
+    (id: string) => {
+      dispatch({
+        type: "CHECK_GOAL",
+        payload: id,
+      });
+    },
+    [dispatch]
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      Alert.alert("حذف الهدف", "هل أنت متأكد من حذف هذا الهدف؟", [
+        {
+          text: "إلغاء",
+          style: "cancel",
+        },
+        {
+          text: "حذف",
+          onPress: () => {
+            dispatch({
+              type: "DELETE_GOAL",
+              payload: id,
+            });
+            setEditModalVisible(false);
+            setCurrentGoal(null);
+          },
+          style: "destructive",
+        },
+      ]);
+    },
+    [dispatch]
+  );
+
+  return (
+    <View style={styles.container}>
+      {/* Add Goal Modal */}
+      <GoalFormModal
+        visible={modalVisible}
+        onClose={closeModal}
+        onSubmit={handleAdd}
+        isEditing={false}
+      />
+
+      {/* Edit Goal Modal */}
+      {currentGoal && (
+        <GoalFormModal
+          visible={editModalVisible}
+          onClose={closeEditModal}
+          onSubmit={handleEdit}
+          initialValue={currentGoal.title}
+          isEditing={true}
+        />
+      )}
+
+      <View style={Classes.containerCard}>
+        <View style={styles.headerContainer}>
+          <Text bold style={styles.headerText}>
+            {" "}
+            أهدافي لهذا اليوم
+          </Text>
+          <View style={styles.progressContainer}>
+            <Text bold color={Colors.goldDark}>
+              {`${filtredGoalsDone?.length}/${filtredGoals?.length}`}
+            </Text>
+          </View>
+        </View>
+
+        {sortedGoals.length === 0 ? (
+          <View style={styles.emptyStateContainer}>
+            <Text style={styles.emptyStateText}>لا توجد أهداف لهذا اليوم</Text>
+            <Text style={styles.emptyStateSubtext}>
+              اضغط على + لإضافة هدف جديد
+            </Text>
+          </View>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scrollViewContent}
+          >
+            {sortedGoals.map((goal: Goal) => (
+              <GoalCard
+                key={goal.id}
+                id={goal.id}
+                title={goal.title}
+                done={goal.done}
+                onToggleDone={handleToggleDone}
+                onLongPress={openEditModal}
+                onToggleDelete={handleDelete}
+              />
+            ))}
+          </ScrollView>
+        )}
+
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={openModal}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="add-circle" size={52} color={Colors.gold} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const { width } = Dimensions.get("window");
+
 const styles = StyleSheet.create({
+  container: {
+    marginBottom: 16,
+  },
   cardGoal: {
-    padding: 10,
+    padding: 8,
     borderWidth: 1.5,
-    borderRadius: 9,
-    marginHorizontal: 5,
+    borderRadius: 12,
+    marginHorizontal: 6,
     borderColor: Colors.gold,
-    width: 140,
-    backgroundColor: "#ddd",
-    alignItems:"center",
-    justifyContent:"center"
+    width: 150,
+    height: 100,
+    backgroundColor: "#f6f6f6",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   centeredView: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: "80%",
+    maxWidth: 340,
+  },
+  modalOverlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 22,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalView: {
-    margin: 20,
     backgroundColor: "white",
     borderRadius: 20,
-    padding: 35,
+    padding: 30,
     alignItems: "center",
+    width: "100%",
     shadowColor: "#000",
     shadowOffset: {
-      width: 4,
+      width: 0,
       height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
   },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  textInput: {
+    padding: 16,
+    marginVertical: 16,
+    textAlign: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    width: "100%",
+    backgroundColor: "#f9f9f9",
+  },
+  buttonContainer: {
+    flexDirection: "row-reverse",
+    justifyContent: "space-around",
+    width: "70%",
+    marginTop: 16,
+  },
   button: {
-    borderRadius: 20,
-    padding: 10,
+    borderRadius: 25,
+    padding: 12,
     elevation: 2,
+    minWidth: 60,
+    alignItems: "center",
   },
   buttonOpen: {
     backgroundColor: Colors.gold,
@@ -68,164 +456,71 @@ const styles = StyleSheet.create({
   buttonClose: {
     backgroundColor: "grey",
   },
+  buttonDisabled: {
+    backgroundColor: "#ccc",
+    opacity: 0.7,
+  },
   textStyle: {
     color: "white",
     fontWeight: "bold",
     textAlign: "center",
   },
-  modalText: {
-    marginBottom: 15,
-    textAlign: "center",
+  headerContainer: {
+    marginBottom: 14,
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerText: {
+    fontSize: 16,
+  },
+  progressContainer: {
+    backgroundColor: "#f0f0f0",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  scrollViewContent: {
+    paddingVertical: 8,
+    paddingRight: 70, // Space for the add button
+  },
+  addButton: {
+    position: "absolute",
+    bottom: 8,
+    right: 10,
+    zIndex: 10,
+  },
+  doneButton: {
+    backgroundColor: Colors.gold,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 2,
+  },
+  deleteButton: {
+    backgroundColor: Colors.dark,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 2,
+  },
+  emptyStateContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 120,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: "#888",
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: "#aaa",
+  },
+  deleteButtonText: {
+    color: "white",
+    marginLeft: 8,
+    fontWeight: "bold",
   },
 });
-export default function GoalsManager() {
-  const { goals } = useSelector((state) => state.goals);
-  const [modalVisible, setModalVisible] = React.useState(false);
-  const [text, setText] = React.useState("");
-  const dispatch = useDispatch();
-
-  const filtredGoals = goals.filter((i: Goal) => {
-    return (
-      !!i &&
-      moment(i.date).format("YYYY-MM-DD") ==
-        moment(new Date()).format("YYYY-MM-DD")
-    );
-  });
-  const filtredGoalsDone = filtredGoals.filter((i: Goal) => i.done);
-
-  const openModal = () => {
-    setModalVisible(true);
-  };
-  const handleAdd = () => {
-    let obj = {
-      id: Math.random() * Math.random(),
-      title: text,
-      done: false,
-      date: new Date(),
-    };
-    dispatch({
-      type: "ADD_GOAL",
-      payload: obj,
-    });
-    setText("");
-    setModalVisible(!modalVisible);
-  };
-  return (
-    <View>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          Alert.alert("Modal has been closed.");
-          setModalVisible(!modalVisible);
-        }}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text>هدف جديد لهذا اليوم</Text>
-            <TextInput
-              style={{
-                padding: 16,
-                marginTop: 20,
-                textAlign: "center"
-              }}
-              onChangeText={setText}
-              value={text}
-              placeholder={"اكتب الهدف باختصار هنا"}
-            />
-            <View
-              style={{
-                flexDirection: "row-reverse",
-                justifyContent: "space-around",
-                width: Dimensions.get("window").width * 0.6,
-              }}
-            >
-              <Pressable
-                style={[styles.button, styles.buttonOpen]}
-                disabled={!text}
-                onPress={handleAdd}
-              >
-                  <AntDesign name="check" size={20} color="white" />
-                {/* <Text style={styles.textStyle}>تأكيد</Text> */}
-              </Pressable>
-              <Pressable
-                style={[styles.button, styles.buttonClose]}
-                onPress={() => setModalVisible(!modalVisible)}
-              >
-                  <AntDesign name="close" size={20} color="white" />
-                {/* <Text style={styles.textStyle}>الغاء</Text> */}
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <View style={Classes.containerCard}>
-        <View
-          style={{
-            marginBottom: 10,
-            flexDirection: "row-reverse",
-            justifyContent: "space-between",
-          }}
-        >
-          <Text bold> أهدافي لهذا اليوم</Text>
-          <Text bold color={Colors.goldDark}>
-            {`${filtredGoalsDone?.length}/${filtredGoals?.length}`}
-          </Text>
-        </View>
-        <RTLScrollView horizontal>
-          {!!goals &&
-            filtredGoals.sort((a,b)=>b.date-a.date).map((goal: any) => <Card key={goal.id} {...goal} />)}
-          <TouchableOpacity
-            style={[
-              styles.cardGoal,
-              {
-                alignItems: "center",
-                justifyContent: "center",
-                flexDirection: "row-reverse",
-                borderWidth:0
-              },
-            ]}
-            onPress={openModal}
-          >
-            <Ionicons name="add" size={24} color="black" />
-
-            <Text bold color={Colors.goldDark}>
-              أضف هدف
-            </Text>
-          </TouchableOpacity>
-        </RTLScrollView>
-      </View>
-    </View>
-  );
-}
-
-function Card({
-  id = "12343",
-  title = " صلاة الفجر في المسجد",
-  done = false,
-  date = undefined,
-}) {
-  const dispatch = useDispatch();
-  const handleDone = () => {
-    dispatch({
-      type: "CHECK_GOAL",
-      payload: id,
-    });
-  };
-  return (
-    <View style={[styles.cardGoal, {borderColor: done ? Colors.success: Colors.gold}]}>
-      <Text style={{ lineHeight: 18 }} align="center">
-        {title} {done ? "✅" : ""}
-      </Text>
-      {!done && (
-        <TouchableOpacity onPress={handleDone}>
-          <Text bold color={Colors.goldDark}>
-            {"تــم"}
-          </Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-}

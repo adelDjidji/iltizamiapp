@@ -11,7 +11,7 @@ import {
   StyleSheet,
   Easing,
 } from "react-native";
-import ProgressCircle from "react-native-progress-circle";
+// import ProgressCircle from "react-native-progress-circle";
 import Text from "../components/Text";
 import Colors from "../constants/Colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -146,7 +146,7 @@ const Counter = (props) => {
         activeOpacity={0.8}
         style={{ margin: 40, alignItems: "center" }}
       >
-        <ProgressCircle
+        {/* <ProgressCircle
           percent={number % 100}
           radius={80}
           borderWidth={10}
@@ -157,7 +157,7 @@ const Counter = (props) => {
           <Text color="white" style={{ fontSize: 18 }}>
             {number % 100}
           </Text>
-        </ProgressCircle>
+        </ProgressCircle> */}
         <Text color="white" align="center" h1 style={{ marginTop: 40 }}>
           {props.label}
         </Text>
@@ -229,16 +229,15 @@ const Screen = (props) => {
         }}
       >
         <View>
-        {props.index < MAX_TABS && (
-          <AntDesign name="swapright" size={30} color={Colors.gold} />
-        )}
+          {props.index < MAX_TABS && (
+            <AntDesign name="swapright" size={30} color={Colors.gold} />
+          )}
         </View>
         <View>
-        {props.index > 0 && (
-          <AntDesign name="swapleft" size={30} color={Colors.gold} />
-        )}
+          {props.index > 0 && (
+            <AntDesign name="swapleft" size={30} color={Colors.gold} />
+          )}
         </View>
-        
       </View>
 
       <Animated.View style={[styles.screen, transitionAnimation(props.index)]}>

@@ -4,19 +4,19 @@ import Card from "./Card";
 import Text from "./Text";
 import { Zekr } from "../screens/AdkarList";
 import Colors from "../constants/Colors";
-import ProgressCircle from "react-native-progress-circle";
+// import ProgressCircle from "react-native-progress-circle";
 
 type Props = { item: Zekr };
 
 export default function ZekrCounter({ item }: Props) {
   const [count, setcount] = React.useState(0);
-  const [show, setshow] = React.useState(true)
+  const [show, setshow] = React.useState(true);
 
-  const handlePress = ()=>{
-    if(count<item.reps) setcount(old=>old+1)
-    else setshow(false)
-  }
-  if(!show) return null
+  const handlePress = () => {
+    if (count < item.reps) setcount((old) => old + 1);
+    else setshow(false);
+  };
+  if (!show) return null;
   return (
     <TouchableOpacity onPress={handlePress} activeOpacity={0.8}>
       <Card>
@@ -43,18 +43,16 @@ export default function ZekrCounter({ item }: Props) {
           <Text bold h3>
             {item.reps}
           </Text>
-          <Text>
-            {count}
-          </Text>
+          <Text>{count}</Text>
           <View>
-            <ProgressCircle
+            {/* <ProgressCircle
               percent={(count*100)/item.reps}
               radius={10}
               borderWidth={10}
               color={Colors.gold}
               shadowColor={"white"}
               bgColor={Colors.primary}
-            />
+            /> */}
           </View>
         </View>
       </Card>

@@ -7,47 +7,29 @@ import {
   ToastAndroid,
   TouchableHighlight,
 } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Classes from "../constants/Classes";
 import Text from "../components/Text";
 import Colors from "../constants/Colors";
 import { useDispatch, useSelector } from "react-redux";
 import moment from "moment";
-import Slider from "@react-native-community/slider";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, AntDesign } from "@expo/vector-icons";
 
 import {
   Menu,
   MenuOptions,
   MenuOption,
   MenuTrigger,
+  renderers,
 } from "react-native-popup-menu";
-import { renderers } from "react-native-popup-menu";
-import { Input } from "react-native-elements";
-import { AntDesign } from "@expo/vector-icons";
 
 const { SlideInMenu } = renderers;
 const salatOptions = [
-  {
-    value: 10,
-    label: "كاملة مع الجماعة",
-  },
-  {
-    value: 8,
-    label: "جزء مع الجماعة",
-  },
-  {
-    value: 6,
-    label: "منفردا في وقتها",
-  },
-  {
-    value: 4,
-    label: "منفردا خارج وقتها",
-  },
-  {
-    value: 1,
-    label: "قضاء",
-  },
+  { value: 10, label: "كاملة مع الجماعة" },
+  { value: 8, label: "جزء مع الجماعة" },
+  { value: 6, label: "منفردا في وقتها" },
+  { value: 4, label: "منفردا خارج وقتها" },
+  { value: 1, label: "قضاء" },
 ];
 
 export const Indicators = [
@@ -56,48 +38,13 @@ export const Indicators = [
     id: "0000",
     color: "#e26a00",
     items: [
-      {
-        id: "0001",
-        title: "🌖 الفجر ",
-        options: salatOptions,
-        weight: 1,
-      },
-      {
-        id: "0002",
-        title: "☀️ الظهر ",
-        options: salatOptions,
-        weight: 1,
-      },
-      {
-        id: "0003",
-        title: "🌤 العصر ",
-        options: salatOptions,
-        weight: 1,
-      },
-      {
-        id: "0004",
-        title: "🌅 المغرب ",
-        options: salatOptions,
-        weight: 1,
-      },
-      {
-        id: "0005",
-        title: "🌃 العشاء ",
-        options: salatOptions,
-        weight: 1,
-      },
-      {
-        id: "0006",
-        title: "🕋 السنن الرواتب ",
-        options: [],
-        weight: 0.7,
-      },
-      {
-        id: "0007",
-        title: "🌙 القيام ",
-        options: [],
-        weight: 1.3,
-      },
+      { id: "0001", title: "🌖 الفجر ", options: salatOptions, weight: 1 },
+      { id: "0002", title: "☀️ الظهر ", options: salatOptions, weight: 1 },
+      { id: "0003", title: "🌤 العصر ", options: salatOptions, weight: 1 },
+      { id: "0004", title: "🌅 المغرب ", options: salatOptions, weight: 1 },
+      { id: "0005", title: "🌃 العشاء ", options: salatOptions, weight: 1 },
+      { id: "0006", title: "🕋 السنن الرواتب ", options: [], weight: 0.7 },
+      { id: "0007", title: "🌙 القيام ", options: [], weight: 1.3 },
     ],
   },
   {
@@ -105,36 +52,11 @@ export const Indicators = [
     id: "0100",
     color: "white",
     items: [
-      {
-        id: "0101",
-        title: "أذكار الصباح",
-        options: [],
-        weight: 1,
-      },
-      {
-        id: "0102",
-        title: "أذكار المساء",
-        options: [],
-        weight: 1,
-      },
-      {
-        id: "0103",
-        title: "الاستغفار",
-        options: [],
-        weight: 1,
-      },
-      {
-        id: "0104",
-        title: "التسبيح",
-        options: [],
-        weight: 1,
-      },
-      {
-        id: "0104",
-        title: "أذكار أخرى",
-        options: [],
-        weight: 1,
-      },
+      { id: "0101", title: "أذكار الصباح", options: [], weight: 1 },
+      { id: "0102", title: "أذكار المساء", options: [], weight: 1 },
+      { id: "0103", title: "الاستغفار", options: [], weight: 1 },
+      { id: "0104", title: "التسبيح", options: [], weight: 1 },
+      { id: "0105", title: "أذكار أخرى", options: [], weight: 1 },
     ],
   },
   {
@@ -142,18 +64,8 @@ export const Indicators = [
     id: "0200",
     color: "grey",
     items: [
-      {
-        id: "0201",
-        title: "الورد اليومي ، تلاوة",
-        options: [],
-        weight: 1,
-      },
-      {
-        id: "0202",
-        title: "حفظ ما تيسر",
-        options: [],
-        weight: 1,
-      },
+      { id: "0201", title: "الورد اليومي ، تلاوة", options: [], weight: 1 },
+      { id: "0202", title: "حفظ ما تيسر", options: [], weight: 1 },
     ],
   },
   {
@@ -161,30 +73,10 @@ export const Indicators = [
     id: "0300",
     color: "grey",
     items: [
-      {
-        id: "0301",
-        title: "صيام التطوع",
-        options: [],
-        weight: 1,
-      },
-      {
-        id: "0302",
-        title: "صيام الفرض",
-        options: [],
-        weight: 1,
-      },
-      {
-        id: "0303",
-        title: "صيام القضاء",
-        options: [],
-        weight: 1,
-      },
-      {
-        id: "0304",
-        title: "لا",
-        options: [],
-        weight: 1,
-      },
+      { id: "0301", title: "صيام التطوع", options: [], weight: 1 },
+      { id: "0302", title: "صيام الفرض", options: [], weight: 1 },
+      { id: "0303", title: "صيام القضاء", options: [], weight: 1 },
+      { id: "0304", title: "لا", options: [], weight: 1 },
     ],
   },
   {
@@ -192,18 +84,8 @@ export const Indicators = [
     id: "0400",
     color: "grey",
     items: [
-      {
-        id: "0401",
-        title: "نعم",
-        options: [],
-        weight: 1,
-      },
-      {
-        id: "0402",
-        title: "لا",
-        options: [],
-        weight: 1,
-      },
+      { id: "0401", title: "نعم", options: [], weight: 1 },
+      { id: "0402", title: "لا", options: [], weight: 1 },
     ],
   },
   {
@@ -211,436 +93,418 @@ export const Indicators = [
     id: "0500",
     color: "grey",
     items: [
-      {
-        id: "0501",
-        title: "نعم",
-        options: [],
-        weight: 1,
-      },
-      {
-        id: "0502",
-        title: "لا",
-        options: [],
-        weight: 1,
-      },
+      { id: "0501", title: "نعم", options: [], weight: 1 },
+      { id: "0502", title: "لا", options: [], weight: 1 },
     ],
   },
 ];
 
-type Itype = number[];
+// Fixed ID key issue in the original Indicators array
+
+const MONTHS_AR = [
+  "جانفي",
+  "فيفري",
+  "مارس",
+  "أفريل",
+  "ماي",
+  "جوان",
+  "جويلية",
+  "أوت",
+  "سبتمبر",
+  "أكتوبر",
+  "نوفمبر",
+  "ديسمبر",
+];
 
 export default function FormEvaluation({ navigation, route }) {
   const { results } = useSelector((state) => state.stats);
   const day = route.params?.day?.timestamp || new Date().getTime();
-  const [tmpData, settmpData] = useState<Itype[]>();
-  // const [data, setdata] = useState();
+  const formattedDate = useMemo(() => moment(day).format("YYYY-MM-DD"), [day]);
   const dispatch = useDispatch();
-  const getData = React.useCallback(() => {
-    // get array of results for a date
-    const resultsData = results.find(
-      (res) => res.date === moment(day).format("YYYY-MM-DD")
-    );
-    if (resultsData?.data) return resultsData.data;
-    else {
-      let arr_values: Itype[] = [];
-      for (let index = 0; index < Indicators.length; index++) {
-        const Indicator = Indicators[index];
-        arr_values[index] = [];
-        for (let index2 = 0; index2 < Indicator.items.length; index2++) {
-          const item = Indicator.items[index2];
-          arr_values[index][index2] = 0;
-        }
-      }
-      return arr_values;
-    }
-  }, [day]);
 
+  // Memoized calculation of initial data
+  const initialData = useMemo(() => {
+    const resultsData = results.find((res) => res.date === formattedDate);
+
+    if (resultsData?.data) return resultsData.data;
+
+    // Generate initial empty data structure if no existing data found
+    return Indicators.map((indicator) => Array(indicator.items.length).fill(0));
+  }, [results, formattedDate]);
+
+  const [data, setData] = useState(initialData);
+  const [selectedModule, setSelectedModule] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [overlayOptions, setOverlayOptions] = useState(null);
+  const [number, setNumber] = useState("");
+
+  // Update navigation options
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={{flexDirection:"row-reverse"}}>
+        <View style={styles.headerButtonsContainer}>
           <TouchableOpacity
-          onPress={() => navigation.push("calendar")}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            // width: 83,
-            backgroundColor: "grey",
-            padding: 8,
-            borderRadius: 5,
-          }}
-        >
-          <AntDesign name="calendar" size={24} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => navigation.push("Stats")}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            backgroundColor: "grey",
-            padding: 8,
-            borderRadius: 5,
-            marginRight:15
-          }}
-        >
-          <AntDesign name="linechart" size={24} color="white" />
-        </TouchableOpacity>
+            onPress={() => navigation.push("calendar")}
+            style={styles.headerButton}
+          >
+            <AntDesign name="calendar" size={24} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.push("Stats")}
+            style={[styles.headerButton, { marginRight: 15 }]}
+          >
+            <AntDesign name="linechart" size={24} color="white" />
+          </TouchableOpacity>
         </View>
       ),
     });
-    let tt = getData();
-    settmpData(tt);
-  }, [route.params]);
+  }, [navigation]);
 
+  // Update local data when route params change
   useEffect(() => {
-    // console.log("results update", results);
-  }, [results]);
+    setData(initialData);
+  }, [initialData, route.params]);
 
-  const [selectedModule, setselectedModule] = useState();
-  const [selectedItem, setselectedItem] = useState();
-  const handleInput = (val_: string) => {
-    const module = selectedModule;
-    const item = selectedItem;
-    let val = val_;
-    if (!val_) val = "0";
-    var tmp = !!tmpData ? tmpData : getData();
-    tmp[module][item] = parseInt(val);
-    settmpData(tmp);
-    // setdata(tmp);
-    dispatch({
-      type: "UPDATE_RESULT",
-      payload: { data: tmp, day },
-    });
-    setselectedModule(null);
-    setselectedItem(null);
-    ToastAndroid.show("✅ تم الحفظ ", ToastAndroid.SHORT);
-  };
+  // Calculate scores for each indicator section
+  const scores = useMemo(
+    () => data.map((section) => section.reduce((acc, cur) => acc + cur, 0)),
+    [data]
+  );
 
-  const SliderSelector = ({ value = 0, onValueChange = (v) => {} }) => {
-    const [val, setvalue] = useState(value);
-    const handleChange = (v) => {
-      setvalue(v);
-      onValueChange(v);
-      //   console.log(v);
+  // Handle input value changes
+  const handleInput = useCallback(
+    (value) => {
+      if (!selectedModule && selectedModule !== 0) return;
+
+      const numValue = value === "" ? 0 : parseInt(value);
+
+      setData((prevData) => {
+        const newData = [...prevData];
+        if (newData[selectedModule]) {
+          newData[selectedModule] = [...newData[selectedModule]];
+          newData[selectedModule][selectedItem] = numValue;
+        }
+        return newData;
+      });
+
+      // Update Redux store
+      dispatch({
+        type: "UPDATE_RESULT",
+        payload: {
+          data: data.map((section, idx) =>
+            idx === selectedModule
+              ? section.map((item, i) => (i === selectedItem ? numValue : item))
+              : section
+          ),
+          day,
+        },
+      });
+
+      setSelectedModule(null);
+      setSelectedItem(null);
+      setNumber("");
+      ToastAndroid.show("✅ تم الحفظ", ToastAndroid.SHORT);
+    },
+    [selectedModule, selectedItem, data, dispatch, day]
+  );
+
+  // Calculate formatted date
+  const dateDisplay = useMemo(() => {
+    const dateObj = new Date(day);
+    return {
+      day: dateObj.getDate(),
+      month: MONTHS_AR[dateObj.getMonth()],
+      year: dateObj.getFullYear(),
     };
-    useEffect(() => {
-      setvalue(value);
-    }, [value]);
+  }, [day]);
+
+  // Render number pad buttons
+  const renderNumberPad = useCallback(() => {
+    const numberGrid = [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+    ];
 
     return (
       <View>
-        {/* <Text>{val}</Text> */}
-        <Slider
-          onValueChange={handleChange}
-          value={val}
-          style={{ width: 200, height: 40 }}
-          minimumValue={0}
-          maximumValue={10}
-          step={1}
-          tapToSeek
-          inverted
-          minimumTrackTintColor="grey"
-          thumbTintColor="black"
-          maximumTrackTintColor="green"
-          // maximumTrackImage={require("../../assets/kaaba.png")}
-          // thumbImage={require("../../assets/kaaba.png")}
-        />
+        <Text align="right" style={styles.inputLabel}>
+          ادخل العلامة هنا
+        </Text>
+        <Text style={styles.numberDisplay}>{number}</Text>
+
+        {numberGrid.map((line, idx) => (
+          <View key={idx} style={styles.numberRow}>
+            {line.map((num) => (
+              <TouchableHighlight
+                key={`num-${num}`}
+                underlayColor={Colors.secondary}
+                onPress={() => setNumber((prev) => prev + num)}
+                style={styles.numberButton}
+              >
+                <Text h1 bold>
+                  {num}
+                </Text>
+              </TouchableHighlight>
+            ))}
+          </View>
+        ))}
+
+        <View style={styles.numberRow}>
+          <TouchableOpacity
+            onPress={() => setNumber((prev) => prev.slice(0, -1))}
+            style={styles.numberButton}
+          >
+            <Ionicons name="backspace" size={26} color="black" />
+          </TouchableOpacity>
+
+          <TouchableHighlight
+            onPress={() => setNumber((prev) => prev + "0")}
+            style={styles.numberButton}
+          >
+            <Text h1 bold>
+              0
+            </Text>
+          </TouchableHighlight>
+
+          <TouchableOpacity
+            onPress={() => handleInput(number)}
+            style={styles.numberButton}
+          >
+            <Ionicons name="checkmark-circle" size={30} color="black" />
+          </TouchableOpacity>
+        </View>
       </View>
     );
-  };
+  }, [number, handleInput]);
 
-  const [number, setnumber] = useState("");
+  // Render an individual menu option
+  const renderMenuOption = useCallback((option, index, itemId) => {
+    if (typeof option === "object") {
+      return (
+        <MenuOption key={`${itemId}-${index}`} value={option.value}>
+          <View style={styles.optionRow}>
+            <Text>{option.label}</Text>
+            <Text>{option.value}</Text>
+          </View>
+        </MenuOption>
+      );
+    }
 
-  const [overlayOptions, setoverlayOptions] = useState();
-  const [customValue, setcustomValue] = useState<string>();
+    return (
+      <MenuOption key={`${itemId}-${index}`} value={option} text={option} />
+    );
+  }, []);
 
-  const months_ar = [
-    "جانفي",
-    "فيفري",
-    "مارس",
-    "أفريل",
-    "ماي",
-    "جوان",
-    "جويلية",
-    "أوت",
-    "سبتمبر",
-    "أكتوبر",
-    "نوفمبر",
-    "ديسمبر",
-  ];
-  if (!tmpData)
-    return <View style={{ backgroundColor: Colors.primary }}></View>;
+  if (!data) {
+    return <View style={{ backgroundColor: Colors.primary }} />;
+  }
+
   return (
-    <ScrollView style={{ backgroundColor: Colors.primary }}>
-      <Text color="white" align="center" style={{ marginTop: 20 }}>
-        {" "}
-        تقييم إلتزامي اليومي ليوم{"   "}
+    <ScrollView style={styles.container}>
+      <Text color="white" align="center" style={styles.dateHeader}>
+        تقييم إلتزامي اليومي ليوم{" "}
         <Text bold color={Colors.gold}>
-          {new Date(day).getDate()} {months_ar[new Date(day).getMonth()]}{" "}
-          {new Date(day).getFullYear()}
-        </Text>{" "}
+          {dateDisplay.day} {dateDisplay.month} {dateDisplay.year}
+        </Text>
       </Text>
 
-      {Indicators.map((indicator, index_ind) => {
-        return (
-          <View key={index_ind + indicator.id} style={Classes.containerCard}>
-            <View
-              style={{
-                marginBottom: 10,
-                flexDirection: "row-reverse",
-                justifyContent: "space-between",
-              }}
-            >
-              <Text bold> {indicator.title}</Text>
-              {tmpData && (
-                <Text bold color={Colors.goldDark}>
-                  {(Array.isArray(tmpData[index_ind]) &&
-                    tmpData[index_ind].reduce((acc, cur) => acc + cur)) +
-                    " نقطة " || 0}{" "}
-                </Text>
-              )}
-            </View>
-            <View style={{ backgroundColor: "white" }}>
-              {indicator.items.map((item, index_item) => {
-                return (
-                  <TouchableOpacity
-                    key={item.id + index_item}
-                    style={{
-                      flexDirection: "row-reverse",
-                      width: "100%",
-                      justifyContent: "space-around",
-                    }}
-                  >
-                    <Menu
-                      name={"numbers-"}
-                      renderer={SlideInMenu}
-                      onSelect={(value) => {
-                        handleInput(value);
-                      }}
-                      onClose={() => {
-                        setselectedModule(null);
-                        setselectedItem(null);
-                      }}
-                    >
-                      <MenuTrigger
-                        onPress={() => {
-                          setselectedModule(index_ind);
-                          setselectedItem(index_item);
-                          setoverlayOptions(item.options);
-                        }}
-                        customStyles={{
-                          triggerWrapper: {
-                            backgroundColor:
-                              selectedItem === index_item &&
-                              selectedModule === index_ind
-                                ? "#eee"
-                                : "white",
-                          },
-                        }}
-                      >
-                        <View style={styles.itemRow}>
-                          <Text
-                            color={
-                              selectedItem === index_item &&
-                              selectedModule === index_ind
-                                ? Colors.goldDark
-                                : "black"
-                            }
-                          >
-                            {item.title}
-                          </Text>
-                          <Text
-                            h2
-                            bold={
-                              selectedItem === index_item &&
-                              selectedModule === index_ind
-                            }
-                          >
-                            {tmpData[index_ind][index_item]}{" "}
-                          </Text>
-                        </View>
-                      </MenuTrigger>
-                      <MenuOptions
-                        customStyles={{
-                          optionsWrapper: {
-                            backgroundColor: Colors.goldLight,
-                            height: overlayOptions?.length
-                              ? overlayOptions?.length * 70
-                              : Dimensions.get("window").height / 1.9, // ,
-                            alignItems: "center",
-                            justifyContent: "space-around",
-                            overflow: "scroll",
-                            borderTopWidth: 5,
-                            borderTopColor: Colors.gold,
-                            borderTopLeftRadius: 20,
-                            borderTopRightRadius: 20,
-                          },
-                          optionText: {
-                            color: "black",
-                            // padding: 15,
-                            fontSize: 14,
-                            fontFamily: Classes.textReg.fontFamily,
-                          },
-                          optionWrapper: {
-                            width: "100%",
-                            borderBottomWidth: 1,
-                            alignItems: "center",
-                          },
-                          optionsContainer: {
-                            borderTopLeftRadius: 20,
-                            borderTopRightRadius: 20,
-
-                            backgroundColor: "white",
-                          },
-                        }}
-                      >
-                        <ScrollView style={{ width: "100%" }}>
-                          {!!overlayOptions && !!overlayOptions.length ? (
-                            overlayOptions.map((op, indx) => {
-                              return typeof op === "object" ? (
-                                <MenuOption
-                                  key={indx + item.id}
-                                  value={op.value}
-                                >
-                                  <View
-                                    style={{
-                                      width: "100%",
-                                      padding: 15,
-                                      flexDirection: "row-reverse",
-                                      justifyContent: "space-around",
-                                    }}
-                                  >
-                                    <Text>{op.label}</Text>
-                                    <Text>{op.value}</Text>
-                                  </View>
-                                </MenuOption>
-                              ) : (
-                                <MenuOption
-                                  key={indx + item.id}
-                                  value={op}
-                                  text={op}
-                                ></MenuOption>
-                              );
-                            })
-                          ) : (
-                            <View style={{ width: 200, alignSelf: "center" }}>
-                              <Text align="right" xs>
-                                {" "}
-                                ادخل العلامة هنا
-                              </Text>
-                              {/* <Input
-                                placeholder=""
-                                onChangeText={(v) => setcustomValue(v)}
-                                style={{ width: "100%", color: "black" }}
-                                leftIcon={{
-                                  name: "check",
-                                  color: "black",
-                                  onPress: () => handleInput(customValue + ""),
-                                }}
-                              /> */}
-                              <Text>{number}</Text>
-                              <View>
-                                {[
-                                  [1, 2, 3],
-                                  [4, 5, 6],
-                                  [7, 8, 9],
-                                ].map((line, indx) => (
-                                  <View key={indx} style={styles.container}>
-                                    {line.map((item, index) => (
-                                      <TouchableHighlight
-                                        underlayColor={Colors.secondary}
-                                        key={index + "-number"}
-                                        onPress={() =>
-                                          setnumber(number + item + "")
-                                        }
-                                        style={styles.item}
-                                      >
-                                        <Text h1 bold>
-                                          {item}
-                                        </Text>
-                                      </TouchableHighlight>
-                                    ))}
-                                  </View>
-                                ))}
-                              </View>
-                              <View style={styles.container}>
-                              <TouchableOpacity
-                                  onPress={() =>
-                                    setnumber((n) => n.slice(0, -1))
-                                  }
-                                  style={styles.item}
-                                >
-                                  <Ionicons
-                                    name="backspace"
-                                    size={26}
-                                    color="black"
-                                  />
-                                </TouchableOpacity>
-                                <TouchableHighlight
-                                  onPress={() => setnumber(number + "0")}
-                                  style={styles.item}
-                                >
-                                  <Text h1 bold>
-                                    0
-                                  </Text>
-                                </TouchableHighlight>
-                                <TouchableOpacity
-                                  onPress={() =>
-                                    handleInput(number)
-                                  }
-                                  style={styles.item}
-                                >
-                                  <Ionicons
-                                    name="checkmark-circle"
-                                    size={30}
-                                    color="black"
-                                  />
-                                </TouchableOpacity>
-                              </View>
-                            </View>
-                          )}
-                        </ScrollView>
-                      </MenuOptions>
-                    </Menu>
-                    {/* <SliderSelector
-                      value={tmpData[index_ind][index_item]}
-                      onValueChange={(v) =>
-                        handleInput(index_ind, index_item, v)
-                      }
-                    /> */}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+      {Indicators.map((indicator, indexInd) => (
+        <View key={indicator.id} style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text bold>{indicator.title}</Text>
+            <Text bold color={Colors.goldDark}>
+              {scores[indexInd]} نقطة
+            </Text>
           </View>
-        );
-      })}
+
+          <View style={styles.cardContent}>
+            {indicator.items.map((item, indexItem) => (
+              <Menu
+                key={item.id}
+                renderer={SlideInMenu}
+                onSelect={handleInput}
+                onClose={() => {
+                  setSelectedModule(null);
+                  setSelectedItem(null);
+                }}
+              >
+                <MenuTrigger
+                  onPress={() => {
+                    setSelectedModule(indexInd);
+                    setSelectedItem(indexItem);
+                    setOverlayOptions(item.options);
+                    setNumber("");
+                  }}
+                  customStyles={{
+                    triggerWrapper: {
+                      backgroundColor:
+                        selectedItem === indexItem &&
+                        selectedModule === indexInd
+                          ? "#eee"
+                          : "white",
+                    },
+                  }}
+                >
+                  <View style={styles.itemRow}>
+                    <Text
+                      color={
+                        selectedItem === indexItem &&
+                        selectedModule === indexInd
+                          ? Colors.goldDark
+                          : "black"
+                      }
+                    >
+                      {item.title}
+                    </Text>
+                    <Text
+                      h2
+                      bold={
+                        selectedItem === indexItem &&
+                        selectedModule === indexInd
+                      }
+                    >
+                      {data[indexInd][indexItem]}
+                    </Text>
+                  </View>
+                </MenuTrigger>
+
+                <MenuOptions
+                  customStyles={{
+                    optionsWrapper: styles.menuOptionsWrapper,
+                    optionText: styles.menuOptionText,
+                    optionWrapper: styles.menuOptionWrapper,
+                    optionsContainer: styles.menuOptionsContainer,
+                  }}
+                  onSelect={(value) => {
+                    console.log("selecting");
+                  }}
+                >
+                  <ScrollView style={styles.menuScroll}>
+                    {overlayOptions && overlayOptions.length ? (
+                      overlayOptions.map((op, idx) =>
+                        renderMenuOption(op, idx, item.id)
+                      )
+                    ) : (
+                      <View style={styles.numberPadContainer}>
+                        {renderNumberPad()}
+                      </View>
+                    )}
+                  </ScrollView>
+                </MenuOptions>
+              </Menu>
+            ))}
+          </View>
+        </View>
+      ))}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+  },
+  dateHeader: {
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  card: {
+    ...Classes.containerCard,
+    marginBottom: 15,
+  },
+  cardHeader: {
+    marginBottom: 10,
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+    paddingHorizontal: 5,
+  },
+  cardContent: {
+    backgroundColor: "white",
+    borderRadius: 5,
+    overflow: "hidden",
+  },
   itemRow: {
     flexDirection: "row-reverse",
     width: "100%",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
     height: 50,
-    borderBottomColor: "grey",
-    borderBottomWidth: 0.2,
+    borderBottomColor: "#eee",
+    borderBottomWidth: 1,
     alignItems: "center",
   },
-  container: {
+  menuOptionsWrapper: {
+    backgroundColor: Colors.goldLight,
+    maxHeight: Dimensions.get("window").height / 2,
+    alignItems: "center",
+    justifyContent: "flex-start",
+    overflow: "hidden",
+    borderTopWidth: 5,
+    borderTopColor: Colors.gold,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  menuOptionText: {
+    color: "black",
+    fontSize: 14,
+    fontFamily: Classes.textReg.fontFamily,
+  },
+  menuOptionWrapper: {
+    width: "100%",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    alignItems: "center",
+  },
+  menuOptionsContainer: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    backgroundColor: "white",
+  },
+  menuScroll: {
+    width: "100%",
+  },
+  numberPadContainer: {
+    width: 200,
+    alignSelf: "center",
+    paddingVertical: 15,
+  },
+  numberRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
   },
-  item: {
+  numberButton: {
     flex: 0.33333,
-    // textAlign:"center",
     alignItems: "center",
     justifyContent: "center",
     height: 60,
+  },
+  numberDisplay: {
+    fontSize: 18,
+    textAlign: "center",
+    marginVertical: 10,
+  },
+  inputLabel: {
+    fontSize: 12,
+    marginTop: 5,
+  },
+  optionRow: {
+    width: "100%",
+    padding: 15,
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+  },
+  headerButtonsContainer: {
+    flexDirection: "row-reverse",
+  },
+  headerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "grey",
+    padding: 8,
+    borderRadius: 5,
   },
 });

@@ -37,13 +37,17 @@ const CustomHeader = (props) => {
       <TouchableOpacity onPress={() => props.navigation.push("drawer-stack")}>
         <AntDesign name="menufold" size={24} color="white" />
       </TouchableOpacity>
-      
     </View>
   );
 };
 
-
-const CardButton = ({ icon, title = "", color = "#a2f", onPress=()=>{}, fullWidth=false }) => {
+const CardButton = ({
+  icon,
+  title = "",
+  color = "#a2f",
+  onPress = () => {},
+  fullWidth = false,
+}) => {
   return (
     <TouchableOpacity
       style={{
@@ -68,63 +72,69 @@ export default function Dashboard({ navigation }) {
 
   return (
     <ScrollView>
-    <Container navigation={navigation}>
-      <ImageBackground
-        style={{ height: Dimensions.get("window").height, paddingTop: 240 }}
-        resizeMode="cover"
-        source={require("../../assets/26080.jpg")}
-      >
-        {/* <CustomHeader navigation={navigation} /> */}
+      <Container navigation={navigation}>
+        <ImageBackground
+          style={{ height: Dimensions.get("window").height, paddingTop: 240 }}
+          resizeMode="cover"
+          source={require("../../assets/26080.jpg")}
+        >
+          {/* <CustomHeader navigation={navigation} /> */}
 
-<GoalsManager/>
-        
+          <GoalsManager />
 
-        <View style={{ flexDirection: "row" }}>
+          <View style={{ flexDirection: "row" }}>
+            <CardButton
+              title="أذكار المسلم"
+              color="#9AD0EC"
+              icon={
+                <Image
+                  style={{
+                    width: 30,
+                    height: 30,
+                  }}
+                  source={require("../../assets/prayer.png")}
+                />
+              }
+              onPress={() => navigation.push("adkar")}
+            />
+            <CardButton
+              title="التسبيح"
+              color="#EFDAD7"
+              icon={
+                <Image
+                  style={{
+                    width: 30,
+                    height: 30,
+                  }}
+                  source={require("../../assets/beads.png")}
+                />
+              }
+              onPress={() => navigation.push("tasbih")}
+            />
+          </View>
           <CardButton
-            title="أذكار المسلم"
-            color="#9AD0EC"
-            icon={
-              <Image
-                style={{
-                  width: 30,
-                  height: 30,
-                }}
-                source={require("../../assets/prayer.png")}
-              />
-            }
-            onPress={()=>navigation.push("adkar")}
-          />
-          <CardButton
-            title="التسبيح"
-            color="#EFDAD7"
-            icon={
-              <Image
-                style={{
-                  width: 30,
-                  height: 30,
-                }}
-                source={require("../../assets/beads.png")}
-              />
-            }
-            onPress={()=>navigation.push("tasbih")}
-          />
-          
-        </View>
-        <CardButton
             title="احصائيات التزامي"
             color="white"
             fullWidth
-            icon={
-              <AntDesign name="linechart" size={24} color="black" />
-            }
-            onPress={()=>navigation.push("Stats")}
+            icon={<AntDesign name="linechart" size={24} color="black" />}
+            onPress={() => navigation.push("Stats")}
           />
-       
-        {/* <TouchableOpacity style={{position:"absolute", bottom:80, right:30, backgroundColor:"white", borderRadius:50, padding:0}} onPress={() => navigation.push("form")}>
-        <AntDesign name="pluscircle" size={50} color={Colors.gold} />
-      </TouchableOpacity> */}
-      </ImageBackground>
-    </Container>
+
+          {/* <TouchableOpacity
+            style={{
+              position: "absolute",
+              bottom: 80,
+              right: 30,
+              backgroundColor: "white",
+              borderRadius: 50,
+              padding: 0,
+            }}
+            onPress={() => navigation.push("form")}
+          >
+            <AntDesign name="pluscircle" size={50} color={Colors.gold} />
+          </TouchableOpacity> */}
+        </ImageBackground>
+      </Container>
     </ScrollView>
   );
 }

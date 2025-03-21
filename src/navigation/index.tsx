@@ -27,7 +27,6 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
-
 function TabsStack() {
   return (
     <Tab.Navigator
@@ -64,7 +63,7 @@ function TabsStack() {
           },
         })}
       />
-      {/* <Tab.Screen
+      <Tab.Screen
         name="Home"
         component={Home}
         options={{
@@ -72,8 +71,8 @@ function TabsStack() {
             <AntDesign name="profile" size={21} color={color} />
           ),
         }}
-      /> */}
-      
+      />
+
       <Tab.Screen
         name="Stats"
         component={Stats}
@@ -136,29 +135,29 @@ const MainStack = () => {
         component={Tasbih}
         name="tasbih"
         options={{
-          title:"",
-          headerShown:false
+          title: "",
+          headerShown: false,
         }}
       />
       <Stack.Screen
         component={Adkar}
         name="adkar"
         options={{
-          title:"أذكار المسلم"
+          title: "أذكار المسلم",
         }}
       />
       <Stack.Screen
         component={AdkarList}
         name="adkar-list"
         options={{
-          title:""
+          title: "",
         }}
       />
       <Stack.Screen
         component={CalendarScreen}
         name="calendar"
         options={{
-          title:""
+          title: "",
         }}
       />
       {/* <Stack.Screen
@@ -232,7 +231,7 @@ const RootStack = () => {
     });
   };
   React.useEffect(() => {
-    // loadLocation();
+    loadLocation();
   }, []);
 
   return (

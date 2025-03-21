@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -13,100 +13,150 @@ import Text from "../components/Text";
 import { useDispatch, useSelector } from "react-redux";
 import moment from "moment";
 import Clock from "../components/Clock";
-import SalatItem from "../components/SalatItem";
 import SalatTable from "../components/SalatTable";
-import * as SecureStore from "expo-secure-store";
 
+// Define TypeScript interfaces for better type checking
+interface HomeProps {
+  navigation: any;
+}
 
+interface LocationState {
+  latitude: number;
+  longitude: number;
+}
 
-const images = [
-  "https://images.unsplash.com/photo-1590075865003-e48277faa558?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=387&q=80",
-  "https://images.unsplash.com/photo-1584013018605-6cd540b26059?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
-  "https://images.unsplash.com/photo-1576506637731-8658b2af90eb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1169&q=80",
-];
+interface PrayerState {
+  current_date: string | null;
+  data: any;
+}
 
-export default function Home({ navigation }: { navigation: any }) {
+interface SettingsState {
+  userPosition: LocationState | null;
+}
+
+interface RootState {
+  prayer: PrayerState;
+  settings: SettingsState;
+}
+
+export default function Home({ navigation }: HomeProps) {
   const [isFetching, setIsFetching] = useState(false);
-  const [pickedLocation, setPickedLocation] = useState(null);
-  const { current_date, data } = useSelector((state) => state.prayer);
-  const { userPosition } = useSelector((state) => state.settings);
+
+  // Type our selectors properly
+  const { current_date, data } = useSelector(
+    (state: RootState) => state.prayer
+  );
+  const { userPosition } = useSelector((state: RootState) => state.settings);
 
   const dispatch = useDispatch();
 
- 
+  // Move API URL construction to useMemo to prevent unnecessary recalculations
+  const getApiUrl = useCallback((location: LocationState) => {
+    const defaultMethod = 3;
+    const formattedDate = moment(new Date()).format("DD-MM-YYYY");
 
-  const loadPrayersTimings = async (location: any) => {
-    let month = new Date().getMonth() + 1;
-    let year = new Date().getFullYear();
-    let defaultMethod = 3;
-    // http://api.aladhan.com/v1/timings/23-01-2022?latitude=36.7167882&longitude=3.0815712&method=3
-    // const API_URL = `http://api.aladhan.com/v1/calendar?latitude=${location?.latitude}&longitude=${location?.longitude}&method=${defaultMethod}&month=${month}&year=${year}`;
-    const API_URL = `http://api.aladhan.com/v1/timings/${moment(
-      new Date().getTime()
-    ).format("DD-MM-YYYY")}?latitude=${location?.latitude}&longitude=${
-      location?.longitude
-    }&method=${defaultMethod}&adjustment=1`;
-    try {
-      const response = await fetch(API_URL).then((res) => res.json());
-      // console.log(response);
-      if (response.code == 200) {
-        dispatch({
-          type: "LOAD_DATA",
-          payload: {
-            current_date: moment(new Date().getTime()).format("DD-MM-YYYY"),
-            data: response.data,
-          },
-        });
-      } else {
-        Alert.alert("Error", response.data);
-      }
-    } catch (error) {
-      console.log(error);
-      Alert.alert("Error getting ");
-    }
-  };
-
-
-  const loadTimings = async () => {
-    setIsFetching(true);
-    loadPrayersTimings(userPosition);
-    setIsFetching(false);
-  };
-  useEffect(() => {
-    if (
-      !data ||
-      current_date !== moment(new Date().getTime()).format("DD-MM-YYYY")
-    ) {
-      loadTimings();
-    } else {
-      console.log("--data exist", data);
-    }
+    return `http://api.aladhan.com/v1/timings/${formattedDate}?latitude=${location?.latitude}&longitude=${location?.longitude}&method=${defaultMethod}&adjustment=1`;
   }, []);
 
+  // Improved error handling and loading state management
+  const loadPrayersTimings = useCallback(
+    async (location: LocationState | null) => {
+      if (!location) {
+        Alert.alert(
+          "Location Error",
+          "Your location is not available. Please check your location settings."
+        );
+        return;
+      }
+
+      try {
+        setIsFetching(true);
+        const API_URL = getApiUrl(location);
+        const response = await fetch(API_URL);
+        const responseData = await response.json();
+
+        if (responseData.code === 200) {
+          dispatch({
+            type: "LOAD_DATA",
+            payload: {
+              current_date: moment(new Date()).format("DD-MM-YYYY"),
+              data: responseData.data,
+            },
+          });
+        } else {
+          Alert.alert(
+            "Server Error",
+            responseData.data || "Failed to load prayer times"
+          );
+        }
+      } catch (error) {
+        console.error("API Error:", error);
+        Alert.alert(
+          "Connection Error",
+          "Could not connect to the prayer times service. Please check your internet connection."
+        );
+      } finally {
+        setIsFetching(false);
+      }
+    },
+    [dispatch, getApiUrl]
+  );
+
+  // Simplified loading function using the callback
+  const loadTimings = useCallback(() => {
+    loadPrayersTimings(userPosition);
+  }, [loadPrayersTimings, userPosition]);
+
+  // Check if we need to reload data based on date
+  const needsReload = useMemo(() => {
+    const today = moment(new Date()).format("DD-MM-YYYY");
+    return !data || current_date !== today;
+  }, [data, current_date]);
+
+  // Use effect with proper dependencies
+  useEffect(() => {
+    if (needsReload) {
+      loadTimings();
+    }
+  }, [needsReload, loadTimings]);
+
+  // Memoize the date display component to prevent unnecessary re-renders
+  const DateDisplay = useMemo(() => {
+    if (isFetching || !data?.date) return null;
+
+    return (
+      <View style={styles.dateContainer}>
+        <Text style={styles.dateText}>{data.date.readable}</Text>
+        <Text style={styles.dateText}>
+          {data.date.hijri.weekday.ar} {data.date.hijri.day}{" "}
+          {data.date.hijri.month.ar} {data.date.hijri.year}
+        </Text>
+      </View>
+    );
+  }, [data, isFetching]);
+
   return (
-    <Container
-      navigation={navigation}
-      style={{ flex: 1, backgroundColor: "red" }}
-    >
+    <Container navigation={navigation} style={styles.container}>
       <ImageBackground
         resizeMode="cover"
         style={styles.coverImage}
         source={require("../../assets/26080.jpg")}
       >
         <Clock />
-        {!isFetching && (
-          <View style={styles.dateContainer}>
-            <Text style={styles.dateText}>{data?.date?.readable}</Text>
-            <Text style={styles.dateText}>
-              {data?.date?.hijri.weekday.ar} {data?.date?.hijri.day}{" "}
-              {data?.date?.hijri.month.ar} {data?.date?.hijri.year}
+
+        {DateDisplay}
+
+        {isFetching ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="white" />
+            <Text style={styles.loadingText}>Loading prayer times...</Text>
+          </View>
+        ) : !data ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>
+              Could not load prayer times. Please try again.
             </Text>
           </View>
-        )}
-
-        {/* <Text style={styles.clockDigital}>{JSON.stringify(Object.entries(data.timings) )}</Text> */}
-        {isFetching || !data ? (
-          <ActivityIndicator size="large" color={"white"} />
         ) : (
           <SalatTable data={data} />
         )}
@@ -116,6 +166,10 @@ export default function Home({ navigation }: { navigation: any }) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5", // More neutral background color
+  },
   text: {
     textAlign: "right",
   },
@@ -124,13 +178,40 @@ const styles = StyleSheet.create({
     height: Dimensions.get("window").height,
     justifyContent: "flex-end",
   },
-
   dateText: {
     color: "white",
     textAlign: "right",
+    fontSize: 16,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   dateContainer: {
     marginRight: 40,
     marginBottom: 20,
+  },
+  loaderContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 40,
+  },
+  loadingText: {
+    color: "white",
+    marginTop: 10,
+    fontSize: 16,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  errorContainer: {
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 20,
+    margin: 20,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  errorText: {
+    color: "white",
+    textAlign: "center",
   },
 });
