@@ -376,9 +376,6 @@ export default function FormEvaluation({ navigation, route }) {
                     optionWrapper: styles.menuOptionWrapper,
                     optionsContainer: styles.menuOptionsContainer,
                   }}
-                  onSelect={(value) => {
-                    console.log("selecting");
-                  }}
                 >
                   <ScrollView style={styles.menuScroll}>
                     {overlayOptions && overlayOptions.length ? (

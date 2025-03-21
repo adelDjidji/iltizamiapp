@@ -18,7 +18,6 @@ import * as Updates from "expo-updates";
 import * as Notifications from "expo-notifications";
 import { initializeApp } from "firebase/app";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
-import "react-native-reanimated";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDTbWCgl_bhDJKwqHZKUmQ-PMxHIbppVA4",
