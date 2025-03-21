@@ -32,7 +32,7 @@ const t = (salat) => {
 };
 
 const formatTimeDiff = (diff: number): string => {
-  if (diff <= 60) return diff.toString();
+  if (diff <= 60) return diff.toFixed(0);
 
   const hours = Math.trunc(diff / 60)
     .toString()
@@ -50,7 +50,7 @@ export default function SalatItem({
   diff_str,
 }) {
   var diff_min = diff;
-  const formattedDiff = formatTimeDiff(diff);
+  const formattedDiff = formatTimeDiff(diff - 1);
 
   if (diff > 60) {
     diff_min = `${Math.trunc(diff / 60)}:${(diff % 60).toFixed(0)}`;
