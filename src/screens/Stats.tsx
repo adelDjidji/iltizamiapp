@@ -11,13 +11,13 @@ import { LineChart } from "react-native-chart-kit";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 
-import { Indicators } from "./FormEvaluation";
 import * as React from "react";
 import Text from "../components/Text";
 import moment from "moment";
 import Colors from "../constants/Colors";
 import * as ScreenOrientation from "expo-screen-orientation";
 import RTLScrollView from "../components/RTLScrollView";
+import { Indicators } from "../constants";
 
 const chartConfig = {
   backgroundGradientFromOpacity: 0,

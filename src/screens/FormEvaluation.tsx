@@ -6,8 +6,15 @@ import {
   Dimensions,
   ToastAndroid,
   TouchableHighlight,
+  TextInput,
 } from "react-native";
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import Classes from "../constants/Classes";
 import Text from "../components/Text";
 import Colors from "../constants/Colors";
@@ -22,99 +29,12 @@ import {
   MenuTrigger,
   renderers,
 } from "react-native-popup-menu";
+import { Indicators, MONTHS_AR } from "../constants";
+import Slider from "@react-native-community/slider";
 
 const { SlideInMenu } = renderers;
-const salatOptions = [
-  { value: 10, label: "كاملة مع الجماعة" },
-  { value: 8, label: "جزء مع الجماعة" },
-  { value: 6, label: "منفردا في وقتها" },
-  { value: 4, label: "منفردا خارج وقتها" },
-  { value: 1, label: "قضاء" },
-];
-
-export const Indicators = [
-  {
-    title: "🕌 مادة الصلاة",
-    id: "0000",
-    color: "#e26a00",
-    items: [
-      { id: "0001", title: "🌖 الفجر ", options: salatOptions, weight: 1 },
-      { id: "0002", title: "☀️ الظهر ", options: salatOptions, weight: 1 },
-      { id: "0003", title: "🌤 العصر ", options: salatOptions, weight: 1 },
-      { id: "0004", title: "🌅 المغرب ", options: salatOptions, weight: 1 },
-      { id: "0005", title: "🌃 العشاء ", options: salatOptions, weight: 1 },
-      { id: "0006", title: "🕋 السنن الرواتب ", options: [], weight: 0.7 },
-      { id: "0007", title: "🌙 القيام ", options: [], weight: 1.3 },
-    ],
-  },
-  {
-    title: "🤲 مادة الأذكار",
-    id: "0100",
-    color: "white",
-    items: [
-      { id: "0101", title: "أذكار الصباح", options: [], weight: 1 },
-      { id: "0102", title: "أذكار المساء", options: [], weight: 1 },
-      { id: "0103", title: "الاستغفار", options: [], weight: 1 },
-      { id: "0104", title: "التسبيح", options: [], weight: 1 },
-      { id: "0105", title: "أذكار أخرى", options: [], weight: 1 },
-    ],
-  },
-  {
-    title: "🕋 مادة القرآن",
-    id: "0200",
-    color: "grey",
-    items: [
-      { id: "0201", title: "الورد اليومي ، تلاوة", options: [], weight: 1 },
-      { id: "0202", title: "حفظ ما تيسر", options: [], weight: 1 },
-    ],
-  },
-  {
-    title: "🍶 مادة الصيام",
-    id: "0300",
-    color: "grey",
-    items: [
-      { id: "0301", title: "صيام التطوع", options: [], weight: 1 },
-      { id: "0302", title: "صيام الفرض", options: [], weight: 1 },
-      { id: "0303", title: "صيام القضاء", options: [], weight: 1 },
-      { id: "0304", title: "لا", options: [], weight: 1 },
-    ],
-  },
-  {
-    title: "💰 مادة الصدقات",
-    id: "0400",
-    color: "grey",
-    items: [
-      { id: "0401", title: "نعم", options: [], weight: 1 },
-      { id: "0402", title: "لا", options: [], weight: 1 },
-    ],
-  },
-  {
-    title: "أعمال أخرى",
-    id: "0500",
-    color: "grey",
-    items: [
-      { id: "0501", title: "نعم", options: [], weight: 1 },
-      { id: "0502", title: "لا", options: [], weight: 1 },
-    ],
-  },
-];
 
 // Fixed ID key issue in the original Indicators array
-
-const MONTHS_AR = [
-  "جانفي",
-  "فيفري",
-  "مارس",
-  "أفريل",
-  "ماي",
-  "جوان",
-  "جويلية",
-  "أوت",
-  "سبتمبر",
-  "أكتوبر",
-  "نوفمبر",
-  "ديسمبر",
-];
 
 export default function FormEvaluation({ navigation, route }) {
   const { results } = useSelector((state) => state.stats);
@@ -225,7 +145,55 @@ export default function FormEvaluation({ navigation, route }) {
       [4, 5, 6],
       [7, 8, 9],
     ];
+    const menuref = useRef(null);
 
+    return (
+      <View>
+        <Text align="right" style={styles.inputLabel}>
+          ادخل العلامة هنا
+        </Text>
+        <Text style={styles.numberDisplay}>{number}0%</Text>
+        <Slider
+          style={{ width: "100%", height: 40 }}
+          minimumValue={2}
+          maximumValue={10}
+          step={1}
+          value={number ? parseInt(number) : 2}
+          onValueChange={(value) => setNumber(value.toString())}
+        />
+        <View style={styles.sliderLabels}>
+          {[...Array(9)].map((_, i) => (
+            <Text key={i} style={styles.sliderLabel}>
+              {i * 10 + 20}
+            </Text>
+          ))}
+        </View>
+        <View>
+          <MenuOption key={`numberbad-$`} value={number}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                backgroundColor: Colors.gold,
+                padding: 10,
+                borderRadius: 5,
+                marginTop: 10,
+              }}
+            >
+              <Text
+                style={{
+                  color: "white",
+                  fontSize: 18,
+                }}
+              >
+                حفظ
+              </Text>
+              <AntDesign name="check" size={24} color="white" />
+            </View>
+          </MenuOption>
+        </View>
+      </View>
+    );
     return (
       <View>
         <Text align="right" style={styles.inputLabel}>
@@ -462,6 +430,16 @@ const styles = StyleSheet.create({
   menuScroll: {
     width: "100%",
   },
+  sliderLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    marginTop: 10,
+  },
+  sliderLabel: {
+    fontSize: 12,
+    textAlign: "center",
+  },
   numberPadContainer: {
     width: 200,
     alignSelf: "center",
@@ -495,6 +473,14 @@ const styles = StyleSheet.create({
   },
   headerButtonsContainer: {
     flexDirection: "row-reverse",
+  },
+  submitButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.gold,
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
   },
   headerButton: {
     flexDirection: "row",

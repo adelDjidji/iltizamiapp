@@ -98,7 +98,7 @@ export default function Dashboard({ navigation }) {
               onPress={() => navigation.push("adkar")}
             />
             <CardButton
-              title="التسبيح"
+              title="دفتر المحاسبة"
               color="#EFDAD7"
               icon={
                 <Image
@@ -106,10 +106,10 @@ export default function Dashboard({ navigation }) {
                     width: 30,
                     height: 30,
                   }}
-                  source={require("../../assets/beads.png")}
+                  source={require("../../assets/checklist.png")}
                 />
               }
-              onPress={() => navigation.push("tasbih")}
+              onPress={() => navigation.push("form")}
             />
           </View>
           <CardButton
