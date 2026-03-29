@@ -25,25 +25,20 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF00"
       },
-      "permissions":[],
+      "permissions": ["android.permission.RECEIVE_BOOT_COMPLETED", "android.permission.POST_NOTIFICATIONS"],
       "package": "com.djidjikdadi.iltizamiapp"
     },
     "web": {
       "favicon": "./assets/iltizamiIcon.png"
     },
     "plugins": [
-      "sentry-expo"
-    ],
-    "hooks": {
-      "postPublish": [
+      [
+        "@sentry/react-native/expo",
         {
-          "file": "sentry-expo/upload-sourcemaps",
-          "config": {
-            "organization": "adel-tech",
-            "project": "iltizami"
-          }
+          "organization": "adel-tech",
+          "project": "iltizami"
         }
       ]
-    }
+    ]
   }
 }

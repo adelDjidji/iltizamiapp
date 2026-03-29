@@ -5,7 +5,6 @@ import { TouchableOpacity } from "react-native";
 import { AdkarTypes } from "../../utils";
 import Card from "../components/Card";
 import Colors from "../constants/Colors";
-import ProgressCircle from "react-native-progress-circle";
 import ZekrCounter from "../components/ZekrCounter";
 
 type zekrMap = {

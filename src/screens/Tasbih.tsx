@@ -36,7 +36,7 @@ export default function Tasbih({ navigation }) {
       <AntDesign
         onPress={() => navigation.pop()}
         style={{ position: "absolute", top: 25, left: 20 }}
-        name="arrowleft"
+        name="arrow-left"
         size={24}
         color="white"
       />

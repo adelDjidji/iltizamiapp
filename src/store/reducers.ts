@@ -69,7 +69,7 @@ export const GoalsReducer = (state = { goals: [] }, action: any) => {
   return state;
 };
 export const SettingsReducer = (
-  state = { userPosition: null },
+  state = { userPosition: null, language: "ar" as "ar" | "en" },
   action: any
 ) => {
   switch (action.type) {
@@ -77,6 +77,11 @@ export const SettingsReducer = (
       return {
         ...state,
         userPosition: action.payload,
+      };
+    case "SET_LANGUAGE":
+      return {
+        ...state,
+        language: action.payload as "ar" | "en",
       };
   }
   return state;

@@ -1,23 +1,24 @@
 import { StatusBar } from "expo-status-bar";
 import { store, persistor } from "./src/store/store";
 import { PersistGate } from "redux-persist/integration/react";
-import { Provider } from "react-redux";
+import { Provider, useSelector } from "react-redux";
 import RootStack from "./src/navigation";
 import Colors from "./src/constants/Colors";
-import AppLoading from "expo-app-loading";
 import {
   useFonts,
   Cairo_400Regular,
   Cairo_700Bold,
 } from "@expo-google-fonts/cairo";
-import { Alert, AppRegistry } from "react-native";
 import { useEffect } from "react";
 import { MenuProvider } from "react-native-popup-menu";
-import * as Sentry from "sentry-expo";
+import * as Sentry from "@sentry/react-native";
 import * as Updates from "expo-updates";
 import * as Notifications from "expo-notifications";
-import { initializeApp } from "firebase/app";
+import Constants, { ExecutionEnvironment } from "expo-constants";
+import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
+import "./src/i18n";
+import i18n from "./src/i18n";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDTbWCgl_bhDJKwqHZKUmQ-PMxHIbppVA4",
@@ -29,80 +30,98 @@ const firebaseConfig = {
   measurementId: "G-QWYH2Z6QYD",
 };
 
-const App = () => {
-  Sentry.init({
-    dsn: "https://118ae08f494c461eac2ae218b3d8ce49@o1173031.ingest.sentry.io/6267923",
-    enableInExpoDevelopment: true,
-    debug: true, // If `true`, Sentry will try to print out useful debugging information if something goes wrong with sending the event. Set it to `false` in production
-  });
+Sentry.init({
+  dsn: "https://118ae08f494c461eac2ae218b3d8ce49@o1173031.ingest.sentry.io/6267923",
+  debug: __DEV__,
+});
 
+if (!getApps().length) {
   initializeApp(firebaseConfig);
+}
 
-  const storeExpoToken = async (token: string) => {
-    const firestore = getFirestore();
-
-    await setDoc(doc(firestore, "expoTokens", token), {
-      token: token,
-      lastActive: new Date().toISOString(),
-    });
-  };
-  let [fontsLoaded] = useFonts({
-    Cairo_400Regular,
-    Cairo_700Bold,
+const storeExpoToken = async (token: string) => {
+  const firestore = getFirestore();
+  await setDoc(doc(firestore, "expoTokens", token), {
+    token: token,
+    lastActive: new Date().toISOString(),
   });
+};
 
-  const lookForUpdates = async () => {
+const lookForUpdates = async () => {
+  try {
     const updatesResponse = await Updates.checkForUpdateAsync();
     if (updatesResponse.isAvailable) {
       await Updates.fetchUpdateAsync();
       await Updates.reloadAsync();
-      // Alert.alert("New update available", "حمل آخر التحديثات", [
-      //   {
-      //     text: "install",
-      //     onPress: async () => {
-      //       await Updates.fetchUpdateAsync();
-      //       await Updates.reloadAsync();
-      //     },
-      //   },
-      //   {
-      //     text: "cancel",
-      //     onPress: async () => {},
-      //   },
-      // ]);
     }
-  };
+  } catch (e) {
+    // Updates not available in dev or bare builds
+  }
+};
 
-  const lookForExpoToken = async () => {
+const lookForExpoToken = async () => {
+  // Push notifications are not supported in Expo Go (removed in SDK 53)
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+    return;
+  }
+  try {
     const { status: existingStatus } =
       await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
-    } else {
-      const { data: deviceID } = await Notifications.getExpoPushTokenAsync();
-      storeExpoToken(deviceID);
     }
-  };
+    if (finalStatus === "granted") {
+      const projectId = Constants.easConfig?.projectId;
+      const { data: deviceID } = await Notifications.getExpoPushTokenAsync(
+        projectId ? { projectId } : undefined
+      );
+      await storeExpoToken(deviceID);
+    }
+  } catch (e) {
+    console.warn("Push token registration failed:", e);
+  }
+};
+
+/** Syncs the persisted Redux language to the i18n singleton on every change. */
+const LanguageSync = () => {
+  const language = useSelector(
+    (state: any) => (state.settings?.language as "ar" | "en") ?? "ar"
+  );
+  useEffect(() => {
+    i18n.changeLanguage(language);
+  }, [language]);
+  return null;
+};
+
+const App = () => {
+  let [fontsLoaded] = useFonts({
+    Cairo_400Regular,
+    Cairo_700Bold,
+  });
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== "development") lookForUpdates();
-    lookForExpoToken();
+    const tasks: Promise<void>[] = [lookForExpoToken()];
+    if (process.env.NODE_ENV !== "development") tasks.push(lookForUpdates());
+    Promise.all(tasks);
   }, []);
 
   if (!fontsLoaded) {
-    return <AppLoading />;
-  } else
-    return (
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <MenuProvider>
-            <RootStack />
-          </MenuProvider>
-          <StatusBar backgroundColor={Colors.primary} style="light" />
-        </PersistGate>
-      </Provider>
-    );
+    return null;
+  }
+
+  return (
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <LanguageSync />
+        <MenuProvider>
+          <RootStack />
+        </MenuProvider>
+        <StatusBar backgroundColor={Colors.primary} style="light" />
+      </PersistGate>
+    </Provider>
+  );
 };
-// AppRegistry.registerComponent('main', () => App);
+
 export default App;

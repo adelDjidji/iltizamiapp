@@ -6,6 +6,7 @@ import {
   ImageBackground,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import * as Location from "expo-location";
 import Container from "../components/Container";
@@ -14,6 +15,10 @@ import { useDispatch, useSelector } from "react-redux";
 import moment from "moment";
 import Clock from "../components/Clock";
 import SalatTable from "../components/SalatTable";
+import { Ionicons } from "@expo/vector-icons";
+import LocationPickerModal from "../components/LocationPickerModal";
+import { useTranslation } from "react-i18next";
+import { useRTL } from "../hooks/useRTL";
 
 // Define TypeScript interfaces for better type checking
 interface HomeProps {
@@ -40,11 +45,15 @@ interface RootState {
 }
 
 export default function Home({ navigation }: HomeProps) {
+  const { t } = useTranslation();
+  const { isRTL, flexRow } = useRTL();
   const [isFetching, setIsFetching] = useState(false);
+  const [locationName, setLocationName] = useState<string | null>(null);
+  const [locationModalVisible, setLocationModalVisible] = useState(false);
 
   // Type our selectors properly
   const { current_date, data } = useSelector(
-    (state: RootState) => state.prayer
+    (state: RootState) => state.prayer,
   );
   const { userPosition } = useSelector((state: RootState) => state.settings);
 
@@ -62,10 +71,7 @@ export default function Home({ navigation }: HomeProps) {
   const loadPrayersTimings = useCallback(
     async (location: LocationState | null) => {
       if (!location) {
-        Alert.alert(
-          "Location Error",
-          "Your location is not available. Please check your location settings."
-        );
+        Alert.alert(t("nav.locationUnavailTitle"), t("nav.locationUnavailMsg"));
         return;
       }
 
@@ -85,21 +91,18 @@ export default function Home({ navigation }: HomeProps) {
           });
         } else {
           Alert.alert(
-            "Server Error",
-            responseData.data || "Failed to load prayer times"
+            t("nav.serverErrTitle"),
+            responseData.data || t("home.errorLoadingPrayers"),
           );
         }
       } catch (error) {
         console.error("API Error:", error);
-        Alert.alert(
-          "Connection Error",
-          "Could not connect to the prayer times service. Please check your internet connection."
-        );
+        Alert.alert(t("nav.connErrTitle"), t("nav.connErrMsg"));
       } finally {
         setIsFetching(false);
       }
     },
-    [dispatch, getApiUrl]
+    [dispatch, getApiUrl],
   );
 
   // Simplified loading function using the callback
@@ -119,6 +122,16 @@ export default function Home({ navigation }: HomeProps) {
       loadTimings();
     }
   }, [needsReload, loadTimings]);
+
+  useEffect(() => {
+    if (!userPosition) return;
+    Location.reverseGeocodeAsync(userPosition).then((results) => {
+      if (results.length > 0) {
+        const { city, district, subregion, region } = results[0];
+        setLocationName(city || district || subregion || region || null);
+      }
+    });
+  }, [userPosition]);
 
   // Memoize the date display component to prevent unnecessary re-renders
   const DateDisplay = useMemo(() => {
@@ -144,18 +157,34 @@ export default function Home({ navigation }: HomeProps) {
       >
         <Clock />
 
+        <TouchableOpacity
+          style={[styles.locationContainer, { flexDirection: flexRow }]}
+          onPress={() => setLocationModalVisible(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="location" size={16} color="white" />
+          <Text style={styles.locationText}>
+            {locationName ?? t("home.setLocation")}
+          </Text>
+          <Ionicons name="pencil" size={12} color="rgba(255,255,255,0.6)" />
+        </TouchableOpacity>
+
+        <LocationPickerModal
+          visible={locationModalVisible}
+          onClose={() => setLocationModalVisible(false)}
+          onLocationChange={setLocationName}
+        />
+
         {DateDisplay}
 
         {isFetching ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color="white" />
-            <Text style={styles.loadingText}>Loading prayer times...</Text>
+            <Text style={styles.loadingText}>{t("home.loadingPrayers")}</Text>
           </View>
         ) : !data ? (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>
-              Could not load prayer times. Please try again.
-            </Text>
+            <Text style={styles.errorText}>{t("home.errorLoadingPrayers")}</Text>
           </View>
         ) : (
           <SalatTable data={data} />
@@ -189,6 +218,22 @@ const styles = StyleSheet.create({
   dateContainer: {
     marginRight: 40,
     marginBottom: 20,
+  },
+  locationContainer: {
+    marginRight: 40,
+    marginBottom: 6,
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    paddingBottom: 20,
+  },
+  locationText: {
+    color: "white",
+    textAlign: "right",
+    fontSize: 14,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   loaderContainer: {
     alignItems: "center",

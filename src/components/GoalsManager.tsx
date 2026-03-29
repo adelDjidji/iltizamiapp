@@ -17,6 +17,8 @@ import Text from "./Text";
 import Colors from "../constants/Colors";
 import { Ionicons, AntDesign, MaterialIcons } from "@expo/vector-icons";
 import moment from "moment";
+import { useTranslation } from "react-i18next";
+import { useRTL } from "../hooks/useRTL";
 
 export type Goal = {
   id: string;
@@ -42,6 +44,8 @@ const GoalCard = memo(
     onToggleDelete: (id: string) => void;
     onLongPress: (goal: { id: string; title: string; done: boolean }) => void;
   }) => {
+    const { t } = useTranslation();
+
     const handleDone = useCallback(() => {
       onToggleDone(id);
     }, [id, onToggleDone]);
@@ -76,20 +80,20 @@ const GoalCard = memo(
         </Text>
         {!done ? (
           <TouchableOpacity onPress={handleDone} style={styles.doneButton}>
-            <Text bold color="white">
-              {"تــم"}
+            <Text bold color="black" size={12}>
+              {t("goals.done")}
             </Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-            <Text bold color="white">
-              {"حذف"}
+            <Text bold color="white" size={12}>
+              {t("goals.delete")}
             </Text>
           </TouchableOpacity>
         )}
       </TouchableOpacity>
     );
-  }
+  },
 );
 
 // Shared Modal component for both Add and Edit operations
@@ -107,6 +111,8 @@ const GoalFormModal = memo(
     initialValue?: string;
     isEditing?: boolean;
   }) => {
+    const { t } = useTranslation();
+    const { flexRow } = useRTL();
     const [text, setText] = useState(initialValue);
 
     // Reset the text input when the modal opens
@@ -117,7 +123,6 @@ const GoalFormModal = memo(
     }, [visible, initialValue]);
 
     const handleSubmit = useCallback(() => {
-      console.log("clicked");
       if (text.trim()) {
         Keyboard.dismiss();
         onSubmit(text);
@@ -139,19 +144,21 @@ const GoalFormModal = memo(
           >
             <View style={styles.modalView}>
               <Text style={styles.modalTitle}>
-                {isEditing ? "تعديل الهدف" : "هدف جديد لهذا اليوم"}
+                {isEditing ? t("goals.editGoal") : t("goals.newGoal")}
               </Text>
               <TextInput
                 style={styles.textInput}
                 onChangeText={setText}
                 value={text}
-                placeholder={"اكتب الهدف باختصار هنا"}
+                placeholder={t("goals.placeholder")}
                 multiline={true}
                 maxLength={50}
                 returnKeyType="done"
                 autoFocus={true}
               />
-              <View style={styles.buttonContainer}>
+              <View
+                style={[styles.buttonContainer, { flexDirection: flexRow }]}
+              >
                 <Pressable
                   style={[
                     styles.button,
@@ -175,11 +182,13 @@ const GoalFormModal = memo(
         </Pressable>
       </Modal>
     );
-  }
+  },
 );
 
 export default function GoalsManager() {
-  const { goals } = useSelector((state) => state.goals);
+  const { t } = useTranslation();
+  const { flexRow } = useRTL();
+  const { goals } = useSelector((state: any) => state.goals);
   const [modalVisible, setModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentGoal, setCurrentGoal] = useState<{
@@ -193,7 +202,7 @@ export default function GoalsManager() {
   const { filtredGoals, filtredGoalsDone } = useMemo(() => {
     const today = moment(new Date()).format("YYYY-MM-DD");
     const filtered = (goals || []).filter(
-      (i: Goal) => !!i && moment(i.date).format("YYYY-MM-DD") === today
+      (i: Goal) => !!i && moment(i.date).format("YYYY-MM-DD") === today,
     );
     return {
       filtredGoals: filtered,
@@ -204,7 +213,7 @@ export default function GoalsManager() {
   // Sort goals only once using useMemo
   const sortedGoals = useMemo(() => {
     return [...filtredGoals].sort((a, b) =>
-      b.done === a.done ? 0 : b.done ? 1 : -1
+      b.done === a.done ? 0 : b.done ? 1 : -1,
     );
   }, [filtredGoals]);
 
@@ -221,7 +230,7 @@ export default function GoalsManager() {
       setCurrentGoal(goal);
       setEditModalVisible(true);
     },
-    []
+    [],
   );
 
   const closeEditModal = useCallback(() => {
@@ -242,7 +251,7 @@ export default function GoalsManager() {
       });
       setModalVisible(false);
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleEdit = useCallback(
@@ -259,7 +268,7 @@ export default function GoalsManager() {
         setCurrentGoal(null);
       }
     },
-    [dispatch, currentGoal]
+    [dispatch, currentGoal],
   );
 
   const handleToggleDone = useCallback(
@@ -269,18 +278,18 @@ export default function GoalsManager() {
         payload: id,
       });
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleDelete = useCallback(
     (id: string) => {
-      Alert.alert("حذف الهدف", "هل أنت متأكد من حذف هذا الهدف؟", [
+      Alert.alert(t("goals.deleteTitle"), t("goals.deleteMsg"), [
         {
-          text: "إلغاء",
+          text: t("cancel"),
           style: "cancel",
         },
         {
-          text: "حذف",
+          text: t("goals.delete"),
           onPress: () => {
             dispatch({
               type: "DELETE_GOAL",
@@ -293,7 +302,7 @@ export default function GoalsManager() {
         },
       ]);
     },
-    [dispatch]
+    [dispatch],
   );
 
   return (
@@ -318,10 +327,9 @@ export default function GoalsManager() {
       )}
 
       <View style={Classes.containerCard}>
-        <View style={styles.headerContainer}>
+        <View style={[styles.headerContainer, { flexDirection: flexRow }]}>
           <Text bold style={styles.headerText}>
-            {" "}
-            أهدافي لهذا اليوم
+            {t("goals.myGoals")}
           </Text>
           <View style={styles.progressContainer}>
             <Text bold color={Colors.goldDark}>
@@ -332,10 +340,8 @@ export default function GoalsManager() {
 
         {sortedGoals.length === 0 ? (
           <View style={styles.emptyStateContainer}>
-            <Text style={styles.emptyStateText}>لا توجد أهداف لهذا اليوم</Text>
-            <Text style={styles.emptyStateSubtext}>
-              اضغط على + لإضافة هدف جديد
-            </Text>
+            <Text style={styles.emptyStateText}>{t("goals.noGoals")}</Text>
+            <Text style={styles.emptyStateSubtext}>{t("goals.addHint")}</Text>
           </View>
         ) : (
           <ScrollView
@@ -373,7 +379,7 @@ const { width } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 0,
   },
   cardGoal: {
     padding: 8,
@@ -382,7 +388,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     borderColor: Colors.gold,
     width: 150,
-    height: 100,
+    height: 90,
     backgroundColor: "#f6f6f6",
     alignItems: "center",
     justifyContent: "center",
@@ -438,7 +444,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9f9f9",
   },
   buttonContainer: {
-    flexDirection: "row-reverse",
     justifyContent: "space-around",
     width: "70%",
     marginTop: 16,
@@ -466,13 +471,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   headerContainer: {
-    marginBottom: 14,
-    flexDirection: "row-reverse",
+    marginBottom: 0,
     justifyContent: "space-between",
     alignItems: "center",
   },
   headerText: {
-    fontSize: 16,
+    fontSize: 14,
   },
   progressContainer: {
     backgroundColor: "#f0f0f0",
@@ -492,15 +496,15 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     backgroundColor: Colors.gold,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: 16,
     marginTop: 2,
   },
   deleteButton: {
     backgroundColor: Colors.dark,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: 16,
     marginTop: 2,
   },

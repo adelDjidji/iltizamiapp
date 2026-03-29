@@ -1,144 +1,143 @@
-import { View, Text } from "react-native";
-import React from "react";
-import {
-  Calendar,
-  CalendarList,
-  Agenda,
-  LocaleConfig,
-} from "react-native-calendars";
+import { View, StyleSheet } from "react-native";
+import React, { useMemo } from "react";
+import { Calendar, LocaleConfig } from "react-native-calendars";
 import moment from "moment";
 import Colors from "../constants/Colors";
+import { useSelector } from "react-redux";
+import { MONTHS_AR, MONTHS_EN } from "../constants";
+import Text from "../components/Text";
+import { useTranslation } from "react-i18next";
+import { useRTL } from "../hooks/useRTL";
 
 LocaleConfig.locales["ar"] = {
-  monthNames: [
-    "جانفي",
-    "فيفري",
-    "مارس",
-    "أفريل",
-    "ماي",
-    "جوان",
-    "جويلية",
-    "أوت",
-    "سبتمبر",
-    "أكتوبر",
-    "نوفمبر",
-    "ديسمبر",
-  ],
-  monthNamesShort: [
-    "Janv.",
-    "Févr.",
-    "Mars",
-    "Avril",
-    "Mai",
-    "Juin",
-    "Juil.",
-    "Août",
-    "Sept.",
-    "Oct.",
-    "Nov.",
-    "Déc.",
-  ],
-  dayNames: [
-    "الأحد",
-    "الاثنين",
-    "الثلاثاء",
-    "الأربعاء",
-    "الخميس",
-    "الجمعة",
-    "السبت",
-  ],
-  dayNamesShort: [
-    "الأحد",
-    "الاثنين",
-    "الثلاثاء",
-    "الأربعاء",
-    "الخميس",
-    "الجمعة",
-    "السبت",
-  ],
-  today: "هذا اليوم",
+  monthNames: MONTHS_AR,
+  monthNamesShort: ["جان", "فيف", "مار", "أفر", "ماي", "جوا", "جوي", "أوت", "سبت", "أكت", "نوف", "ديس"],
+  dayNames: ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
+  dayNamesShort: ["أحد", "اثن", "ثلا", "أرب", "خمي", "جمع", "سبت"],
+  today: "اليوم",
+};
+LocaleConfig.locales["en"] = {
+  monthNames: MONTHS_EN,
+  monthNamesShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  dayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  dayNamesShort: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  today: "Today",
 };
 LocaleConfig.defaultLocale = "ar";
 
-export default function CalendarScreen({ navigation }) {
-  const today = moment().format("YYYY-MM-DD");
+export default function CalendarScreen({ navigation }: any) {
+  const { t } = useTranslation();
+  const { isRTL, flexRow } = useRTL();
+  const language = isRTL ? "ar" : "en";
+
+  // Sync calendar locale with current language
+  React.useEffect(() => {
+    LocaleConfig.defaultLocale = language;
+  }, [language]);
+
+  const { results } = useSelector((state: any) => state.stats);
+
+  const markedDates = useMemo(() => {
+    const today = moment().format("YYYY-MM-DD");
+    const dates: any = {};
+
+    results.forEach((res: any) => {
+      const date = moment(res.date).format("YYYY-MM-DD");
+      if (res.data.length > 0) {
+        dates[date] = {
+          marked: true,
+          customStyles: {
+            container: {
+              backgroundColor: "transparent",
+              borderWidth: 1.5,
+              borderColor: "#50cebb",
+              borderRadius: 50,
+            },
+            text: {},
+          },
+        };
+      }
+    });
+
+    dates[today] = {
+      marked: true,
+      customStyles: {
+        container: {
+          backgroundColor: Colors.blue,
+          borderRadius: 50,
+          elevation: 3,
+        },
+        text: { color: "white", fontWeight: "bold" },
+      },
+    };
+
+    return dates;
+  }, [results]);
+
   return (
-    <View>
+    <View style={styles.container}>
       <Calendar
-        // Initially visible month. Default = now
-        //   current={moment().format('YYYY-MM-DD')}
-        //   // Minimum date that can be selected, dates before minDate will be grayed out. Default = undefined
-        //   minDate={'2012-05-10'}
-        //   // Maximum date that can be selected, dates after maxDate will be grayed out. Default = undefined
-        //   maxDate={'2012-05-30'}
-        // Handler which gets executed on day press. Default = undefined
-        onDayPress={(day) => {
-          console.log("selected day", day);
-          navigation.navigate("form", { day });
-        }}
-        // Handler which gets executed on day long press. Default = undefined
-        onDayLongPress={(day) => {
-          console.log("selected day", day);
-        }}
-        // Month format in calendar title. Formatting values: http://arshaw.com/xdate/#Formatting
+        onDayPress={(day: any) => navigation.navigate("form", { day })}
         monthFormat={"yyyy MM"}
-        // Handler which gets executed when visible month changes in calendar. Default = undefined
-        onMonthChange={(month) => {
-          console.log("month changed", month);
-        }}
-        // Hide month navigation arrows. Default = false
-        //   hideArrows={true}
-        // Do not show days of other months in month page. Default = false
         hideExtraDays={true}
-        // If hideArrows = false and hideExtraDays = false do not switch month when tapping on greyed out
-        // day from another month that is visible in calendar page. Default = false
-        //   disableMonthChange={true}
-        // If firstDay=1 week starts from Monday. Note that dayNames and dayNamesShort should still start from Sunday
-        firstDay={-1}
-        // Hide day names. Default = false
-        //   hideDayNames={true}
-        // Show week numbers to the left. Default = false
-        //   showWeekNumbers={true}
-        // Handler which gets executed when press arrow icon left. It receive a callback can go back month
-        //   onPressArrowLeft={subtractMonth => subtractMonth()}
-        // Handler which gets executed when press arrow icon right. It receive a callback can go next month
-        //   onPressArrowRight={addMonth => addMonth()}
-        // Disable left arrow. Default = false
-        //   disableArrowLeft={true}
-        // Disable right arrow. Default = false
-        //   disableArrowRight={true}
-        // Disable all touch events for disabled days. can be override with disableTouchEvent in markedDates
-        //   disableAllTouchEventsForDisabledDays={true}
-        // Replace default month and year title with custom one. the function receive a date as parameter
-        //   renderHeader={date => {
-        //     /*Return JSX*/
-        //     return <View><Text>Header</Text></View>
-        //   }}
-        // Enable the option to swipe between months. Default = false
+        firstDay={6}
         enableSwipeMonths={true}
         markingType={"custom"}
-        markedDates={{
-          [today]: {
-            marked: true,
-            dotColor: "#50cebb",
-            customStyles: {
-              container: {
-                backgroundColor: Colors.blue,
-                elevation: 2,
-              },
-              text: {
-                color: "white",
-              },
-            },
-          },
-        }}
+        markedDates={markedDates}
         theme={{
-          backgroundColor: "red",
+          backgroundColor: "transparent",
+          calendarBackground: "white",
           selectedDayTextColor: Colors.goldDark,
           todayTextColor: Colors.gold,
           arrowColor: Colors.gold,
+          monthTextColor: Colors.primary,
+          textMonthFontWeight: "bold",
         }}
       />
+
+      {/* Legend */}
+      <View style={[styles.legend, { flexDirection: flexRow }]}>
+        <View style={[styles.legendItem, { flexDirection: flexRow }]}>
+          <View style={styles.legendDotToday} />
+          <Text p color="#555">{t("calendar.today")}</Text>
+        </View>
+        <View style={[styles.legendItem, { flexDirection: flexRow }]}>
+          <View style={styles.legendDotRecorded} />
+          <Text p color="#555">{t("calendar.recordedDay")}</Text>
+        </View>
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f8f8",
+  },
+  legend: {
+    justifyContent: "center",
+    paddingVertical: 16,
+    gap: 24,
+  },
+  legendItem: {
+    alignItems: "center",
+    gap: 6,
+  },
+  legendDotToday: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: Colors.blue,
+    marginLeft: 6,
+  },
+  legendDotRecorded: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1.5,
+    borderColor: "#50cebb",
+    backgroundColor: "transparent",
+    marginLeft: 6,
+  },
+});

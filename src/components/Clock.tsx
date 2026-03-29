@@ -17,7 +17,7 @@ export default function Clock() {
   const [time, settime] = useState("");
   useEffect(() => {
     let it = setInterval(() => {
-      settime(moment().format("HH : mm : ss"));
+      settime(moment().locale("en").format("HH : mm : ss"));
     }, 1000);
 
     return () => {

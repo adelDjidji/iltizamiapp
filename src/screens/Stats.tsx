@@ -2,13 +2,12 @@ import {
   View,
   Dimensions,
   TouchableOpacity,
-  Button,
   ScrollView,
+  StyleSheet,
 } from "react-native";
 import { useSelector } from "react-redux";
 import Container from "../components/Container";
 import { LineChart } from "react-native-chart-kit";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 
 import * as React from "react";
@@ -16,268 +15,463 @@ import Text from "../components/Text";
 import moment from "moment";
 import Colors from "../constants/Colors";
 import * as ScreenOrientation from "expo-screen-orientation";
-import RTLScrollView from "../components/RTLScrollView";
 import { Indicators } from "../constants";
+import { useTranslation } from "react-i18next";
+import { useRTL } from "../hooks/useRTL";
+
+// Distinct colors per indicator (override the washed-out constants)
+const INDICATOR_COLORS: Record<string, string> = {
+  "0000": "#e26a00",
+  "0100": "#27ae60",
+  "0200": "#2980b9",
+  "0300": "#8e44ad",
+  "0400": "#e74c3c",
+  "0500": "#7f8c8d",
+};
+
+type DateRange = "7d" | "30d" | "90d" | "all";
 
 const chartConfig = {
   backgroundGradientFromOpacity: 0,
   backgroundGradientToOpacity: 0,
   fillShadowGradientToOpacity: 0,
-  decimalPlaces: 0, // optional, defaults to 2dp
-  color: (opacity = 1) => `rgba(10, 10, 10, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-  style: {
-    borderRadius: 16,
-  },
-  propsForDots: {
-    r: "6",
-    strokeWidth: "2",
-    stroke: "#ffa726",
-  },
-};
-const Dot = ({ color = "black" }) => {
-  return (
-    <View
-      style={{
-        width: 11,
-        height: 11,
-        backgroundColor: color,
-        borderRadius: 10,
-        marginHorizontal: 10,
-        borderColor: Colors.blueDark,
-        borderWidth: 0.5,
-        alignSelf: "center",
-      }}
-    ></View>
-  );
+  decimalPlaces: 0,
+  color: (opacity = 1) => `rgba(2, 16, 27, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
+  style: { borderRadius: 0 },
+  propsForDots: { r: "0" },
+  propsForBackgroundLines: { stroke: "#f0f2f5", strokeDasharray: "" },
 };
 
-export default function Stats({ navigation }) {
-  const { results } = useSelector((state) => state.stats);
-  const [rotation, setrotation] = React.useState(false);
-  const [chartWidth, setchartWidth] = React.useState(
-    Dimensions.get("window").width
+export default function Stats({ navigation }: any) {
+  const { t } = useTranslation();
+  const { isRTL, flexRow } = useRTL();
+  const { results } = useSelector((state: any) => state.stats);
+  const [chartWidth, setChartWidth] = React.useState(
+    Dimensions.get("window").width - 32
   );
+  const [dateRange, setDateRange] = React.useState<DateRange>("30d");
 
-  // const [legendDirection, setlegendDirection] = React.useState("column");
   React.useEffect(() => {
-    var subscribedEvent = ScreenOrientation.addOrientationChangeListener(
-      (e) => {
-        if (
-          e.orientationInfo.orientation ===
-          ScreenOrientation.Orientation.PORTRAIT_UP
-        ) {
-          setchartWidth(Dimensions.get("window").width);
-          // setlegendDirection("column");
-        } else {
-          // landscape right
-          setchartWidth(Dimensions.get("window").height);
-          // setlegendDirection("row-reverse");
-        }
-      }
-    );
-
-    return () => {
-      ScreenOrientation.removeOrientationChangeListener(subscribedEvent);
-    };
+    const sub = ScreenOrientation.addOrientationChangeListener((e) => {
+      const isPortrait =
+        e.orientationInfo.orientation ===
+        ScreenOrientation.Orientation.PORTRAIT_UP;
+      setChartWidth(
+        isPortrait
+          ? Dimensions.get("window").width - 32
+          : Dimensions.get("window").height - 32
+      );
+    });
+    return () => ScreenOrientation.removeOrientationChangeListener(sub);
   }, []);
 
-  const cleanResult = results.filter(
-    (res) => !!res?.data && !!res.data.length && res.data[0].length
+  const allClean = results.filter(
+    (res: any) => !!res?.data && !!res.data.length && res.data[0].length
   );
-  const dates = cleanResult.map((res) => res.date);
-  const datas = [[]];
 
-  cleanResult.forEach((res, index) => {
-    let tmp = res.data.map((res_) => res_.reduce((r, a) => a + r));
-    datas[index] = tmp;
-  });
+  const filtered = React.useMemo(() => {
+    if (dateRange === "all") return allClean;
+    const days = dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : 90;
+    const cutoff = moment().subtract(days, "days").startOf("day");
+    return allClean.filter((r: any) => moment(r.date).isSameOrAfter(cutoff));
+  }, [results, dateRange]);
 
-  let finalData = [];
-  let i = 0;
-  for (let j = 0; j < datas[i].length; j++) {
-    let tmp = datas.map((item) => item[j]);
-    finalData.push({ data: tmp, id: Indicators[j].id });
-  }
+  const dates = filtered.map((res: any) => res.date);
+  const datas: number[][] = filtered.map((res: any) =>
+    res.data.map((section: number[]) =>
+      section.reduce((a: number, b: number) => a + b, 0)
+    )
+  );
 
-  const defaultIndicatorIds = Indicators.map((ind) => {
-    return ind.id;
-  });
-  const [indicatorsShow, setindicatorsShow] =
-    React.useState(defaultIndicatorIds);
-  const getIndicatorById = (id) => {
-    return Indicators.find((ind) => ind.id === id) || null;
+  const finalData = Indicators.map((ind, j) => ({
+    id: ind.id,
+    data: datas.map((d) => d[j] ?? 0),
+  }));
+
+  const [visibleIds, setVisibleIds] = React.useState(
+    Indicators.map((ind) => ind.id)
+  );
+
+  const toggleIndicator = (id: string) => {
+    setVisibleIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
   };
 
-  const renderDate = (date) => moment(date).format("MM/DD");
-  const Legend = (props) => (
-    <TouchableOpacity
-      style={{
-        flexDirection: "row",
-        justifyContent: "flex-end",
-        margin: 10,
-        // width:130,
-        borderColor: "grey",
-        borderWidth: 0.5,
-        padding: 10,
-        borderRadius: 5,
-        backgroundColor: indicatorsShow.includes(props.indicator.id)
-          ? "white"
-          : "",
-      }}
-      onPress={props.onPress}
-    >
-      <Text
-        style={{
-          opacity: indicatorsShow.includes(props.indicator.id) ? 1 : 0.2,
-        }}
-        bold={indicatorsShow.includes(props.indicator.id)}
-      >
-        {props.indicator.title}
-      </Text>
-      <Dot color={props.indicator.color}></Dot>
-    </TouchableOpacity>
-  );
-  const handleRotation = async () => {
-    if (!rotation) {
-      setrotation(true);
-      await ScreenOrientation.lockAsync(
-        ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT
-      );
-    } else {
-      setrotation(false);
-      await ScreenOrientation.lockAsync(
-        ScreenOrientation.OrientationLock.PORTRAIT
-      );
-    }
-  };
+  const chartDatasets = finalData
+    .filter((item) => visibleIds.includes(item.id))
+    .map((item) => ({
+      data: item.data.length > 0 ? item.data : [0],
+      color: () => INDICATOR_COLORS[item.id] ?? "#888",
+      strokeWidth: 2,
+    }));
+
+  const hasData = dates.length > 0;
+
+  const dayTotals = datas.map((day) => day.reduce((a, b) => a + b, 0));
+  const avgScore =
+    dayTotals.length > 0
+      ? Math.round(dayTotals.reduce((a, b) => a + b, 0) / dayTotals.length)
+      : 0;
+  const bestDay = dayTotals.length > 0 ? Math.max(...dayTotals) : 0;
+
+  const ranges: { key: DateRange; label: string }[] = [
+    { key: "7d", label: t("stats.last7") },
+    { key: "30d", label: t("stats.last30") },
+    { key: "90d", label: t("stats.last90") },
+    { key: "all", label: t("stats.allTime") },
+  ];
+
   return (
     <ScrollView
-      contentContainerStyle={{ flex: 1, justifyContent: "space-between" }}
+      style={styles.root}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
     >
       <Container navigation={navigation}>
-        <View style={{ margin: 30, flexDirection: "row" }}>
-          <AntDesign
+        {/* Header */}
+        <View style={[styles.header, { flexDirection: flexRow }]}>
+          <TouchableOpacity
             onPress={() => navigation.goBack()}
-            name="arrowleft"
-            size={24}
-            color="black"
-          />
-          <Text h3 style={{ marginLeft: 30 }}>
-            {" "}
-            منحنى إلتزامي{" "}
+            style={styles.backBtn}
+          >
+            <AntDesign name="arrowleft" size={18} color={Colors.primary} />
+          </TouchableOpacity>
+          <Text
+            h3
+            bold
+            style={{ flex: 1, marginHorizontal: 12 }}
+            align={isRTL ? "right" : "left"}
+          >
+            {t("stats.title")}
           </Text>
         </View>
-        {/* <RTLScrollView showsHorizontalScrollIndicator={true}>
-          {Indicators.map((ind) => (
-            <Legend
-              onPress={() => {
-                setindicatorsShow((prev) => {
-                  return prev.includes(ind.id)
-                    ? prev.filter((item) => item !== ind.id)
-                    : [...prev, ind.id];
-                });
-              }}
-              indicator={ind}
-            />
-          ))}
-        </RTLScrollView> */}
 
-        <LineChart
-          onDataPointClick={(data) => {
-            console.log(data);
-          }}
-          data={{
-            labels: dates.map(renderDate),
-            datasets: finalData
-              .filter((item, index) => {
-                let id = item.id;
-                return indicatorsShow.includes(id);
-              })
-              .map((data, index) => {
-                return {
-                  data: data.data,
-                  color: (opacity) =>
-                    getIndicatorById(data.id)?.color || "black",
-                  strokeWidth: 2,
-                };
-              }),
-            // legend: Indicators.map((ind) => ind.title),
-          }}
-          withDots={false}
-          // withOuterLines={false}
-          withVerticalLines={false}
-          withHorizontalLines={true}
-          withHorizontalLabels={true}
-          width={chartWidth} // from react-native
-          height={220}
-          // yAxisLabel="x"
-          // yAxisSuffix="k"
-          yAxisInterval={1} // optional, defaults to 1
-          chartConfig={chartConfig}
-          bezier
-          fromZero
-          style={{
-            marginVertical: 8,
-            borderRadius: 16,
-          }}
-        />
-
-        <View style={{ flexDirection: "row-reverse", flexWrap: "wrap" }}>
-          {Indicators.map((ind) => (
-            <Legend
-              key={ind.id}
-              onPress={() => {
-                setindicatorsShow((prev) => {
-                  return prev.includes(ind.id)
-                    ? prev.filter((item) => item !== ind.id)
-                    : [...prev, ind.id];
-                });
-              }}
-              indicator={ind}
-            />
+        {/* Date range filter */}
+        <View style={[styles.rangeRow, { flexDirection: flexRow }]}>
+          {ranges.map((r) => (
+            <TouchableOpacity
+              key={r.key}
+              style={[
+                styles.rangeChip,
+                dateRange === r.key && styles.rangeChipActive,
+              ]}
+              onPress={() => setDateRange(r.key)}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.rangeLabel,
+                  dateRange === r.key && styles.rangeLabelActive,
+                ]}
+              >
+                {r.label}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
-        <View
-          style={{
-            flexDirection: "row-reverse",
-            justifyContent: "space-between",
-            padding: 20,
-            marginTop: 90,
-          }}
-        >
+
+        {hasData ? (
+          <>
+            {/* Summary row */}
+            <View style={[styles.summaryRow, { flexDirection: flexRow }]}>
+              <View style={styles.summaryCard}>
+                <Text bold style={styles.summaryValue}>
+                  {dates.length}
+                </Text>
+                <Text style={styles.summaryLabel}>{t("stats.days")}</Text>
+              </View>
+              <View style={[styles.summaryCard, styles.summaryCardHighlight]}>
+                <Text
+                  bold
+                  style={[styles.summaryValue, { color: Colors.goldDark }]}
+                >
+                  {avgScore}
+                </Text>
+                <Text style={styles.summaryLabel}>{t("stats.avg")}</Text>
+              </View>
+              <View style={styles.summaryCard}>
+                <Text bold style={styles.summaryValue}>
+                  {bestDay}
+                </Text>
+                <Text style={styles.summaryLabel}>{t("stats.best")}</Text>
+              </View>
+            </View>
+
+            {/* Chart */}
+            <View style={styles.chartCard}>
+              <LineChart
+                data={{
+                  labels: dates.map((d: string) =>
+                    moment(d).locale("en").format("MM/DD")
+                  ),
+                  datasets:
+                    chartDatasets.length > 0 ? chartDatasets : [{ data: [0] }],
+                }}
+                withDots={false}
+                withVerticalLines={false}
+                withHorizontalLines={true}
+                withHorizontalLabels={true}
+                width={chartWidth}
+                height={200}
+                yAxisInterval={1}
+                chartConfig={chartConfig}
+                bezier
+                fromZero
+                style={styles.chart}
+              />
+            </View>
+
+            {/* Legend */}
+            <View style={styles.legendWrap}>
+              <View style={[styles.legendGrid, { flexDirection: "row" }]}>
+                {Indicators.map((ind) => {
+                  const active = visibleIds.includes(ind.id);
+                  const color = INDICATOR_COLORS[ind.id] ?? "#888";
+                  return (
+                    <TouchableOpacity
+                      key={ind.id}
+                      style={[
+                        styles.legendChip,
+                        active && {
+                          borderColor: color + "55",
+                          backgroundColor: color + "12",
+                        },
+                      ]}
+                      onPress={() => toggleIndicator(ind.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View
+                        style={[
+                          styles.legendDot,
+                          { backgroundColor: active ? color : "#ccc" },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.legendText,
+                          { opacity: active ? 1 : 0.35 },
+                        ]}
+                      >
+                        {t(ind.titleKey)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </>
+        ) : (
+          <View style={styles.emptyState}>
+            <AntDesign name="linechart" size={52} color="#ddd" />
+            <Text
+              h3
+              color="#bbb"
+              align="center"
+              style={{ marginTop: 20 }}
+            >
+              {t("stats.noData")}
+            </Text>
+            <Text
+              p
+              color="#ccc"
+              align="center"
+              style={{ marginTop: 6, paddingHorizontal: 32 }}
+            >
+              {t("stats.addRatings")}
+            </Text>
+          </View>
+        )}
+
+        {/* FABs */}
+        <View style={[styles.actions, { flexDirection: flexRow }]}>
           <TouchableOpacity
-            style={{ width: 50, backgroundColor: "white", borderRadius: 50 }}
+            style={styles.fabPrimary}
             onPress={() => navigation.navigate("form")}
           >
-            <AntDesign name="pluscircle" size={50} color={Colors.gold} />
+            <AntDesign name="plus" size={24} color="white" />
           </TouchableOpacity>
           <TouchableOpacity
-            style={{
-              width: 50,
-              backgroundColor: "white",
-              borderRadius: 50,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+            style={styles.fabSecondary}
             onPress={() => navigation.navigate("calendar")}
           >
-            <AntDesign name="calendar" size={25} color={Colors.primary} />
+            <AntDesign name="calendar" size={20} color={Colors.primary} />
           </TouchableOpacity>
-          {/* <TouchableOpacity
-            style={{
-              width: 50,
-              backgroundColor: "white",
-              borderRadius: 50,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onPress={() => navigation.navigate("config")}
-          >
-            <AntDesign name="edit" size={25} color={Colors.primary} />
-          </TouchableOpacity> */}
         </View>
       </Container>
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    backgroundColor: "#f5f6f8",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 32,
+  },
+  header: {
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  rangeRow: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    gap: 8,
+  },
+  rangeChip: {
+    flex: 1,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: "white",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e4e7ec",
+  },
+  rangeChipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  rangeLabel: {
+    fontSize: 11,
+    fontFamily: "Cairo_400Regular",
+    color: "#666",
+  },
+  rangeLabelActive: {
+    color: "white",
+    fontFamily: "Cairo_700Bold",
+  },
+  summaryRow: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    gap: 10,
+  },
+  summaryCard: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  summaryCardHighlight: {
+    borderBottomWidth: 2.5,
+    borderBottomColor: Colors.gold,
+  },
+  summaryValue: {
+    fontSize: 22,
+    fontFamily: "Cairo_700Bold",
+    color: Colors.primary,
+    lineHeight: 28,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    fontFamily: "Cairo_400Regular",
+    color: "#94a3b8",
+    marginTop: 2,
+  },
+  chartCard: {
+    marginHorizontal: 16,
+    backgroundColor: "white",
+    borderRadius: 16,
+    paddingTop: 16,
+    paddingBottom: 0,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    marginBottom: 12,
+  },
+  chart: {
+    borderRadius: 0,
+  },
+  legendWrap: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  legendGrid: {
+    flexWrap: "wrap",
+  },
+  legendChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    margin: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#e8eaed",
+    backgroundColor: "white",
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  legendText: {
+    fontSize: 11,
+    fontFamily: "Cairo_400Regular",
+    color: "#334155",
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 80,
+  },
+  actions: {
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    marginTop: 12,
+  },
+  fabPrimary: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: Colors.gold,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.gold,
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  fabSecondary: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+});

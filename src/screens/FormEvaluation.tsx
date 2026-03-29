@@ -5,21 +5,17 @@ import {
   TouchableOpacity,
   Dimensions,
   ToastAndroid,
-  TouchableHighlight,
   TextInput,
+  Platform,
 } from "react-native";
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-  useCallback,
-  useRef,
-} from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Classes from "../constants/Classes";
 import Text from "../components/Text";
 import Colors from "../constants/Colors";
 import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../store/store";
 import moment from "moment";
+import "moment/locale/ar";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
 
 import {
@@ -29,36 +25,71 @@ import {
   MenuTrigger,
   renderers,
 } from "react-native-popup-menu";
-import { Indicators, MONTHS_AR } from "../constants";
-import Slider from "@react-native-community/slider";
+import { Indicators } from "../constants";
+import { useTranslation } from "react-i18next";
+import { useRTL } from "../hooks/useRTL";
 
 const { SlideInMenu } = renderers;
+const MAX_ITEM_SCORE = 10;
 
-// Fixed ID key issue in the original Indicators array
+const getScoreColor = (value: number) => {
+  if (value === 0) return "#bbb";
+  if (value <= 4) return "#e07373";
+  if (value <= 7) return Colors.gold;
+  return "#5cb85c";
+};
 
-export default function FormEvaluation({ navigation, route }) {
-  const { results } = useSelector((state) => state.stats);
-  const day = route.params?.day?.timestamp || new Date().getTime();
+const CategoryProgressBar = ({
+  score,
+  max,
+}: {
+  score: number;
+  max: number;
+}) => {
+  const pct = max > 0 ? Math.min(score / max, 1) : 0;
+  const barColor =
+    pct === 0
+      ? "#e0e0e0"
+      : pct < 0.5
+        ? "#e07373"
+        : pct < 0.8
+          ? Colors.gold
+          : "#5cb85c";
+  return (
+    <View style={styles.progressTrack}>
+      <View
+        style={[
+          styles.progressFill,
+          { width: `${pct * 100}%` as any, backgroundColor: barColor },
+        ]}
+      />
+    </View>
+  );
+};
+
+export default function FormEvaluation({ navigation, route }: any) {
+  const { t } = useTranslation();
+  const { isRTL, flexRow, textAlign } = useRTL();
+  const { results } = useSelector(
+    (state: RootState) => state.stats,
+  ) as unknown as { results: Array<{ date: string; data: number[][] }> };
+  const [day, setDay] = useState(
+    route.params?.day?.timestamp || new Date().getTime(),
+  );
   const formattedDate = useMemo(() => moment(day).format("YYYY-MM-DD"), [day]);
   const dispatch = useDispatch();
 
-  // Memoized calculation of initial data
   const initialData = useMemo(() => {
-    const resultsData = results.find((res) => res.date === formattedDate);
-
+    const resultsData = results.find((res: any) => res.date === formattedDate);
     if (resultsData?.data) return resultsData.data;
-
-    // Generate initial empty data structure if no existing data found
     return Indicators.map((indicator) => Array(indicator.items.length).fill(0));
   }, [results, formattedDate]);
 
   const [data, setData] = useState(initialData);
-  const [selectedModule, setSelectedModule] = useState(null);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [overlayOptions, setOverlayOptions] = useState(null);
+  const [selectedModule, setSelectedModule] = useState<number | null>(null);
+  const [selectedItem, setSelectedItem] = useState<number | null>(null);
   const [number, setNumber] = useState("");
 
-  // Update navigation options
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -73,196 +104,91 @@ export default function FormEvaluation({ navigation, route }) {
             onPress={() => navigation.push("Stats")}
             style={[styles.headerButton, { marginRight: 15 }]}
           >
-            <AntDesign name="linechart" size={24} color="white" />
+            <AntDesign name="line-chart" size={24} color="white" />
           </TouchableOpacity>
         </View>
       ),
     });
   }, [navigation]);
 
-  // Update local data when route params change
   useEffect(() => {
     setData(initialData);
   }, [initialData, route.params]);
 
-  // Calculate scores for each indicator section
   const scores = useMemo(
-    () => data.map((section) => section.reduce((acc, cur) => acc + cur, 0)),
-    [data]
+    () =>
+      data.map((section: number[]) =>
+        section.reduce((acc: number, cur: number) => acc + cur, 0),
+      ),
+    [data],
   );
 
-  // Handle input value changes
   const handleInput = useCallback(
-    (value) => {
+    (value: string | number) => {
       if (!selectedModule && selectedModule !== 0) return;
 
-      const numValue = value === "" ? 0 : parseInt(value);
+      const raw = parseInt(String(value));
+      const numValue = isNaN(raw)
+        ? 0
+        : Math.min(MAX_ITEM_SCORE, Math.max(0, raw));
 
-      setData((prevData) => {
-        const newData = [...prevData];
-        if (newData[selectedModule]) {
-          newData[selectedModule] = [...newData[selectedModule]];
-          newData[selectedModule][selectedItem] = numValue;
-        }
-        return newData;
-      });
+      const newData = data.map((section: number[], idx: number) =>
+        idx === selectedModule
+          ? section.map((item: number, i: number) =>
+              i === selectedItem ? numValue : item,
+            )
+          : section,
+      );
 
-      // Update Redux store
-      dispatch({
-        type: "UPDATE_RESULT",
-        payload: {
-          data: data.map((section, idx) =>
-            idx === selectedModule
-              ? section.map((item, i) => (i === selectedItem ? numValue : item))
-              : section
-          ),
-          day,
-        },
-      });
+      setData(newData);
+      dispatch({ type: "UPDATE_RESULT", payload: { data: newData, day } });
 
       setSelectedModule(null);
       setSelectedItem(null);
       setNumber("");
-      ToastAndroid.show("✅ تم الحفظ", ToastAndroid.SHORT);
+      if (Platform.OS === "android") {
+        ToastAndroid.show(t("form.saved"), ToastAndroid.SHORT);
+      }
     },
-    [selectedModule, selectedItem, data, dispatch, day]
+    [selectedModule, selectedItem, data, dispatch, day],
   );
 
-  // Calculate formatted date
   const dateDisplay = useMemo(() => {
-    const dateObj = new Date(day);
+    const lang = isRTL ? "ar" : "en";
     return {
-      day: dateObj.getDate(),
-      month: MONTHS_AR[dateObj.getMonth()],
-      year: dateObj.getFullYear(),
+      day: moment(day).format("D"),
+      month: moment(day).format("MMMM"),
+      year: moment(day).format("YYYY"),
     };
-  }, [day]);
+  }, [day, isRTL]);
 
-  // Render number pad buttons
-  const renderNumberPad = useCallback(() => {
-    const numberGrid = [
-      [1, 2, 3],
-      [4, 5, 6],
-      [7, 8, 9],
-    ];
-    const menuref = useRef(null);
-
-    return (
-      <View>
-        <Text align="right" style={styles.inputLabel}>
-          ادخل العلامة هنا
-        </Text>
-        <Text style={styles.numberDisplay}>{number}0%</Text>
-        <Slider
-          style={{ width: "100%", height: 40 }}
-          minimumValue={2}
-          maximumValue={10}
-          step={1}
-          value={number ? parseInt(number) : 2}
-          onValueChange={(value) => setNumber(value.toString())}
-        />
-        <View style={styles.sliderLabels}>
-          {[...Array(9)].map((_, i) => (
-            <Text key={i} style={styles.sliderLabel}>
-              {i * 10 + 20}
-            </Text>
-          ))}
-        </View>
-        <View>
-          <MenuOption key={`numberbad-$`} value={number}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "center",
-                backgroundColor: Colors.gold,
-                padding: 10,
-                borderRadius: 5,
-                marginTop: 10,
-              }}
-            >
-              <Text
-                style={{
-                  color: "white",
-                  fontSize: 18,
-                }}
+  const renderMenuOption = useCallback(
+    (option: any, index: number, itemId: string | number) => {
+      if (typeof option === "object") {
+        return (
+          <MenuOption key={`${itemId}-${index}`} value={option.value}>
+            <View style={[styles.optionRow, { flexDirection: flexRow }]}>
+              <Text>{option.key ? t(option.key) : option.label}</Text>
+              <View
+                style={[
+                  styles.optionBadge,
+                  { backgroundColor: getScoreColor(option.value) },
+                ]}
               >
-                حفظ
-              </Text>
-              <AntDesign name="check" size={24} color="white" />
+                <Text bold color="white">
+                  {option.value}
+                </Text>
+              </View>
             </View>
           </MenuOption>
-        </View>
-      </View>
-    );
-    return (
-      <View>
-        <Text align="right" style={styles.inputLabel}>
-          ادخل العلامة هنا
-        </Text>
-        <Text style={styles.numberDisplay}>{number}</Text>
-
-        {numberGrid.map((line, idx) => (
-          <View key={idx} style={styles.numberRow}>
-            {line.map((num) => (
-              <TouchableHighlight
-                key={`num-${num}`}
-                underlayColor={Colors.secondary}
-                onPress={() => setNumber((prev) => prev + num)}
-                style={styles.numberButton}
-              >
-                <Text h1 bold>
-                  {num}
-                </Text>
-              </TouchableHighlight>
-            ))}
-          </View>
-        ))}
-
-        <View style={styles.numberRow}>
-          <TouchableOpacity
-            onPress={() => setNumber((prev) => prev.slice(0, -1))}
-            style={styles.numberButton}
-          >
-            <Ionicons name="backspace" size={26} color="black" />
-          </TouchableOpacity>
-
-          <TouchableHighlight
-            onPress={() => setNumber((prev) => prev + "0")}
-            style={styles.numberButton}
-          >
-            <Text h1 bold>
-              0
-            </Text>
-          </TouchableHighlight>
-
-          <TouchableOpacity
-            onPress={() => handleInput(number)}
-            style={styles.numberButton}
-          >
-            <Ionicons name="checkmark-circle" size={30} color="black" />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }, [number, handleInput]);
-
-  // Render an individual menu option
-  const renderMenuOption = useCallback((option, index, itemId) => {
-    if (typeof option === "object") {
+        );
+      }
       return (
-        <MenuOption key={`${itemId}-${index}`} value={option.value}>
-          <View style={styles.optionRow}>
-            <Text>{option.label}</Text>
-            <Text>{option.value}</Text>
-          </View>
-        </MenuOption>
+        <MenuOption key={`${itemId}-${index}`} value={option} text={option} />
       );
-    }
-
-    return (
-      <MenuOption key={`${itemId}-${index}`} value={option} text={option} />
-    );
-  }, []);
+    },
+    [flexRow, t],
+  );
 
   if (!data) {
     return <View style={{ backgroundColor: Colors.primary }} />;
@@ -270,98 +196,184 @@ export default function FormEvaluation({ navigation, route }) {
 
   return (
     <ScrollView style={styles.container}>
-      <Text color="white" align="center" style={styles.dateHeader}>
-        تقييم إلتزامي اليومي ليوم{" "}
-        <Text bold color={Colors.gold}>
-          {dateDisplay.day} {dateDisplay.month} {dateDisplay.year}
+      <View style={[styles.dateNavRow, { flexDirection: flexRow }]}>
+        <TouchableOpacity
+          onPress={() => setDay(moment(day).subtract(1, "day").valueOf())}
+          style={styles.navArrow}
+        >
+          <AntDesign name="right" size={20} color="white" />
+        </TouchableOpacity>
+
+        <Text color="white" align="center" style={styles.dateHeader}>
+          {t("form.dailyTitle")}{" "}
+          <Text bold color={Colors.gold}>
+            {dateDisplay.day} {dateDisplay.month} {dateDisplay.year}
+          </Text>
         </Text>
-      </Text>
 
-      {Indicators.map((indicator, indexInd) => (
-        <View key={indicator.id} style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text bold>{indicator.title}</Text>
-            <Text bold color={Colors.goldDark}>
-              {scores[indexInd]} نقطة
-            </Text>
-          </View>
+        <TouchableOpacity
+          onPress={() => setDay(moment(day).add(1, "day").valueOf())}
+          style={styles.navArrow}
+          disabled={moment(day).isSameOrAfter(moment(), "day")}
+        >
+          <AntDesign
+            name="left"
+            size={20}
+            color={
+              moment(day).isSameOrAfter(moment(), "day")
+                ? "rgba(255,255,255,0.2)"
+                : "white"
+            }
+          />
+        </TouchableOpacity>
+      </View>
 
-          <View style={styles.cardContent}>
-            {indicator.items.map((item, indexItem) => (
-              <Menu
-                key={item.id}
-                renderer={SlideInMenu}
-                onSelect={handleInput}
-                onClose={() => {
-                  setSelectedModule(null);
-                  setSelectedItem(null);
-                }}
-              >
-                <MenuTrigger
-                  onPress={() => {
-                    setSelectedModule(indexInd);
-                    setSelectedItem(indexItem);
-                    setOverlayOptions(item.options);
-                    setNumber("");
-                  }}
-                  customStyles={{
-                    triggerWrapper: {
-                      backgroundColor:
-                        selectedItem === indexItem &&
-                        selectedModule === indexInd
-                          ? "#eee"
-                          : "white",
-                    },
-                  }}
-                >
-                  <View style={styles.itemRow}>
-                    <Text
-                      color={
-                        selectedItem === indexItem &&
-                        selectedModule === indexInd
-                          ? Colors.goldDark
-                          : "black"
-                      }
-                    >
-                      {item.title}
-                    </Text>
-                    <Text
-                      h2
-                      bold={
-                        selectedItem === indexItem &&
-                        selectedModule === indexInd
-                      }
-                    >
-                      {data[indexInd][indexItem]}
-                    </Text>
-                  </View>
-                </MenuTrigger>
+      {Indicators.map((indicator, indexInd) => {
+        const maxScore = indicator.items.length * MAX_ITEM_SCORE;
+        return (
+          <View key={indicator.id} style={styles.card}>
+            <View style={[styles.cardHeader, { flexDirection: flexRow }]}>
+              <Text bold>{t(indicator.titleKey)}</Text>
+              <Text bold color={getScoreColor(scores[indexInd])}>
+                {scores[indexInd]}
+                <Text color="#888"> / {maxScore}</Text>
+              </Text>
+            </View>
+            <CategoryProgressBar score={scores[indexInd]} max={maxScore} />
 
-                <MenuOptions
-                  customStyles={{
-                    optionsWrapper: styles.menuOptionsWrapper,
-                    optionText: styles.menuOptionText,
-                    optionWrapper: styles.menuOptionWrapper,
-                    optionsContainer: styles.menuOptionsContainer,
+            <View style={styles.cardContent}>
+              {indicator.items.map((item, indexItem) => (
+                <Menu
+                  key={item.id}
+                  renderer={SlideInMenu}
+                  onSelect={handleInput}
+                  onClose={() => {
+                    setSelectedModule(null);
+                    setSelectedItem(null);
                   }}
                 >
-                  <ScrollView style={styles.menuScroll}>
-                    {overlayOptions && overlayOptions.length ? (
-                      overlayOptions.map((op, idx) =>
-                        renderMenuOption(op, idx, item.id)
-                      )
-                    ) : (
-                      <View style={styles.numberPadContainer}>
-                        {renderNumberPad()}
+                  <MenuTrigger
+                    onPress={() => {
+                      setSelectedModule(indexInd);
+                      setSelectedItem(indexItem);
+                      setNumber("");
+                    }}
+                    customStyles={{
+                      triggerWrapper: {
+                        backgroundColor:
+                          selectedItem === indexItem &&
+                          selectedModule === indexInd
+                            ? "#f5f0e8"
+                            : "white",
+                      },
+                    }}
+                  >
+                    <View style={[styles.itemRow, { flexDirection: flexRow }]}>
+                      <Text
+                        color={
+                          selectedItem === indexItem &&
+                          selectedModule === indexInd
+                            ? Colors.goldDark
+                            : "black"
+                        }
+                      >
+                        {t(item.titleKey)}
+                      </Text>
+                      <View
+                        style={[
+                          styles.scoreBadge,
+                          {
+                            backgroundColor: getScoreColor(
+                              data[indexInd][indexItem],
+                            ),
+                          },
+                        ]}
+                      >
+                        <Text bold color="white">
+                          {data[indexInd][indexItem]}
+                        </Text>
                       </View>
-                    )}
-                  </ScrollView>
-                </MenuOptions>
-              </Menu>
-            ))}
+                    </View>
+                  </MenuTrigger>
+
+                  <MenuOptions
+                    customStyles={{
+                      optionsWrapper: styles.menuOptionsWrapper,
+                      optionText: styles.menuOptionText,
+                      optionWrapper: styles.menuOptionWrapper,
+                      optionsContainer: styles.menuOptionsContainer,
+                    }}
+                  >
+                    <ScrollView style={styles.menuScroll}>
+                      {item.options && item.options.length ? (
+                        item.options.map((op, idx) =>
+                          renderMenuOption(op, idx, item.id),
+                        )
+                      ) : (
+                        <View style={styles.numberPadContainer}>
+                          <Text align={textAlign} style={styles.inputLabel}>
+                            {t("form.enterValue")}
+                          </Text>
+                          <TextInput
+                            value={number}
+                            onChangeText={(text) => {
+                              const digits = text.replace(/[^0-9]/g, "");
+                              const num = parseInt(digits);
+                              if (
+                                digits === "" ||
+                                (!isNaN(num) && num <= MAX_ITEM_SCORE)
+                              ) {
+                                setNumber(digits);
+                              }
+                            }}
+                            style={styles.numberInput}
+                            placeholder="0 – 10"
+                            keyboardType="numeric"
+                            maxLength={2}
+                            textAlign="center"
+                          />
+                          {number !== "" && (
+                            <View
+                              style={[
+                                styles.numberPreview,
+                                {
+                                  backgroundColor: getScoreColor(
+                                    parseInt(number) || 0,
+                                  ),
+                                },
+                              ]}
+                            >
+                              <Text bold color="white" style={{ fontSize: 20 }}>
+                                {number}
+                              </Text>
+                            </View>
+                          )}
+                          <TouchableOpacity
+                            onPress={() => handleInput(number)}
+                            style={[
+                              styles.confirmButton,
+                              { flexDirection: flexRow },
+                            ]}
+                          >
+                            <Ionicons
+                              name="checkmark-circle"
+                              size={22}
+                              color="white"
+                            />
+                            <Text bold color="white" style={{ marginRight: 8 }}>
+                              {t("form.save")}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </ScrollView>
+                  </MenuOptions>
+                </Menu>
+              ))}
+            </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
     </ScrollView>
   );
 }
@@ -371,33 +383,68 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.primary,
   },
-  dateHeader: {
+  dateNavRow: {
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
     marginTop: 20,
     marginBottom: 10,
+  },
+  navArrow: {
+    padding: 8,
+  },
+  dateHeader: {
+    flex: 1,
+    textAlign: "center",
   },
   card: {
     ...Classes.containerCard,
     marginBottom: 15,
   },
   cardHeader: {
-    marginBottom: 10,
-    flexDirection: "row-reverse",
+    marginBottom: 6,
     justifyContent: "space-between",
     paddingHorizontal: 5,
+    alignItems: "center",
+  },
+  progressTrack: {
+    height: 4,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 2,
+    marginHorizontal: 5,
+    marginBottom: 10,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: 2,
   },
   cardContent: {
     backgroundColor: "white",
-    borderRadius: 5,
+    borderRadius: 8,
     overflow: "hidden",
   },
   itemRow: {
-    flexDirection: "row-reverse",
     width: "100%",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    height: 50,
-    borderBottomColor: "#eee",
+    paddingHorizontal: 16,
+    height: 52,
+    borderBottomColor: "#f0f0f0",
     borderBottomWidth: 1,
+    alignItems: "center",
+  },
+  scoreBadge: {
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    minWidth: 34,
+    alignItems: "center",
+  },
+  optionBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    minWidth: 28,
     alignItems: "center",
   },
   menuOptionsWrapper: {
@@ -406,7 +453,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
     overflow: "hidden",
-    borderTopWidth: 5,
+    borderTopWidth: 4,
     borderTopColor: Colors.gold,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -430,49 +477,57 @@ const styles = StyleSheet.create({
   menuScroll: {
     width: "100%",
   },
-  sliderLabels: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    marginTop: 10,
-  },
-  sliderLabel: {
-    fontSize: 12,
-    textAlign: "center",
-  },
   numberPadContainer: {
-    width: 200,
+    width: 220,
     alignSelf: "center",
-    paddingVertical: 15,
-  },
-  numberRow: {
-    flexDirection: "row",
+    paddingVertical: 20,
     alignItems: "center",
-    justifyContent: "center",
   },
-  numberButton: {
-    flex: 0.33333,
-    alignItems: "center",
-    justifyContent: "center",
-    height: 60,
-  },
-  numberDisplay: {
-    fontSize: 18,
+  numberInput: {
+    borderColor: Colors.gold,
+    borderWidth: 1.5,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    fontSize: 22,
+    width: "100%",
+    marginTop: 10,
+    color: "#222",
+    backgroundColor: "#fafafa",
     textAlign: "center",
-    marginVertical: 10,
+  },
+  numberPreview: {
+    marginTop: 12,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 6,
+    alignItems: "center",
+  },
+  confirmButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.gold,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    marginTop: 14,
+    width: "100%",
+    gap: 6,
   },
   inputLabel: {
     fontSize: 12,
     marginTop: 5,
+    color: "#666",
   },
   optionRow: {
     width: "100%",
-    padding: 15,
-    flexDirection: "row-reverse",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     justifyContent: "space-between",
+    alignItems: "center",
   },
   headerButtonsContainer: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
   },
   submitButton: {
     alignItems: "center",
@@ -486,8 +541,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "grey",
+    backgroundColor: "rgba(255,255,255,0.15)",
     padding: 8,
-    borderRadius: 5,
+    borderRadius: 8,
   },
 });

@@ -1,33 +1,34 @@
 import { View, StyleSheet } from "react-native";
-import React, { ReactPortal, useEffect, useState } from "react";
+import React from "react";
 import Text from "./Text";
-import moment from "moment";
 import Colors from "../constants/Colors";
+import { useTranslation } from "react-i18next";
+import { useRTL } from "../hooks/useRTL";
 
-const SalatText = (props: {
-  children: boolean | ReactPortal | null | undefined;
-}) => (
+const SalatText = ({ children }: { children: React.ReactNode }) => (
   <Text h3 style={styles.flex1}>
-    {props.children}
+    {children}
   </Text>
 );
 
-const t = (salat) => {
+const getPrayerName = (salat: string, t: (key: string) => string): string => {
   switch (salat) {
     case "Fajr":
-      return "🌖 الفجر ";
+      return t("salat.fajr");
     case "Sunrise":
-      return "🌄 الشروق";
+      return t("salat.sunrise");
     case "Dhuhr":
-      return "☀️ الظهر";
+      return t("salat.dhuhr");
     case "Asr":
-      return "🌤 العصر";
+      return t("salat.asr");
     case "Sunset":
-      return " الغروب";
+      return t("salat.sunset");
     case "Maghrib":
-      return "🌅 المغرب";
+      return t("salat.maghrib");
     case "Isha":
-      return "🌃 العشاء";
+      return t("salat.isha");
+    default:
+      return salat;
   }
 };
 
@@ -41,6 +42,15 @@ const formatTimeDiff = (diff: number): string => {
   return `${hours}:${minutes.toString().padStart(2, "0")}`;
 };
 
+interface SalatItemProps {
+  time: string;
+  salat: string;
+  diff: number;
+  signedDiff: number;
+  showDiff?: boolean;
+  diff_str: string;
+}
+
 export default function SalatItem({
   time,
   salat,
@@ -48,19 +58,16 @@ export default function SalatItem({
   signedDiff,
   showDiff = false,
   diff_str,
-}) {
-  var diff_min = diff;
+}: SalatItemProps) {
+  const { t } = useTranslation();
+  const { flexRow } = useRTL();
+
   const formattedDiff = formatTimeDiff(diff - 1);
 
-  if (diff > 60) {
-    diff_min = `${Math.trunc(diff / 60)}:${(diff % 60).toFixed(0)}`;
-    // console.log(diff_min);
-    // diff_min=diff_str
-  }
   return (
-    <View style={styles.salatItem}>
+    <View style={[styles.salatItem, { flexDirection: flexRow }]}>
       <SalatText> {time}</SalatText>
-      <SalatText>{t(salat)}</SalatText>
+      <SalatText>{getPrayerName(salat, t)}</SalatText>
       <SalatText>
         {" "}
         {!!showDiff && <Text p>⌛️</Text>}{" "}
@@ -69,9 +76,9 @@ export default function SalatItem({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   salatItem: {
-    flexDirection: "row-reverse",
     justifyContent: "space-between",
     width: "100%",
     paddingVertical: 5,

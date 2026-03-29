@@ -2,6 +2,7 @@ import { View, StyleSheet } from "react-native";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import Text from "./Text";
 import SalatItem from "./SalatItem";
+import { useTranslation } from "react-i18next";
 
 const styles = StyleSheet.create({
   salatsContainer: {
@@ -26,6 +27,7 @@ interface SalatTableProps {
 }
 
 export default function SalatTable({ data }: SalatTableProps) {
+  const { t } = useTranslation();
   const [listData, setListData] = useState<
     Array<{
       salat: string;
@@ -119,7 +121,7 @@ export default function SalatTable({ data }: SalatTableProps) {
   return (
     <View style={styles.salatsContainer}>
       <Text bold style={styles.title} align="center">
-        🕗 مواقيت الصلاة
+        {t("salat.prayerTimes")}
       </Text>
       {listData.length > 0 ? (
         listData
@@ -137,7 +139,7 @@ export default function SalatTable({ data }: SalatTableProps) {
           ))
       ) : (
         <Text style={{ textAlign: "center", marginTop: 10 }}>
-          Loading prayer times...
+          {t("salat.loading")}
         </Text>
       )}
     </View>
