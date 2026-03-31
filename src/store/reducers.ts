@@ -23,7 +23,7 @@ export const authReducer = (state = initialAuthState, action: any) => {
 };
 export const TimingReducer = (
   state = { current_date: null, data: null },
-  action: any
+  action: any,
 ) => {
   switch (action.type) {
     case "LOAD_DATA":
@@ -69,8 +69,12 @@ export const GoalsReducer = (state = { goals: [] }, action: any) => {
   return state;
 };
 export const SettingsReducer = (
-  state = { userPosition: null, language: "ar" as "ar" | "en" },
-  action: any
+  state = {
+    userPosition: null,
+    language: "ar" as "ar" | "en",
+    theme: "dark" as "dark" | "light",
+  },
+  action: any,
 ) => {
   switch (action.type) {
     case "USER_POSITION":
@@ -83,26 +87,57 @@ export const SettingsReducer = (
         ...state,
         language: action.payload as "ar" | "en",
       };
+    case "SET_THEME":
+      return {
+        ...state,
+        theme: action.payload as "dark" | "light",
+      };
   }
   return state;
 };
+export type PrayerKey = "fajr" | "dhuhr" | "asr" | "maghrib" | "isha";
+export interface PrayerNotifConfig {
+  enabled: boolean;
+  delay: number; // minutes after prayer time
+}
+export type NotificationSettingsState = Record<PrayerKey, PrayerNotifConfig>;
+
+const initialNotificationSettings: NotificationSettingsState = {
+  fajr: { enabled: false, delay: 15 },
+  dhuhr: { enabled: false, delay: 15 },
+  asr: { enabled: false, delay: 15 },
+  maghrib: { enabled: false, delay: 15 },
+  isha: { enabled: false, delay: 15 },
+};
+
+export const NotificationSettingsReducer = (
+  state = initialNotificationSettings,
+  action: any,
+): NotificationSettingsState => {
+  switch (action.type) {
+    case "UPDATE_NOTIF_SETTINGS":
+      return { ...state, ...action.payload };
+  }
+  return state;
+};
+
 export const StatsReducer = (
   state = { results: [{ date: "", data: [[]] }] },
-  action: any
+  action: any,
 ) => {
   switch (action.type) {
     case "UPDATE_RESULT":
       const payloadData = action.payload.data;
       const day = action.payload.day;
+      console.log("day ===", day);
       // look for current date if exist: update data, else create new record
-      let date_exist = !!state.results.find(
-        (el) => el.date === moment(day).format("YYYY-MM-DD")
-      );
+      const dayKey = moment(day).locale("en").format("YYYY-MM-DD");
+      let date_exist = !!state.results.find((el) => el.date === dayKey);
       let tmp;
       let exist = false;
       tmp = state.results.map(({ date, data }) => {
         let el = { date, data };
-        if (date === moment(day).format("YYYY-MM-DD")) {
+        if (date === dayKey) {
           exist = true;
           el.data = payloadData;
         }
@@ -110,7 +145,7 @@ export const StatsReducer = (
       });
       if (!exist) {
         tmp.push({
-          date: moment(day).format("YYYY-MM-DD"),
+          date: dayKey,
           data: payloadData,
         });
       }

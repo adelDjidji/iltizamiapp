@@ -6,6 +6,7 @@ import Colors from "../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
+import { useTheme } from "../hooks/useTheme";
 
 type Category = {
   id: string;
@@ -27,6 +28,7 @@ const CATEGORIES: Category[] = [
 export default function Adkar({ navigation }: any) {
   const { t } = useTranslation();
   const { flexRow, textAlign } = useRTL();
+  const theme = useTheme();
 
   const handleNavigation = (id: string, titleKey: string) => {
     navigation.navigate("adkar-list", { id, title: t(titleKey) });
@@ -35,12 +37,12 @@ export default function Adkar({ navigation }: any) {
   return (
     <ScrollView
       contentContainerStyle={styles.contentContainer}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.bg }]}
     >
       {CATEGORIES.map((cat) => (
         <TouchableOpacity
           key={cat.id}
-          style={[styles.item, { flexDirection: flexRow }]}
+          style={[styles.item, { flexDirection: flexRow, backgroundColor: theme.bgCard }]}
           onPress={() => handleNavigation(cat.id, cat.titleKey)}
           activeOpacity={0.7}
         >

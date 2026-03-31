@@ -7,12 +7,14 @@ import Colors from "../constants/Colors";
 import Text from "./Text";
 import { computeChallengeState } from "../utils/challenge";
 import { useRTL } from "../hooks/useRTL";
+import { useTheme } from "../hooks/useTheme";
 
 const CHALLENGE_DAYS = 40;
 
 export default function ChallengeCard({ onPress }: { onPress: () => void }) {
   const { t } = useTranslation();
   const { isRTL, flexRow } = useRTL();
+  const theme = useTheme();
   const { results } = useSelector((state: any) => state.stats);
 
   const { totalStars, currentStreak, daysInCurrentCycle } = useMemo(
@@ -20,7 +22,6 @@ export default function ChallengeCard({ onPress }: { onPress: () => void }) {
     [results],
   );
 
-  // When streak just hit a multiple of 40, treat as "full" for display
   const displayDays =
     currentStreak === 0
       ? 0
@@ -29,7 +30,7 @@ export default function ChallengeCard({ onPress }: { onPress: () => void }) {
         : daysInCurrentCycle;
   const progress = displayDays / CHALLENGE_DAYS;
   const daysLeft = CHALLENGE_DAYS - displayDays;
-  const progressWidth = Dimensions.get("window").width - 52; // card padding
+  const progressWidth = Dimensions.get("window").width - 72;
 
   const motivationKey =
     currentStreak === 0
@@ -42,9 +43,24 @@ export default function ChallengeCard({ onPress }: { onPress: () => void }) {
 
   const starsToShow = Math.min(totalStars, 12);
 
+  const isComplete = daysInCurrentCycle === 0 && currentStreak > 0;
+
+  // Theme-aware values
+  const cardBg = theme.mode === "dark" ? "rgba(1,19,35,0.82)" : theme.bgCard;
+  const trackBg =
+    theme.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const milestoneEmpty =
+    theme.mode === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)";
+
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[
+        styles.card,
+        {
+          backgroundColor: cardBg,
+          borderColor: Colors.gold + "40",
+        },
+      ]}
       onPress={onPress}
       activeOpacity={0.85}
     >
@@ -85,25 +101,32 @@ export default function ChallengeCard({ onPress }: { onPress: () => void }) {
       {/* Progress area */}
       <View style={styles.progressArea}>
         <View style={[styles.progressHeader, { flexDirection: flexRow }]}>
-          <Text style={styles.dayCount}>
+          <Text style={[styles.dayCount, { color: theme.text }]}>
             {displayDays}
-            <Text style={styles.dayMax}> / {CHALLENGE_DAYS}</Text>
+            <Text style={[styles.dayMax, { color: theme.textMuted }]}>
+              {" "}
+              / {CHALLENGE_DAYS}
+            </Text>
           </Text>
-          <Text style={styles.dayLabel}>{t("challenge.days")}</Text>
+          <Text style={[styles.dayLabel, { color: theme.textSub }]}>
+            {t("challenge.days")}
+          </Text>
         </View>
 
         {/* Track */}
-        <View style={[styles.trackBg, { width: progressWidth }]}>
+        <View
+          style={[
+            styles.trackBg,
+            { width: progressWidth, backgroundColor: trackBg },
+          ]}
+        >
           <View
             style={[
               styles.trackFill,
               { width: progressWidth * progress },
-              daysInCurrentCycle === 0 &&
-                currentStreak > 0 &&
-                styles.trackComplete,
+              isComplete && styles.trackComplete,
             ]}
           />
-          {/* Milestone markers at 10, 20, 30 days */}
           {[10, 20, 30].map((milestone) => (
             <View
               key={milestone}
@@ -112,9 +135,7 @@ export default function ChallengeCard({ onPress }: { onPress: () => void }) {
                 {
                   left: (progressWidth * milestone) / 40 - 1,
                   backgroundColor:
-                    displayDays >= milestone
-                      ? Colors.primary
-                      : "rgba(255,255,255,0.2)",
+                    displayDays >= milestone ? Colors.primary : milestoneEmpty,
                 },
               ]}
             />
@@ -126,10 +147,8 @@ export default function ChallengeCard({ onPress }: { onPress: () => void }) {
       <Text
         style={[
           styles.motivation,
+          { color: isComplete ? Colors.gold : theme.textSub },
           { textAlign: isRTL ? "right" : "left" },
-          daysInCurrentCycle === 0 &&
-            currentStreak > 0 &&
-            styles.motivationComplete,
         ]}
       >
         {t(motivationKey, { days: daysLeft, streak: currentStreak })}
@@ -140,19 +159,17 @@ export default function ChallengeCard({ onPress }: { onPress: () => void }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.dark,
-    marginHorizontal: 10,
+    // marginHorizontal: 10,
     marginBottom: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(229, 198, 81, 0.25)",
-    elevation: 5,
+    elevation: 3,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   headerRow: {
     alignItems: "center",
@@ -179,7 +196,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   starsLabel: {
-    color: "rgba(229,198,81,0.7)",
+    color: Colors.gold + "bb",
     fontSize: 12,
   },
   progressArea: {
@@ -190,22 +207,18 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dayCount: {
-    color: "white",
     fontSize: 24,
     fontWeight: "700",
   },
   dayMax: {
-    color: "rgba(255,255,255,0.4)",
     fontSize: 14,
     fontWeight: "400",
   },
   dayLabel: {
-    color: "rgba(255,255,255,0.5)",
     fontSize: 12,
   },
   trackBg: {
     height: 8,
-    backgroundColor: "rgba(255,255,255,0.08)",
     borderRadius: 4,
     overflow: "visible",
     position: "relative",
@@ -216,7 +229,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   trackComplete: {
-    backgroundColor: Colors.success || "#2b8b2b",
+    backgroundColor: Colors.success,
   },
   milestone: {
     position: "absolute",
@@ -226,11 +239,7 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
   motivation: {
-    color: "rgba(255,255,255,0.5)",
     fontSize: 12,
     marginTop: 8,
-  },
-  motivationComplete: {
-    color: Colors.gold,
   },
 });

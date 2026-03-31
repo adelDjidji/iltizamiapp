@@ -94,7 +94,7 @@ export function computeChallengeState(
   const completionDates = new Set<string>();
   for (const run of allRuns) {
     for (let i = 40; i <= run.length; i += 40) {
-      completionDates.add(moment(run.start).add(i - 1, "days").format("YYYY-MM-DD"));
+      completionDates.add(moment(run.start).add(i - 1, "days").locale("en").format("YYYY-MM-DD"));
     }
   }
 

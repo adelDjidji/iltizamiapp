@@ -8,6 +8,8 @@ import {
   TextInput,
   Platform,
 } from "react-native";
+import celebrationAnimation from "../../assets/animations/Celebrations.json";
+import LottieView from "lottie-react-native";
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Classes from "../constants/Classes";
 import Text from "../components/Text";
@@ -28,6 +30,8 @@ import {
 import { Indicators } from "../constants";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
+import { useTheme } from "../hooks/useTheme";
+import { Theme } from "../constants/Theme";
 
 const { SlideInMenu } = renderers;
 const MAX_ITEM_SCORE = 10;
@@ -56,10 +60,10 @@ const CategoryProgressBar = ({
           ? Colors.gold
           : "#5cb85c";
   return (
-    <View style={styles.progressTrack}>
+    <View style={progressStyles.progressTrack}>
       <View
         style={[
-          styles.progressFill,
+          progressStyles.progressFill,
           { width: `${pct * 100}%` as any, backgroundColor: barColor },
         ]}
       />
@@ -67,16 +71,199 @@ const CategoryProgressBar = ({
   );
 };
 
+const progressStyles = StyleSheet.create({
+  progressTrack: {
+    height: 4,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 2,
+    marginHorizontal: 5,
+    marginBottom: 10,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+});
+
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.bg,
+    },
+    dateNavRow: {
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 10,
+      marginTop: 20,
+      marginBottom: 10,
+    },
+    navArrow: {
+      padding: 8,
+    },
+    dateHeader: {
+      flex: 1,
+      textAlign: "center",
+    },
+    card: {
+      ...Classes.containerCard,
+      backgroundColor: theme.bgCard,
+      marginBottom: 15,
+    },
+    cardHeader: {
+      marginBottom: 6,
+      justifyContent: "space-between",
+      paddingHorizontal: 5,
+      alignItems: "center",
+    },
+    cardContent: {
+      backgroundColor: theme.bgCard,
+      borderRadius: 8,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    itemRow: {
+      width: "100%",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      height: 52,
+      borderBottomColor: theme.border,
+      borderBottomWidth: 1,
+      alignItems: "center",
+    },
+    scoreBadge: {
+      borderRadius: 14,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      minWidth: 34,
+      alignItems: "center",
+    },
+    optionBadge: {
+      borderRadius: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      minWidth: 28,
+      alignItems: "center",
+    },
+    menuOptionsWrapper: {
+      backgroundColor: Colors.goldLight,
+      maxHeight: Dimensions.get("window").height / 2,
+      alignItems: "center",
+      justifyContent: "flex-start",
+      overflow: "hidden",
+      borderTopWidth: 4,
+      borderTopColor: Colors.gold,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+    },
+    menuOptionText: {
+      color: "black",
+      fontSize: 14,
+      fontFamily: Classes.textReg.fontFamily,
+    },
+    menuOptionWrapper: {
+      width: "100%",
+      borderBottomWidth: 1,
+      borderBottomColor: "#eee",
+      alignItems: "center",
+    },
+    menuOptionsContainer: {
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      backgroundColor: "white",
+    },
+    menuScroll: {
+      width: "100%",
+    },
+    numberPadContainer: {
+      width: 220,
+      alignSelf: "center",
+      paddingVertical: 20,
+      alignItems: "center",
+    },
+    numberInput: {
+      borderColor: Colors.gold,
+      borderWidth: 1.5,
+      borderRadius: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      fontSize: 22,
+      width: "100%",
+      marginTop: 10,
+      color: "#222",
+      backgroundColor: "#fafafa",
+      textAlign: "center",
+    },
+    numberPreview: {
+      marginTop: 12,
+      borderRadius: 24,
+      paddingHorizontal: 20,
+      paddingVertical: 6,
+      alignItems: "center",
+    },
+    confirmButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: Colors.gold,
+      borderRadius: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 24,
+      marginTop: 14,
+      width: "100%",
+      gap: 6,
+    },
+    inputLabel: {
+      fontSize: 12,
+      marginTop: 5,
+      color: "#666",
+    },
+    optionRow: {
+      width: "100%",
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    headerButtonsContainer: {
+      flexDirection: "row",
+    },
+    submitButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: Colors.gold,
+      padding: 10,
+      borderRadius: 5,
+      marginTop: 10,
+    },
+    headerButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(255,255,255,0.15)",
+      padding: 8,
+      borderRadius: 8,
+    },
+  });
+}
+
 export default function FormEvaluation({ navigation, route }: any) {
   const { t } = useTranslation();
   const { isRTL, flexRow, textAlign } = useRTL();
+  const theme = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
+
   const { results } = useSelector(
     (state: RootState) => state.stats,
   ) as unknown as { results: Array<{ date: string; data: number[][] }> };
   const [day, setDay] = useState(
     route.params?.day?.timestamp || new Date().getTime(),
   );
-  const formattedDate = useMemo(() => moment(day).format("YYYY-MM-DD"), [day]);
+  const formattedDate = useMemo(
+    () => moment(day).locale("en").format("YYYY-MM-DD"),
+    [day],
+  );
   const dispatch = useDispatch();
 
   const initialData = useMemo(() => {
@@ -89,6 +276,7 @@ export default function FormEvaluation({ navigation, route }: any) {
   const [selectedModule, setSelectedModule] = useState<number | null>(null);
   const [selectedItem, setSelectedItem] = useState<number | null>(null);
   const [number, setNumber] = useState("");
+  const [showCelebration, setShowCelebration] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -98,22 +286,28 @@ export default function FormEvaluation({ navigation, route }: any) {
             onPress={() => navigation.push("calendar")}
             style={styles.headerButton}
           >
-            <AntDesign name="calendar" size={24} color="white" />
+            <AntDesign name="calendar" size={24} color={theme.headerText} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.push("Stats")}
             style={[styles.headerButton, { marginRight: 15 }]}
           >
-            <AntDesign name="line-chart" size={24} color="white" />
+            <AntDesign name="line-chart" size={24} color={theme.headerText} />
           </TouchableOpacity>
         </View>
       ),
     });
-  }, [navigation]);
+  }, [navigation, theme]);
+
+  useEffect(() => {
+    if (route.params?.day?.timestamp) {
+      setDay(route.params.day.timestamp);
+    }
+  }, [route.params?.day?.timestamp]);
 
   useEffect(() => {
     setData(initialData);
-  }, [initialData, route.params]);
+  }, [initialData]);
 
   const scores = useMemo(
     () =>
@@ -142,7 +336,10 @@ export default function FormEvaluation({ navigation, route }: any) {
 
       setData(newData);
       dispatch({ type: "UPDATE_RESULT", payload: { data: newData, day } });
-
+      const allPrayersPerfect = newData[0]
+        ?.slice(0, 5)
+        .every((v: number) => v === MAX_ITEM_SCORE);
+      if (allPrayersPerfect) setShowCelebration(true);
       setSelectedModule(null);
       setSelectedItem(null);
       setNumber("");
@@ -154,11 +351,14 @@ export default function FormEvaluation({ navigation, route }: any) {
   );
 
   const dateDisplay = useMemo(() => {
-    const lang = isRTL ? "ar" : "en";
+    const m = moment(day).local();
     return {
-      day: moment(day).format("D"),
-      month: moment(day).format("MMMM"),
-      year: moment(day).format("YYYY"),
+      day: m.clone().locale("en").format("D"),
+      month: m
+        .clone()
+        .locale(isRTL ? "ar" : "en")
+        .format("MMMM"),
+      year: m.clone().locale("en").format("YYYY"),
     };
   }, [day, isRTL]);
 
@@ -168,7 +368,9 @@ export default function FormEvaluation({ navigation, route }: any) {
         return (
           <MenuOption key={`${itemId}-${index}`} value={option.value}>
             <View style={[styles.optionRow, { flexDirection: flexRow }]}>
-              <Text>{option.key ? t(option.key) : option.label}</Text>
+              <Text color="black">
+                {option.key ? t(option.key) : option.label}
+              </Text>
               <View
                 style={[
                   styles.optionBadge,
@@ -187,24 +389,39 @@ export default function FormEvaluation({ navigation, route }: any) {
         <MenuOption key={`${itemId}-${index}`} value={option} text={option} />
       );
     },
-    [flexRow, t],
+    [flexRow, t, styles],
   );
 
   if (!data) {
-    return <View style={{ backgroundColor: Colors.primary }} />;
+    return <View style={{ backgroundColor: theme.bg, flex: 1 }} />;
   }
 
   return (
     <ScrollView style={styles.container}>
-      <View style={[styles.dateNavRow, { flexDirection: flexRow }]}>
+      {showCelebration && (
+        <LottieView
+          source={celebrationAnimation}
+          autoPlay
+          loop={false}
+          onAnimationFinish={() => setShowCelebration(false)}
+          style={{
+            width: Dimensions.get("window").width,
+            height: Dimensions.get("window").height / 2,
+            position: "absolute",
+            top: 0,
+            zIndex: 12,
+          }}
+        />
+      )}
+      <View style={[styles.dateNavRow, { flexDirection: "row-reverse" }]}>
         <TouchableOpacity
           onPress={() => setDay(moment(day).subtract(1, "day").valueOf())}
           style={styles.navArrow}
         >
-          <AntDesign name="right" size={20} color="white" />
+          <AntDesign name="right" size={20} color={theme.text} />
         </TouchableOpacity>
 
-        <Text color="white" align="center" style={styles.dateHeader}>
+        <Text align="center" style={styles.dateHeader}>
           {t("form.dailyTitle")}{" "}
           <Text bold color={Colors.gold}>
             {dateDisplay.day} {dateDisplay.month} {dateDisplay.year}
@@ -221,8 +438,8 @@ export default function FormEvaluation({ navigation, route }: any) {
             size={20}
             color={
               moment(day).isSameOrAfter(moment(), "day")
-                ? "rgba(255,255,255,0.2)"
-                : "white"
+                ? theme.textMuted
+                : theme.text
             }
           />
         </TouchableOpacity>
@@ -236,7 +453,7 @@ export default function FormEvaluation({ navigation, route }: any) {
               <Text bold>{t(indicator.titleKey)}</Text>
               <Text bold color={getScoreColor(scores[indexInd])}>
                 {scores[indexInd]}
-                <Text color="#888"> / {maxScore}</Text>
+                <Text color={theme.textMuted}> / {maxScore}</Text>
               </Text>
             </View>
             <CategoryProgressBar score={scores[indexInd]} max={maxScore} />
@@ -263,8 +480,8 @@ export default function FormEvaluation({ navigation, route }: any) {
                         backgroundColor:
                           selectedItem === indexItem &&
                           selectedModule === indexInd
-                            ? "#f5f0e8"
-                            : "white",
+                            ? Colors.goldLight
+                            : theme.bgCard,
                       },
                     }}
                   >
@@ -274,7 +491,7 @@ export default function FormEvaluation({ navigation, route }: any) {
                           selectedItem === indexItem &&
                           selectedModule === indexInd
                             ? Colors.goldDark
-                            : "black"
+                            : theme.text
                         }
                       >
                         {t(item.titleKey)}
@@ -311,7 +528,11 @@ export default function FormEvaluation({ navigation, route }: any) {
                         )
                       ) : (
                         <View style={styles.numberPadContainer}>
-                          <Text align={textAlign} style={styles.inputLabel}>
+                          <Text
+                            align={textAlign}
+                            style={styles.inputLabel}
+                            color="#666"
+                          >
                             {t("form.enterValue")}
                           </Text>
                           <TextInput
@@ -377,172 +598,3 @@ export default function FormEvaluation({ navigation, route }: any) {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.primary,
-  },
-  dateNavRow: {
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  navArrow: {
-    padding: 8,
-  },
-  dateHeader: {
-    flex: 1,
-    textAlign: "center",
-  },
-  card: {
-    ...Classes.containerCard,
-    marginBottom: 15,
-  },
-  cardHeader: {
-    marginBottom: 6,
-    justifyContent: "space-between",
-    paddingHorizontal: 5,
-    alignItems: "center",
-  },
-  progressTrack: {
-    height: 4,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 2,
-    marginHorizontal: 5,
-    marginBottom: 10,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: 4,
-    borderRadius: 2,
-  },
-  cardContent: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  itemRow: {
-    width: "100%",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    height: 52,
-    borderBottomColor: "#f0f0f0",
-    borderBottomWidth: 1,
-    alignItems: "center",
-  },
-  scoreBadge: {
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    minWidth: 34,
-    alignItems: "center",
-  },
-  optionBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    minWidth: 28,
-    alignItems: "center",
-  },
-  menuOptionsWrapper: {
-    backgroundColor: Colors.goldLight,
-    maxHeight: Dimensions.get("window").height / 2,
-    alignItems: "center",
-    justifyContent: "flex-start",
-    overflow: "hidden",
-    borderTopWidth: 4,
-    borderTopColor: Colors.gold,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  menuOptionText: {
-    color: "black",
-    fontSize: 14,
-    fontFamily: Classes.textReg.fontFamily,
-  },
-  menuOptionWrapper: {
-    width: "100%",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    alignItems: "center",
-  },
-  menuOptionsContainer: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    backgroundColor: "white",
-  },
-  menuScroll: {
-    width: "100%",
-  },
-  numberPadContainer: {
-    width: 220,
-    alignSelf: "center",
-    paddingVertical: 20,
-    alignItems: "center",
-  },
-  numberInput: {
-    borderColor: Colors.gold,
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    fontSize: 22,
-    width: "100%",
-    marginTop: 10,
-    color: "#222",
-    backgroundColor: "#fafafa",
-    textAlign: "center",
-  },
-  numberPreview: {
-    marginTop: 12,
-    borderRadius: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 6,
-    alignItems: "center",
-  },
-  confirmButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.gold,
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    marginTop: 14,
-    width: "100%",
-    gap: 6,
-  },
-  inputLabel: {
-    fontSize: 12,
-    marginTop: 5,
-    color: "#666",
-  },
-  optionRow: {
-    width: "100%",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerButtonsContainer: {
-    flexDirection: "row",
-  },
-  submitButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.gold,
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  headerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.15)",
-    padding: 8,
-    borderRadius: 8,
-  },
-});

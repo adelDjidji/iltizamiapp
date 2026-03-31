@@ -18,8 +18,10 @@ import * as ScreenOrientation from "expo-screen-orientation";
 import { Indicators } from "../constants";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
+import { useTheme } from "../hooks/useTheme";
+import { Theme } from "../constants/Theme";
 
-// Distinct colors per indicator (override the washed-out constants)
+// Distinct colors per indicator
 const INDICATOR_COLORS: Record<string, string> = {
   "0000": "#e26a00",
   "0100": "#27ae60",
@@ -31,26 +33,214 @@ const INDICATOR_COLORS: Record<string, string> = {
 
 type DateRange = "7d" | "30d" | "90d" | "all";
 
-const chartConfig = {
-  backgroundGradientFromOpacity: 0,
-  backgroundGradientToOpacity: 0,
-  fillShadowGradientToOpacity: 0,
-  decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(2, 16, 27, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
-  style: { borderRadius: 0 },
-  propsForDots: { r: "0" },
-  propsForBackgroundLines: { stroke: "#f0f2f5", strokeDasharray: "" },
-};
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    root: {
+      backgroundColor: theme.bg,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingBottom: 32,
+    },
+    header: {
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+    },
+    backBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.bgCard,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: "#000",
+      shadowOpacity: 0.07,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+    },
+    rangeRow: {
+      paddingHorizontal: 16,
+      marginBottom: 16,
+      gap: 8,
+    },
+    rangeChip: {
+      flex: 1,
+      paddingVertical: 7,
+      borderRadius: 20,
+      backgroundColor: theme.bgCard,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    rangeChipActive: {
+      backgroundColor: Colors.primary,
+      borderColor: Colors.blue,
+    },
+    rangeLabel: {
+      fontSize: 11,
+      fontFamily: "Cairo_400Regular",
+      color: theme.textSub,
+    },
+    rangeLabelActive: {
+      color: "white",
+      fontFamily: "Cairo_700Bold",
+    },
+    summaryRow: {
+      paddingHorizontal: 16,
+      marginBottom: 12,
+      gap: 10,
+    },
+    summaryCard: {
+      flex: 1,
+      backgroundColor: theme.bgCard,
+      borderRadius: 14,
+      paddingVertical: 14,
+      alignItems: "center",
+      shadowColor: "#000",
+      shadowOpacity: 0.04,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
+    },
+    summaryCardHighlight: {
+      borderBottomWidth: 2.5,
+      borderBottomColor: Colors.gold,
+    },
+    summaryValue: {
+      fontSize: 22,
+      fontFamily: "Cairo_700Bold",
+      color: theme.text,
+      lineHeight: 28,
+    },
+    summaryLabel: {
+      fontSize: 11,
+      fontFamily: "Cairo_400Regular",
+      color: theme.textMuted,
+      marginTop: 2,
+    },
+    chartCard: {
+      marginHorizontal: 16,
+      backgroundColor: theme.bgCard,
+      borderRadius: 16,
+      paddingTop: 16,
+      paddingBottom: 0,
+      overflow: "hidden",
+      shadowColor: "#000",
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+      marginBottom: 12,
+    },
+    chart: {
+      borderRadius: 0,
+    },
+    legendWrap: {
+      paddingHorizontal: 16,
+      marginBottom: 8,
+    },
+    legendGrid: {
+      flexWrap: "wrap",
+    },
+    legendChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      margin: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.bgCard,
+    },
+    legendDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginRight: 6,
+    },
+    legendText: {
+      fontSize: 11,
+      fontFamily: "Cairo_400Regular",
+      color: theme.text,
+    },
+    emptyState: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 80,
+    },
+    actions: {
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 24,
+      paddingVertical: 16,
+      marginTop: 12,
+    },
+    fabPrimary: {
+      width: 40,
+      height: 40,
+      borderRadius: 26,
+      backgroundColor: Colors.gold,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: Colors.gold,
+      shadowOpacity: 0.45,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 4,
+    },
+    fabSecondary: {
+      width: 40,
+      height: 40,
+      borderRadius: 22,
+      backgroundColor: theme.bgCard,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: "#000",
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+    },
+  });
+}
 
 export default function Stats({ navigation }: any) {
   const { t } = useTranslation();
   const { isRTL, flexRow } = useRTL();
+  const theme = useTheme();
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
   const { results } = useSelector((state: any) => state.stats);
   const [chartWidth, setChartWidth] = React.useState(
-    Dimensions.get("window").width - 32
+    Dimensions.get("window").width - 32,
   );
   const [dateRange, setDateRange] = React.useState<DateRange>("30d");
+
+  const chartConfig = React.useMemo(
+    () => ({
+      backgroundGradientFromOpacity: 0,
+      backgroundGradientToOpacity: 0,
+      fillShadowGradientToOpacity: 0,
+      decimalPlaces: 0,
+      color: (opacity = 1) =>
+        theme.mode === "dark"
+          ? `rgba(255,255,255,${opacity})`
+          : `rgba(2,16,27,${opacity})`,
+      labelColor: (opacity = 1) =>
+        theme.mode === "dark"
+          ? `rgba(200,210,220,${opacity})`
+          : `rgba(100,116,139,${opacity})`,
+      style: { borderRadius: 0 },
+      propsForDots: { r: "0" },
+      propsForBackgroundLines: {
+        stroke: theme.mode === "dark" ? "rgba(255,255,255,0.08)" : "#f0f2f5",
+        strokeDasharray: "",
+      },
+    }),
+    [theme],
+  );
 
   React.useEffect(() => {
     const sub = ScreenOrientation.addOrientationChangeListener((e) => {
@@ -60,14 +250,14 @@ export default function Stats({ navigation }: any) {
       setChartWidth(
         isPortrait
           ? Dimensions.get("window").width - 32
-          : Dimensions.get("window").height - 32
+          : Dimensions.get("window").height - 32,
       );
     });
     return () => ScreenOrientation.removeOrientationChangeListener(sub);
   }, []);
 
   const allClean = results.filter(
-    (res: any) => !!res?.data && !!res.data.length && res.data[0].length
+    (res: any) => !!res?.data && !!res.data.length && res.data[0].length,
   );
 
   const filtered = React.useMemo(() => {
@@ -80,8 +270,8 @@ export default function Stats({ navigation }: any) {
   const dates = filtered.map((res: any) => res.date);
   const datas: number[][] = filtered.map((res: any) =>
     res.data.map((section: number[]) =>
-      section.reduce((a: number, b: number) => a + b, 0)
-    )
+      section.reduce((a: number, b: number) => a + b, 0),
+    ),
   );
 
   const finalData = Indicators.map((ind, j) => ({
@@ -90,12 +280,12 @@ export default function Stats({ navigation }: any) {
   }));
 
   const [visibleIds, setVisibleIds] = React.useState(
-    Indicators.map((ind) => ind.id)
+    Indicators.map((ind) => ind.id),
   );
 
   const toggleIndicator = (id: string) => {
     setVisibleIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
@@ -131,12 +321,12 @@ export default function Stats({ navigation }: any) {
     >
       <Container navigation={navigation}>
         {/* Header */}
-        <View style={[styles.header, { flexDirection: flexRow }]}>
+        <View style={[styles.header, { flexDirection: "row" }]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backBtn}
           >
-            <AntDesign name="arrowleft" size={18} color={Colors.primary} />
+            <AntDesign name="arrow-left" size={18} color={theme.text} />
           </TouchableOpacity>
           <Text
             h3
@@ -204,7 +394,7 @@ export default function Stats({ navigation }: any) {
               <LineChart
                 data={{
                   labels: dates.map((d: string) =>
-                    moment(d).locale("en").format("MM/DD")
+                    moment(d).locale("en").format("MM/DD"),
                   ),
                   datasets:
                     chartDatasets.length > 0 ? chartDatasets : [{ data: [0] }],
@@ -264,10 +454,10 @@ export default function Stats({ navigation }: any) {
           </>
         ) : (
           <View style={styles.emptyState}>
-            <AntDesign name="linechart" size={52} color="#ddd" />
+            <AntDesign name="line-chart" size={52} color={theme.textMuted} />
             <Text
               h3
-              color="#bbb"
+              color={theme.textMuted}
               align="center"
               style={{ marginTop: 20 }}
             >
@@ -275,7 +465,7 @@ export default function Stats({ navigation }: any) {
             </Text>
             <Text
               p
-              color="#ccc"
+              color={theme.textSub}
               align="center"
               style={{ marginTop: 6, paddingHorizontal: 32 }}
             >
@@ -290,188 +480,16 @@ export default function Stats({ navigation }: any) {
             style={styles.fabPrimary}
             onPress={() => navigation.navigate("form")}
           >
-            <AntDesign name="plus" size={24} color="white" />
+            <AntDesign name="plus" size={20} color="white" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.fabSecondary}
             onPress={() => navigation.navigate("calendar")}
           >
-            <AntDesign name="calendar" size={20} color={Colors.primary} />
+            <AntDesign name="calendar" size={20} color={theme.text} />
           </TouchableOpacity>
         </View>
       </Container>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    backgroundColor: "#f5f6f8",
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 32,
-  },
-  header: {
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "white",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.07,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  rangeRow: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    gap: 8,
-  },
-  rangeChip: {
-    flex: 1,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: "white",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e4e7ec",
-  },
-  rangeChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  rangeLabel: {
-    fontSize: 11,
-    fontFamily: "Cairo_400Regular",
-    color: "#666",
-  },
-  rangeLabelActive: {
-    color: "white",
-    fontFamily: "Cairo_700Bold",
-  },
-  summaryRow: {
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    gap: 10,
-  },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: "white",
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  summaryCardHighlight: {
-    borderBottomWidth: 2.5,
-    borderBottomColor: Colors.gold,
-  },
-  summaryValue: {
-    fontSize: 22,
-    fontFamily: "Cairo_700Bold",
-    color: Colors.primary,
-    lineHeight: 28,
-  },
-  summaryLabel: {
-    fontSize: 11,
-    fontFamily: "Cairo_400Regular",
-    color: "#94a3b8",
-    marginTop: 2,
-  },
-  chartCard: {
-    marginHorizontal: 16,
-    backgroundColor: "white",
-    borderRadius: 16,
-    paddingTop: 16,
-    paddingBottom: 0,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    marginBottom: 12,
-  },
-  chart: {
-    borderRadius: 0,
-  },
-  legendWrap: {
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  legendGrid: {
-    flexWrap: "wrap",
-  },
-  legendChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    margin: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#e8eaed",
-    backgroundColor: "white",
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  legendText: {
-    fontSize: 11,
-    fontFamily: "Cairo_400Regular",
-    color: "#334155",
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 80,
-  },
-  actions: {
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    marginTop: 12,
-  },
-  fabPrimary: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: Colors.gold,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: Colors.gold,
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  fabSecondary: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "white",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-});

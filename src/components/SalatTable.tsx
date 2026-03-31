@@ -3,10 +3,10 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import Text from "./Text";
 import SalatItem from "./SalatItem";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "../hooks/useTheme";
 
-const styles = StyleSheet.create({
+const staticStyles = StyleSheet.create({
   salatsContainer: {
-    backgroundColor: "white",
     flex: 0.6,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -28,6 +28,7 @@ interface SalatTableProps {
 
 export default function SalatTable({ data }: SalatTableProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const [listData, setListData] = useState<
     Array<{
       salat: string;
@@ -119,8 +120,8 @@ export default function SalatTable({ data }: SalatTableProps) {
   console.log(listData);
 
   return (
-    <View style={styles.salatsContainer}>
-      <Text bold style={styles.title} align="center">
+    <View style={[staticStyles.salatsContainer, { backgroundColor: theme.bgCard }]}>
+      <Text bold style={staticStyles.title} align="center">
         {t("salat.prayerTimes")}
       </Text>
       {listData.length > 0 ? (
@@ -138,7 +139,7 @@ export default function SalatTable({ data }: SalatTableProps) {
             />
           ))
       ) : (
-        <Text style={{ textAlign: "center", marginTop: 10 }}>
+        <Text style={{ textAlign: "center", marginTop: 10 }} align="center">
           {t("salat.loading")}
         </Text>
       )}

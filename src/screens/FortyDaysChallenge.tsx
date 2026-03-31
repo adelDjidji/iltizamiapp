@@ -16,18 +16,70 @@ import Text from "../components/Text";
 import { computeChallengeState } from "../utils/challenge";
 import { useRTL } from "../hooks/useRTL";
 import { MONTHS_AR, MONTHS_EN } from "../constants";
+import { useTheme } from "../hooks/useTheme";
+import { Theme } from "../constants/Theme";
 
 LocaleConfig.locales["ar"] = {
   monthNames: MONTHS_AR,
-  monthNamesShort: ["جان", "فيف", "مار", "أفر", "ماي", "جوا", "جوي", "أوت", "سبت", "أكت", "نوف", "ديس"],
-  dayNames: ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
-  dayNamesShort: ["أحد", "اثن", "ثلا", "أرب", "خمي", "جمع", "سبت"],
+  monthNamesShort: [
+    "جان",
+    "فيف",
+    "مار",
+    "أفر",
+    "ماي",
+    "جوا",
+    "جوي",
+    "أوت",
+    "سبت",
+    "أكت",
+    "نوف",
+    "ديس",
+  ],
+  dayNames: [
+    "الأحد",
+    "الاثنين",
+    "الثلاثاء",
+    "الأربعاء",
+    "الخميس",
+    "الجمعة",
+    "السبت",
+  ],
+  dayNamesShort: [
+    "الأحد",
+    "الاثنين",
+    "الثلاثاء",
+    "الأربعاء",
+    "الخميس",
+    "الجمعة",
+    "السبت",
+  ],
   today: "اليوم",
 };
 LocaleConfig.locales["en"] = {
   monthNames: MONTHS_EN,
-  monthNamesShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-  dayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  monthNamesShort: [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ],
+  dayNames: [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ],
   dayNamesShort: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   today: "Today",
 };
@@ -61,19 +113,28 @@ function StarsDisplay({ count }: { count: number }) {
 function ProgressBadge({
   days,
   streak,
+  theme,
 }: {
   days: number;
   streak: number;
+  theme: Theme;
 }) {
   const pct = Math.round((days / CHALLENGE_DAYS) * 100);
   const isComplete = days >= CHALLENGE_DAYS;
   const ringColor = isComplete ? "#27ae60" : Colors.gold;
 
   return (
-    <View style={[styles.badge, { borderColor: ringColor }]}>
+    <View
+      style={[
+        styles.badge,
+        { borderColor: ringColor, backgroundColor: theme.bgSurface },
+      ]}
+    >
       <Text style={[styles.badgeNumber, { color: ringColor }]}>{days}</Text>
-      <Text style={styles.badgeDivider}>/ {CHALLENGE_DAYS}</Text>
-      <Text style={styles.badgePct}>{pct}%</Text>
+      <Text style={[styles.badgeDivider, { color: theme.textMuted }]}>
+        / {CHALLENGE_DAYS}
+      </Text>
+      <Text style={[styles.badgePct, { color: theme.textMuted }]}>{pct}%</Text>
     </View>
   );
 }
@@ -86,17 +147,28 @@ function StatCard({
   value,
   label,
   accent = Colors.gold,
+  bgColor,
+  labelColor,
 }: {
   icon: React.ReactNode;
   value: string | number;
   label: string;
   accent?: string;
+  bgColor?: string;
+  labelColor?: string;
 }) {
   return (
-    <View style={[styles.statCard, { borderTopColor: accent }]}>
+    <View
+      style={[
+        styles.statCard,
+        { borderTopColor: accent, backgroundColor: bgColor },
+      ]}
+    >
       {icon}
       <Text style={[styles.statValue, { color: accent }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statLabel, labelColor ? { color: labelColor } : {}]}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -107,6 +179,7 @@ function StatCard({
 export default function FortyDaysChallenge({ navigation }: any) {
   const { t } = useTranslation();
   const { isRTL, flexRow } = useRTL();
+  const theme = useTheme();
   const language = isRTL ? "ar" : "en";
 
   React.useEffect(() => {
@@ -126,27 +199,31 @@ export default function FortyDaysChallenge({ navigation }: any) {
   } = useMemo(() => computeChallengeState(results), [results]);
 
   const displayDays =
-    currentStreak === 0 ? 0 : daysInCurrentCycle === 0 ? 40 : daysInCurrentCycle;
+    currentStreak === 0
+      ? 0
+      : daysInCurrentCycle === 0
+        ? 40
+        : daysInCurrentCycle;
   const daysLeft = CHALLENGE_DAYS - displayDays;
 
   const motivationKey =
     currentStreak === 0
       ? "challenge.startMsg"
       : daysInCurrentCycle === 0
-      ? "challenge.completedMsg"
-      : daysLeft <= 7
-      ? "challenge.almostMsg"
-      : "challenge.progressMsg";
+        ? "challenge.completedMsg"
+        : daysLeft <= 7
+          ? "challenge.almostMsg"
+          : "challenge.progressMsg";
 
   // ------- Calendar marking ----------------------------------------
   const markedDates = useMemo(() => {
-    const today = moment().format("YYYY-MM-DD");
+    const today = moment().locale("en").format("YYYY-MM-DD");
     const marks: Record<string, any> = {};
 
     // Mark every day that has data
     results.forEach((r: any) => {
       if (!r.date || !r.data?.length) return;
-      const date = moment(r.date).format("YYYY-MM-DD");
+      const date = moment(r.date).locale("en").format("YYYY-MM-DD");
       const isPerfect = perfectSet.has(date);
 
       marks[date] = {
@@ -214,12 +291,12 @@ export default function FortyDaysChallenge({ navigation }: any) {
 
   return (
     <ScrollView
-      style={styles.root}
+      style={[styles.root, { backgroundColor: theme.bg }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
       {/* ── Hero ─────────────────────────────────────── */}
-      <View style={styles.hero}>
+      <View style={[styles.hero, { backgroundColor: theme.bgCard }]}>
         {/* Trophy + title */}
         <View style={styles.heroTitleRow}>
           <MaterialCommunityIcons
@@ -227,24 +304,32 @@ export default function FortyDaysChallenge({ navigation }: any) {
             size={34}
             color={Colors.gold}
           />
-          <Text style={styles.heroTitle}>{t("challenge.title")}</Text>
+          <Text style={[styles.heroTitle, { color: theme.text }]}>
+            {t("challenge.title")}
+          </Text>
         </View>
 
         {/* Stars */}
         {totalStars > 0 ? (
           <StarsDisplay count={totalStars} />
         ) : (
-          <Text style={styles.noStarsHint}>{t("challenge.noStarsYet")}</Text>
+          <Text style={[styles.noStarsHint, { color: theme.textMuted }]}>
+            {t("challenge.noStarsYet")}
+          </Text>
         )}
 
         {/* Progress badge */}
-        <ProgressBadge days={displayDays} streak={currentStreak} />
+        <ProgressBadge
+          days={displayDays}
+          streak={currentStreak}
+          theme={theme}
+        />
 
         {/* Motivation */}
         <Text
           style={[
             styles.motivation,
-            { textAlign: "center" },
+            { textAlign: "center", color: theme.textSub },
             daysInCurrentCycle === 0 &&
               currentStreak > 0 &&
               styles.motivationSuccess,
@@ -255,7 +340,15 @@ export default function FortyDaysChallenge({ navigation }: any) {
 
         {/* Progress track */}
         <View style={styles.heroTrackWrap}>
-          <View style={styles.heroTrackBg}>
+          <View
+            style={[
+              styles.heroTrackBg,
+              {
+                backgroundColor: theme.bgSurface,
+                flexDirection: flexRow,
+              },
+            ]}
+          >
             <View
               style={[
                 styles.heroTrackFill,
@@ -271,14 +364,20 @@ export default function FortyDaysChallenge({ navigation }: any) {
                 key={m}
                 style={[
                   styles.heroTick,
-                  { left: `${(m / CHALLENGE_DAYS) * 100}%` },
+                  {
+                    left: `${(m / CHALLENGE_DAYS) * 100}%`,
+                    backgroundColor: theme.border,
+                  },
                 ]}
               />
             ))}
           </View>
           <View style={[styles.heroTrackLabels, { flexDirection: flexRow }]}>
             {[0, 10, 20, 30, 40].map((m) => (
-              <Text key={m} style={styles.heroTickLabel}>
+              <Text
+                key={m}
+                style={[styles.heroTickLabel, { color: theme.textMuted }]}
+              >
                 {m}
               </Text>
             ))}
@@ -293,28 +392,46 @@ export default function FortyDaysChallenge({ navigation }: any) {
           value={currentStreak}
           label={t("challenge.currentStreak")}
           accent={Colors.gold}
+          bgColor={theme.bgCard}
+          labelColor={theme.textSub}
         />
         <StatCard
           icon={<AntDesign name="trophy" size={18} color="#e67e22" />}
           value={bestStreak}
           label={t("challenge.bestStreak")}
           accent="#e67e22"
+          bgColor={theme.bgCard}
+          labelColor={theme.textSub}
         />
         <StatCard
           icon={<AntDesign name="check-circle" size={18} color="#27ae60" />}
           value={totalSuccessDays}
           label={t("challenge.totalDays")}
           accent="#27ae60"
+          bgColor={theme.bgCard}
+          labelColor={theme.textSub}
         />
       </View>
 
       {/* ── How to achieve ───────────────────────────── */}
       {currentStreak === 0 && (
-        <View style={styles.hintCard}>
-          <Text style={[styles.hintTitle, { textAlign: isRTL ? "right" : "left" }]}>
+        <View
+          style={[
+            styles.hintCard,
+            { backgroundColor: theme.bgCard, borderColor: theme.border },
+          ]}
+        >
+          <Text
+            style={[styles.hintTitle, { textAlign: isRTL ? "right" : "left" }]}
+          >
             {t("challenge.howTitle")}
           </Text>
-          <Text style={[styles.hintBody, { textAlign: isRTL ? "right" : "left" }]}>
+          <Text
+            style={[
+              styles.hintBody,
+              { textAlign: isRTL ? "right" : "left", color: theme.textSub },
+            ]}
+          >
             {t("challenge.howBody")}
           </Text>
           <TouchableOpacity
@@ -327,9 +444,31 @@ export default function FortyDaysChallenge({ navigation }: any) {
         </View>
       )}
 
+      <View
+        style={[
+          styles.hintCard,
+          { backgroundColor: theme.bgCard, borderColor: theme.border },
+        ]}
+      >
+        <Text style={[styles.motivation, { color: theme.textSub }]}>
+          عن أنس بن مالك ـ رضي الله عنه ـ قال: قال رسول الله صلى الله عليه وسلم:
+        </Text>
+        <Text
+          style={[styles.motivation, { color: theme.textSub, fontSize: 16 }]}
+        >
+          من صلى لله أربعين يومًا في جماعة يدرك التكبيرة الأولى، كتبت له
+          براءتان: براءة من النار، وبراءة من النفاق.
+        </Text>
+        <Text style={[styles.motivation, { color: theme.textSub }]}>
+          وهذا الحديث قد حسنه الألباني في صحيح سنن الترمذي.
+        </Text>
+      </View>
+
       {/* ── Calendar ─────────────────────────────────── */}
-      <View style={styles.calendarWrap}>
-        <Text style={styles.sectionTitle}>{t("challenge.calendarTitle")}</Text>
+      <View style={[styles.calendarWrap, { backgroundColor: theme.bgCard }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
+          {t("challenge.calendarTitle")}
+        </Text>
         <Calendar
           hideExtraDays
           firstDay={6}
@@ -338,30 +477,62 @@ export default function FortyDaysChallenge({ navigation }: any) {
           markedDates={markedDates}
           theme={{
             backgroundColor: "transparent",
-            calendarBackground: "white",
+            calendarBackground: theme.bgCard,
             todayTextColor: Colors.blue,
             arrowColor: Colors.gold,
-            monthTextColor: Colors.primary,
+            monthTextColor: theme.text,
             textMonthFontWeight: "bold",
             textDayFontFamily: "Cairo_400Regular",
             textMonthFontFamily: "Cairo_700Bold",
             textDayHeaderFontFamily: "Cairo_400Regular",
+            dayTextColor: theme.text,
+            textDisabledColor: theme.textMuted,
           }}
         />
 
         {/* Legend */}
         <View style={[styles.legend, { flexDirection: flexRow }]}>
           <View style={[styles.legendItem, { flexDirection: flexRow }]}>
-            <View style={[styles.legendDot, { borderColor: "#27ae60", backgroundColor: "rgba(39,174,96,0.18)" }]} />
-            <Text style={styles.legendText}>{t("challenge.legendPerfect")}</Text>
+            <View
+              style={[
+                styles.legendDot,
+                {
+                  borderColor: "#27ae60",
+                  backgroundColor: "rgba(39,174,96,0.18)",
+                },
+              ]}
+            />
+            <Text style={[styles.legendText, { color: theme.textSub }]}>
+              {t("challenge.legendPerfect")}
+            </Text>
           </View>
           <View style={[styles.legendItem, { flexDirection: flexRow }]}>
-            <View style={[styles.legendDot, { borderColor: "#e74c3c", backgroundColor: "rgba(231,76,60,0.12)" }]} />
-            <Text style={styles.legendText}>{t("challenge.legendImperfect")}</Text>
+            <View
+              style={[
+                styles.legendDot,
+                {
+                  borderColor: "#e74c3c",
+                  backgroundColor: "rgba(231,76,60,0.12)",
+                },
+              ]}
+            />
+            <Text style={[styles.legendText, { color: theme.textSub }]}>
+              {t("challenge.legendImperfect")}
+            </Text>
           </View>
           <View style={[styles.legendItem, { flexDirection: flexRow }]}>
-            <View style={[styles.legendDot, { borderColor: Colors.gold, backgroundColor: Colors.gold + "22" }]} />
-            <Text style={styles.legendText}>{t("challenge.legendMilestone")}</Text>
+            <View
+              style={[
+                styles.legendDot,
+                {
+                  borderColor: Colors.gold,
+                  backgroundColor: Colors.gold + "22",
+                },
+              ]}
+            />
+            <Text style={[styles.legendText, { color: theme.textSub }]}>
+              {t("challenge.legendMilestone")}
+            </Text>
           </View>
         </View>
       </View>
@@ -372,7 +543,6 @@ export default function FortyDaysChallenge({ navigation }: any) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.dark,
   },
   content: {
     paddingBottom: 40,
@@ -384,7 +554,6 @@ const styles = StyleSheet.create({
     paddingTop: 30,
     paddingBottom: 24,
     paddingHorizontal: 20,
-    backgroundColor: Colors.primary,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
   },
@@ -395,7 +564,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   heroTitle: {
-    color: "white",
     fontSize: 20,
     fontWeight: "700",
   },
@@ -421,7 +589,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   noStarsHint: {
-    color: "rgba(255,255,255,0.35)",
     fontSize: 13,
     marginBottom: 20,
     textAlign: "center",
@@ -433,7 +600,6 @@ const styles = StyleSheet.create({
     borderWidth: 8,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.04)",
     marginBottom: 16,
   },
   badgeNumber: {
@@ -442,16 +608,13 @@ const styles = StyleSheet.create({
     lineHeight: 52,
   },
   badgeDivider: {
-    color: "rgba(255,255,255,0.4)",
     fontSize: 14,
   },
   badgePct: {
-    color: "rgba(255,255,255,0.3)",
     fontSize: 11,
     marginTop: 2,
   },
   motivation: {
-    color: "rgba(255,255,255,0.65)",
     fontSize: 13,
     marginBottom: 18,
     paddingHorizontal: 10,
@@ -466,7 +629,6 @@ const styles = StyleSheet.create({
   },
   heroTrackBg: {
     height: 10,
-    backgroundColor: "rgba(255,255,255,0.08)",
     borderRadius: 5,
     overflow: "visible",
     position: "relative",
@@ -484,7 +646,6 @@ const styles = StyleSheet.create({
     top: 0,
     width: 2,
     height: "100%",
-    backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 1,
   },
   heroTrackLabels: {
@@ -492,7 +653,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   heroTickLabel: {
-    color: "rgba(255,255,255,0.3)",
     fontSize: 10,
   },
 
@@ -504,7 +664,6 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.primary,
     borderRadius: 12,
     padding: 12,
     alignItems: "center",
@@ -516,7 +675,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   statLabel: {
-    color: "rgba(255,255,255,0.5)",
     fontSize: 10,
     textAlign: "center",
   },
@@ -524,11 +682,9 @@ const styles = StyleSheet.create({
   // ── Hint card (empty state)
   hintCard: {
     margin: 16,
-    backgroundColor: Colors.primary,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: "rgba(229,198,81,0.2)",
     gap: 8,
   },
   hintTitle: {
@@ -537,7 +693,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   hintBody: {
-    color: "rgba(255,255,255,0.6)",
     fontSize: 13,
     lineHeight: 20,
   },
@@ -559,13 +714,11 @@ const styles = StyleSheet.create({
   calendarWrap: {
     marginHorizontal: 16,
     marginTop: 20,
-    backgroundColor: "white",
     borderRadius: 16,
     overflow: "hidden",
     paddingBottom: 8,
   },
   sectionTitle: {
-    color: Colors.primary,
     fontSize: 14,
     fontWeight: "700",
     paddingHorizontal: 16,
@@ -590,7 +743,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   legendText: {
-    color: "#555",
     fontSize: 11,
   },
 });

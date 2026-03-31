@@ -9,8 +9,12 @@ export default {
   // Dashboard
   dashboard: {
     adkar: "Muslim Adhkar",
+    adkarSub: "Morning · Evening · Sleep · Tasbih",
     form: "Accountability Journal",
+    formSub: "Rate your daily commitment",
+    formSubDone: "✓ Recorded today",
     stats: "My Commitment Stats",
+    statsSub: "Track your progress curve",
   },
 
   // 40 Days Challenge
@@ -22,9 +26,11 @@ export default {
     bestStreak: "Best Streak",
     totalDays: "Perfect Days",
     completions: "{{count}} completion(s)",
-    startMsg: "Complete all 5 prayers with congregation for 40 consecutive days",
+    startMsg:
+      "Complete all 5 prayers with congregation for 40 consecutive days",
     progressMsg: "Great! {{days}} days left to complete the challenge",
-    almostMsg: "You're only {{days}} days away from completing it — keep going!",
+    almostMsg:
+      "You're only {{days}} days away from completing it — keep going!",
     completedMsg: "Congratulations! Challenge complete! Start a new one!",
     noStarsYet: "Complete 40 consecutive days to earn your first star ⭐",
     calendarTitle: "Challenge Calendar",
@@ -32,7 +38,8 @@ export default {
     legendImperfect: "Incomplete day",
     legendMilestone: "40-day milestone",
     howTitle: "How to achieve it?",
-    howBody: "Score 10/10 on Fajr, Dhuhr, Asr, Maghrib, and Isha for 40 consecutive days without a break.",
+    howBody:
+      "Score 10/10 on Fajr, Dhuhr, Asr, Maghrib, and Isha for 40 consecutive days without a break.",
     fillForm: "Record Today",
   },
 
@@ -63,8 +70,7 @@ export default {
     title: "About Iltizami App",
     description:
       "Iltizami allows you to add daily ratings on various acts of worship such as prayers, remembrances, and charity. The app draws a chart showing your rating results over days and months.",
-    quote:
-      '" حاسبوا أنفسكم قبل أن تحاسبوا وزنوا أعمالكم قبل أن توزن عليكم "',
+    quote: '" حاسبوا أنفسكم قبل أن تحاسبوا وزنوا أعمالكم قبل أن توزن عليكم "',
     quoteAuthor: "— Omar ibn al-Khattab, may Allah be pleased with him",
     feedback: "Share your feedback and suggestions",
     comingFeatures: "Many new features coming soon, God willing",
@@ -190,8 +196,23 @@ export default {
     yes: "Yes",
   },
 
+  // Settings / Config
+  config: {
+    title: "Settings",
+    notifSection: "Prayer Evaluation Reminders",
+    notifDesc:
+      "A reminder notification will be sent after each prayer at the specified delay so you can record your evaluation.",
+    delayLabel: "min after prayer",
+    delayPlaceholder: "Minutes",
+    save: "Save Settings",
+    saved: "✅ Saved",
+    noPrayerTimes: "Please load prayer times first from the Prayer tab.",
+    notifBody: "Don't forget to record your prayer evaluation 🕌",
+  },
+
   // Salat options (prayer rating)
   salatOpts: {
+    withJamaaANdTakbir: "Complete with congregation and Takbir al-Ihram",
     withJamaa: "Complete with congregation",
     partWithJamaa: "Partial with congregation",
     aloneOnTime: "Alone, on time",

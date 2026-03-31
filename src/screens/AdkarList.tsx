@@ -6,6 +6,7 @@ import { AdkarTypes } from "../../utils";
 import Card from "../components/Card";
 import Colors from "../constants/Colors";
 import ZekrCounter from "../components/ZekrCounter";
+import { useTheme } from "../hooks/useTheme";
 
 type zekrMap = {
   [key: string]: Zekr[];
@@ -1002,6 +1003,7 @@ const ListAdkar: zekrMap = {
 
 export default function AdkarList({ navigation, route }) {
   const { id, title } = route.params;
+  const theme = useTheme();
   const data = ListAdkar[id] ?? null;
   React.useEffect(() => {
     navigation.setOptions({
@@ -1010,7 +1012,7 @@ export default function AdkarList({ navigation, route }) {
   });
 
   return (
-    <ScrollView>
+    <ScrollView style={{ backgroundColor: theme.bg }}>
       {data &&
         data.map((item) => (
           <ZekrCounter item={item}/>

@@ -1,11 +1,21 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+} from "@react-navigation/native";
 import { createDrawerNavigator } from "@react-navigation/drawer";
+
+export const navigationRef = createNavigationContainerRef<any>();
 import Home from "../screens/Home";
 import Stats from "../screens/Stats";
-import { AntDesign } from "@expo/vector-icons";
+import {
+  AntDesign,
+  Octicons,
+  MaterialCommunityIcons,
+  Ionicons,
+} from "@expo/vector-icons";
 import Dashboard from "../screens/Dashboard";
 import Colors from "../constants/Colors";
 import { View, Text, Alert } from "react-native";
@@ -15,6 +25,7 @@ import { Provider, useSelector, useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
 
 import * as SecureStore from "expo-secure-store";
+import { useTheme } from "../hooks/useTheme";
 
 import * as Location from "expo-location";
 import ConfigScreen from "../screens/Config";
@@ -30,12 +41,13 @@ const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
 function TabsStack() {
+  const theme = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ navigation, route }) => ({
-        tabBarStyle: { backgroundColor: Colors.secondary, borderTopWidth: 0 },
+        tabBarStyle: { backgroundColor: theme.tabBar, borderTopWidth: 0 },
         tabBarShowLabel: false,
-        tabBarInactiveTintColor: "grey",
+        tabBarInactiveTintColor: theme.tabBarInactive,
         tabBarActiveTintColor: Colors.gold,
         headerTitle: "",
         headerShown: false,
@@ -46,7 +58,11 @@ function TabsStack() {
         component={Dashboard}
         options={(props) => ({
           tabBarIcon: ({ focused, color, size }) => (
-            <AntDesign name="home" size={21} color={color} />
+            <Octicons
+              name={focused ? "home-fill" : "home"}
+              size={21}
+              color={color}
+            />
           ),
           headerStyle: {
             backgroundColor: Colors.primary,
@@ -58,7 +74,11 @@ function TabsStack() {
         component={Home}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
-            <AntDesign name="profile" size={21} color={color} />
+            <MaterialCommunityIcons
+              name={focused ? "mosque" : "mosque-outline"}
+              size={21}
+              color={color}
+            />
           ),
         }}
       />
@@ -67,7 +87,11 @@ function TabsStack() {
         component={Stats}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
-            <AntDesign name="line-chart" size={21} color={color} />
+            <Ionicons
+              name={focused ? "bar-chart-sharp" : "bar-chart-outline"}
+              size={21}
+              color={color}
+            />
           ),
         }}
       />
@@ -76,7 +100,15 @@ function TabsStack() {
         component={About}
         options={{
           tabBarIcon: ({ focused, color, size }) => (
-            <AntDesign name="info-circle" size={21} color={color} />
+            <MaterialCommunityIcons
+              name={
+                focused
+                  ? "information-variant-circle"
+                  : "information-variant-circle-outline"
+              }
+              size={21}
+              color={color}
+            />
           ),
         }}
       />
@@ -86,6 +118,7 @@ function TabsStack() {
 
 const MainStack = () => {
   const { t } = useTranslation();
+  const theme = useTheme();
 
   return (
     <Stack.Navigator initialRouteName={"main"}>
@@ -104,9 +137,9 @@ const MainStack = () => {
         name="form"
         options={{
           title: t("nav.formTitle"),
-          headerStyle: { backgroundColor: Colors.primary },
-          headerTitleStyle: { color: "white" },
-          headerTintColor: "white",
+          headerStyle: { backgroundColor: theme.header },
+          headerTitleStyle: { color: theme.headerText },
+          headerTintColor: theme.headerText,
         }}
       />
       <Stack.Screen
@@ -114,9 +147,9 @@ const MainStack = () => {
         name="config"
         options={{
           title: t("nav.configTitle"),
-          headerStyle: { backgroundColor: Colors.primary },
-          headerTitleStyle: { color: "white" },
-          headerTintColor: "white",
+          headerStyle: { backgroundColor: theme.header },
+          headerTitleStyle: { color: theme.headerText },
+          headerTintColor: theme.headerText,
         }}
       />
       <Stack.Screen
@@ -127,25 +160,38 @@ const MainStack = () => {
       <Stack.Screen
         component={Adkar}
         name="adkar"
-        options={{ title: t("nav.adkarTitle") }}
+        options={{
+          title: t("nav.adkarTitle"),
+          headerStyle: { backgroundColor: theme.header },
+          headerTitleStyle: { color: theme.headerText },
+          headerTintColor: theme.headerText,
+        }}
       />
       <Stack.Screen
         component={AdkarList}
         name="adkar-list"
-        options={{ title: "" }}
+        options={{
+          title: "",
+          headerStyle: { backgroundColor: theme.header },
+          headerTintColor: theme.headerText,
+        }}
       />
       <Stack.Screen
         component={CalendarScreen}
         name="calendar"
-        options={{ title: "" }}
+        options={{
+          title: "",
+          headerStyle: { backgroundColor: theme.header },
+          headerTintColor: theme.headerText,
+        }}
       />
       <Stack.Screen
         component={FortyDaysChallenge}
         name="challenge"
         options={{
           title: t("challenge.navTitle"),
-          headerStyle: { backgroundColor: Colors.primary },
-          headerTitleStyle: { color: "white" },
+          headerStyle: { backgroundColor: theme.header },
+          headerTitleStyle: { color: theme.headerText },
           headerTintColor: Colors.gold,
         }}
       />
@@ -207,7 +253,7 @@ const RootStack = () => {
   }, []);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <MainStack />
     </NavigationContainer>
   );

@@ -1,7 +1,12 @@
 import { View, Text as RNText, StyleSheet } from "react-native";
 import React from "react";
+import { useSelector } from "react-redux";
+import Colors from "../constants/Colors";
 
 export default function Text(props) {
+  const themeMode = useSelector((state: any) => state.settings?.theme ?? "dark") as "dark" | "light";
+  const defaultColor = themeMode === "light" ? Colors.primary : "#ffffff";
+
   const {
     bold = false,
     size = "",
@@ -10,7 +15,7 @@ export default function Text(props) {
     h3 = false,
     h4 = false,
     p = false,
-    color = "black",
+    color = defaultColor,
     align="right"
   } = props;
   const calcSize = () => {

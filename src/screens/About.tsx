@@ -14,10 +14,85 @@ import Constants from "expo-constants";
 import * as Updates from "expo-updates";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
+import { useTheme } from "../hooks/useTheme";
+import { Theme } from "../constants/Theme";
+
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.bg,
+    },
+    header: {
+      alignItems: "center",
+      borderBottomColor: Colors.gold,
+      backgroundColor: theme.bgCard,
+      paddingVertical: 24,
+      borderBottomWidth: 1,
+      gap: 8,
+    },
+    icon: {
+      width: 90,
+      height: 90,
+      marginBottom: 8,
+    },
+    body: {
+      padding: 20,
+      gap: 16,
+    },
+    paragraph: {
+      lineHeight: 24,
+    },
+    quote: {
+      fontSize: 15,
+      lineHeight: 26,
+      textAlign: "center",
+      fontStyle: "italic",
+      backgroundColor: Colors.goldLight,
+      borderRadius: 10,
+      padding: 14,
+      marginTop: 8,
+    },
+    feedbackButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      // backgroundColor: "#0084ff",
+      borderColor: "#0084ff",
+      borderWidth: 1,
+      borderRadius: 12,
+      padding: 14,
+      marginTop: 8,
+      gap: 10,
+    },
+    messengerIcon: {
+      width: 24,
+      height: 24,
+      marginLeft: 8,
+    },
+    footer: {
+      position: "absolute",
+      bottom: 24,
+      width: "100%",
+      alignItems: "center",
+      gap: 4,
+    },
+    updateButton: {
+      backgroundColor: Colors.gold,
+      borderRadius: 10,
+      paddingHorizontal: 24,
+      paddingVertical: 10,
+      marginTop: 10,
+      minWidth: 160,
+      alignItems: "center",
+    },
+  });
+}
 
 export default function About() {
   const { t } = useTranslation();
   const { isRTL, flexRow, textAlign } = useRTL();
+  const theme = useTheme();
+  const styles = React.useMemo(() => makeStyles(theme), [theme]);
   const version = Constants.expoConfig?.version;
 
   const [updateAvailable, setUpdateAvailable] = React.useState(false);
@@ -47,7 +122,9 @@ export default function About() {
           style={styles.icon}
           source={require("../../assets/iltizamiIcon.png")}
         />
-        <Text h2 align="center">{t("about.title")}</Text>
+        <Text h2 align="center">
+          {t("about.title")}
+        </Text>
       </View>
 
       {/* Body */}
@@ -58,30 +135,34 @@ export default function About() {
         <Text style={styles.quote} color={Colors.goldDark}>
           {t("about.quote")}
         </Text>
-        <Text p color="#999" align="center" style={{ marginTop: 4 }}>
+        <Text p color={theme.textMuted} align="center" style={{ marginTop: 4 }}>
           {t("about.quoteAuthor")}
         </Text>
 
         {/* Feedback */}
         <TouchableOpacity
           style={[styles.feedbackButton, { flexDirection: flexRow }]}
-          onPress={() => Linking.openURL("https://www.facebook.com/iltizamiApp")}
+          onPress={() =>
+            Linking.openURL("https://www.facebook.com/iltizamiApp")
+          }
           activeOpacity={0.7}
         >
           <Image
             style={styles.messengerIcon}
             source={require("../../assets/messenger-icon.png")}
           />
-          <Text h3 color="white">{t("about.feedback")}</Text>
+          <Text h3 color="white">
+            {t("about.feedback")}
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text p color="#aaa" align="center">
+        {/* <Text p color={theme.textMuted} align="center">
           {t("about.comingFeatures")}
-        </Text>
-        <Text p color="#bbb" align="center" style={{ marginTop: 4 }}>
+        </Text> */}
+        <Text p color={theme.textSub} align="center" style={{ marginTop: 4 }}>
           {t("about.version")} {version}
         </Text>
         {updateAvailable && (
@@ -94,7 +175,9 @@ export default function About() {
             {refreshing ? (
               <ActivityIndicator size="small" color="white" />
             ) : (
-              <Text bold color="white">{t("about.update")}</Text>
+              <Text bold color="white">
+                {t("about.update")}
+              </Text>
             )}
           </TouchableOpacity>
         )}
@@ -102,71 +185,3 @@ export default function About() {
     </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fafafa",
-  },
-  header: {
-    alignItems: "center",
-    borderBottomColor: Colors.gold,
-    backgroundColor: Colors.goldLight,
-    paddingVertical: 24,
-    borderBottomWidth: 1,
-    gap: 8,
-  },
-  icon: {
-    width: 90,
-    height: 90,
-    marginBottom: 8,
-  },
-  body: {
-    padding: 20,
-    gap: 16,
-  },
-  paragraph: {
-    lineHeight: 24,
-    textAlign: "right",
-  },
-  quote: {
-    fontSize: 15,
-    lineHeight: 26,
-    textAlign: "center",
-    fontStyle: "italic",
-    backgroundColor: Colors.goldLight,
-    borderRadius: 10,
-    padding: 14,
-    marginTop: 8,
-  },
-  feedbackButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#0084ff",
-    borderRadius: 12,
-    padding: 14,
-    marginTop: 8,
-    gap: 10,
-  },
-  messengerIcon: {
-    width: 24,
-    height: 24,
-    marginLeft: 8,
-  },
-  footer: {
-    position: "absolute",
-    bottom: 24,
-    width: "100%",
-    alignItems: "center",
-    gap: 4,
-  },
-  updateButton: {
-    backgroundColor: Colors.gold,
-    borderRadius: 10,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    marginTop: 10,
-    minWidth: 160,
-    alignItems: "center",
-  },
-});

@@ -1,8 +1,9 @@
 import { StatusBar } from "expo-status-bar";
+import { useTheme } from "./src/hooks/useTheme";
 import { store, persistor } from "./src/store/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { Provider, useSelector } from "react-redux";
-import RootStack from "./src/navigation";
+import RootStack, { navigationRef } from "./src/navigation";
 import Colors from "./src/constants/Colors";
 import {
   useFonts,
@@ -19,6 +20,17 @@ import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
 import "./src/i18n";
 import i18n from "./src/i18n";
+
+// Show notifications while app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 const firebaseConfig = {
   apiKey: "AIzaSyDTbWCgl_bhDJKwqHZKUmQ-PMxHIbppVA4",
@@ -95,6 +107,11 @@ const LanguageSync = () => {
   return null;
 };
 
+const ThemeStatusBar = () => {
+  const theme = useTheme();
+  return <StatusBar backgroundColor={theme.header} style={theme.statusBar} />;
+};
+
 const App = () => {
   let [fontsLoaded] = useFonts({
     Cairo_400Regular,
@@ -105,6 +122,17 @@ const App = () => {
     const tasks: Promise<void>[] = [lookForExpoToken()];
     if (process.env.NODE_ENV !== "development") tasks.push(lookForUpdates());
     Promise.all(tasks);
+
+    // Navigate to form screen when user taps a prayer reminder notification
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
+        if (data?.screen === "form" && navigationRef.isReady()) {
+          navigationRef.navigate("form");
+        }
+      }
+    );
+    return () => subscription.remove();
   }, []);
 
   if (!fontsLoaded) {
@@ -115,10 +143,10 @@ const App = () => {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <LanguageSync />
+        <ThemeStatusBar />
         <MenuProvider>
           <RootStack />
         </MenuProvider>
-        <StatusBar backgroundColor={Colors.primary} style="light" />
       </PersistGate>
     </Provider>
   );

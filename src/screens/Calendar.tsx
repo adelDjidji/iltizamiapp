@@ -8,18 +8,69 @@ import { MONTHS_AR, MONTHS_EN } from "../constants";
 import Text from "../components/Text";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
+import { useTheme } from "../hooks/useTheme";
 
 LocaleConfig.locales["ar"] = {
   monthNames: MONTHS_AR,
-  monthNamesShort: ["جان", "فيف", "مار", "أفر", "ماي", "جوا", "جوي", "أوت", "سبت", "أكت", "نوف", "ديس"],
-  dayNames: ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
-  dayNamesShort: ["أحد", "اثن", "ثلا", "أرب", "خمي", "جمع", "سبت"],
+  monthNamesShort: [
+    "جان",
+    "فيف",
+    "مار",
+    "أفر",
+    "ماي",
+    "جوا",
+    "جوي",
+    "أوت",
+    "سبت",
+    "أكت",
+    "نوف",
+    "ديس",
+  ],
+  dayNames: [
+    "الأحد",
+    "الاثنين",
+    "الثلاثاء",
+    "الأربعاء",
+    "الخميس",
+    "الجمعة",
+    "السبت",
+  ],
+  dayNamesShort: [
+    "الأحد",
+    "الاثنين",
+    "الثلاثاء",
+    "الأربعاء",
+    "الخميس",
+    "الجمعة",
+    "السبت",
+  ],
   today: "اليوم",
 };
 LocaleConfig.locales["en"] = {
   monthNames: MONTHS_EN,
-  monthNamesShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-  dayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  monthNamesShort: [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ],
+  dayNames: [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ],
   dayNamesShort: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   today: "Today",
 };
@@ -28,6 +79,7 @@ LocaleConfig.defaultLocale = "ar";
 export default function CalendarScreen({ navigation }: any) {
   const { t } = useTranslation();
   const { isRTL, flexRow } = useRTL();
+  const theme = useTheme();
   const language = isRTL ? "ar" : "en";
 
   // Sync calendar locale with current language
@@ -38,12 +90,30 @@ export default function CalendarScreen({ navigation }: any) {
   const { results } = useSelector((state: any) => state.stats);
 
   const markedDates = useMemo(() => {
-    const today = moment().format("YYYY-MM-DD");
+    const today = moment().locale("en").format("YYYY-MM-DD");
     const dates: any = {};
 
     results.forEach((res: any) => {
-      const date = moment(res.date).format("YYYY-MM-DD");
-      if (res.data.length > 0) {
+      if (!res?.data || !res.data.length || !res.data[0]?.length) return;
+      const date = res.date;
+      if (!date) return;
+
+      if (date === today) {
+        // Today with recorded data: combine both indicators
+        dates[date] = {
+          marked: true,
+          customStyles: {
+            container: {
+              backgroundColor: Colors.blue,
+              borderRadius: 50,
+              elevation: 3,
+              borderWidth: 1.5,
+              borderColor: "#50cebb",
+            },
+            text: { color: "white", fontWeight: "bold" },
+          },
+        };
+      } else {
         dates[date] = {
           marked: true,
           customStyles: {
@@ -53,29 +123,33 @@ export default function CalendarScreen({ navigation }: any) {
               borderColor: "#50cebb",
               borderRadius: 50,
             },
-            text: {},
+            text: { color: theme.text },
           },
         };
       }
     });
 
-    dates[today] = {
-      marked: true,
-      customStyles: {
-        container: {
-          backgroundColor: Colors.blue,
-          borderRadius: 50,
-          elevation: 3,
+    // Only set today's default style if it wasn't already set above (no recorded data for today)
+    if (!dates[today]) {
+      dates[today] = {
+        marked: true,
+        customStyles: {
+          container: {
+            backgroundColor: Colors.blue,
+            borderRadius: 50,
+            elevation: 3,
+          },
+          text: { color: "white", fontWeight: "bold" },
         },
-        text: { color: "white", fontWeight: "bold" },
-      },
-    };
+      };
+    }
 
+    console.log("dates =", dates);
     return dates;
-  }, [results]);
+  }, [results, theme.text]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <Calendar
         onDayPress={(day: any) => navigation.navigate("form", { day })}
         monthFormat={"yyyy MM"}
@@ -86,12 +160,14 @@ export default function CalendarScreen({ navigation }: any) {
         markedDates={markedDates}
         theme={{
           backgroundColor: "transparent",
-          calendarBackground: "white",
+          calendarBackground: theme.bgCard,
           selectedDayTextColor: Colors.goldDark,
           todayTextColor: Colors.gold,
           arrowColor: Colors.gold,
-          monthTextColor: Colors.primary,
+          monthTextColor: theme.text,
           textMonthFontWeight: "bold",
+          dayTextColor: theme.text,
+          textDisabledColor: theme.textMuted,
         }}
       />
 
@@ -99,11 +175,15 @@ export default function CalendarScreen({ navigation }: any) {
       <View style={[styles.legend, { flexDirection: flexRow }]}>
         <View style={[styles.legendItem, { flexDirection: flexRow }]}>
           <View style={styles.legendDotToday} />
-          <Text p color="#555">{t("calendar.today")}</Text>
+          <Text p color={theme.textSub}>
+            {t("calendar.today")}
+          </Text>
         </View>
         <View style={[styles.legendItem, { flexDirection: flexRow }]}>
           <View style={styles.legendDotRecorded} />
-          <Text p color="#555">{t("calendar.recordedDay")}</Text>
+          <Text p color={theme.textSub}>
+            {t("calendar.recordedDay")}
+          </Text>
         </View>
       </View>
     </View>

@@ -19,6 +19,9 @@ import { Ionicons } from "@expo/vector-icons";
 import LocationPickerModal from "../components/LocationPickerModal";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
+import { schedulePrayerNotifications } from "../utils/notifications";
+import { PrayerKey } from "../store/reducers";
+import { useTheme } from "../hooks/useTheme";
 
 // Define TypeScript interfaces for better type checking
 interface HomeProps {
@@ -47,6 +50,7 @@ interface RootState {
 export default function Home({ navigation }: HomeProps) {
   const { t } = useTranslation();
   const { isRTL, flexRow } = useRTL();
+  const theme = useTheme();
   const [isFetching, setIsFetching] = useState(false);
   const [locationName, setLocationName] = useState<string | null>(null);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
@@ -56,6 +60,9 @@ export default function Home({ navigation }: HomeProps) {
     (state: RootState) => state.prayer,
   );
   const { userPosition } = useSelector((state: RootState) => state.settings);
+  const notificationSettings = useSelector(
+    (state: any) => state.notificationSettings
+  );
 
   const dispatch = useDispatch();
 
@@ -89,6 +96,24 @@ export default function Home({ navigation }: HomeProps) {
               data: responseData.data,
             },
           });
+          // Reschedule prayer notifications with fresh times
+          const anyEnabled = (Object.keys(notificationSettings) as PrayerKey[])
+            .some((k) => notificationSettings[k].enabled);
+          if (anyEnabled) {
+            const labels: Record<PrayerKey, string> = {
+              fajr: t("ind.fajr"),
+              dhuhr: t("ind.dhuhr"),
+              asr: t("ind.asr"),
+              maghrib: t("ind.maghrib"),
+              isha: t("ind.isha"),
+            };
+            schedulePrayerNotifications(
+              responseData.data.timings,
+              notificationSettings,
+              labels,
+              t("config.notifBody")
+            ).catch(() => {});
+          }
         } else {
           Alert.alert(
             t("nav.serverErrTitle"),
@@ -102,7 +127,7 @@ export default function Home({ navigation }: HomeProps) {
         setIsFetching(false);
       }
     },
-    [dispatch, getApiUrl],
+    [dispatch, getApiUrl, notificationSettings, t],
   );
 
   // Simplified loading function using the callback
@@ -149,7 +174,7 @@ export default function Home({ navigation }: HomeProps) {
   }, [data, isFetching]);
 
   return (
-    <Container navigation={navigation} style={styles.container}>
+    <Container navigation={navigation} style={[styles.container, { backgroundColor: theme.bg }]}>
       <ImageBackground
         resizeMode="cover"
         style={styles.coverImage}
@@ -172,7 +197,10 @@ export default function Home({ navigation }: HomeProps) {
         <LocationPickerModal
           visible={locationModalVisible}
           onClose={() => setLocationModalVisible(false)}
-          onLocationChange={setLocationName}
+          onLocationChange={(name, coords) => {
+            setLocationName(name);
+            loadPrayersTimings(coords);
+          }}
         />
 
         {DateDisplay}
