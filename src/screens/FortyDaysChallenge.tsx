@@ -475,6 +475,7 @@ export default function FortyDaysChallenge({ navigation }: any) {
           enableSwipeMonths
           markingType="custom"
           markedDates={markedDates}
+          onDayPress={(day: any) => navigation.navigate("form", { day })}
           theme={{
             backgroundColor: "transparent",
             calendarBackground: theme.bgCard,

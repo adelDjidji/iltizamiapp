@@ -418,7 +418,7 @@ export default function FormEvaluation({ navigation, route }: any) {
           onPress={() => setDay(moment(day).subtract(1, "day").valueOf())}
           style={styles.navArrow}
         >
-          <AntDesign name="right" size={20} color={theme.text} />
+          <AntDesign name="caret-right" size={20} color={theme.text} />
         </TouchableOpacity>
 
         <Text align="center" style={styles.dateHeader}>
@@ -434,7 +434,7 @@ export default function FormEvaluation({ navigation, route }: any) {
           disabled={moment(day).isSameOrAfter(moment(), "day")}
         >
           <AntDesign
-            name="left"
+            name="caret-left"
             size={20}
             color={
               moment(day).isSameOrAfter(moment(), "day")

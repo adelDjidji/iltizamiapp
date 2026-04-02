@@ -191,7 +191,7 @@ export const Indicators = [
         options: [],
         weight: 1,
       },
-      { id: "0304", title: "لا", titleKey: "ind.no", options: [], weight: 1 },
+      // { id: "0304", title: "لا", titleKey: "ind.no", options: [], weight: 1 },
     ],
   },
   {
@@ -201,7 +201,7 @@ export const Indicators = [
     color: "grey",
     items: [
       { id: "0401", title: "نعم", titleKey: "ind.yes", options: [], weight: 1 },
-      { id: "0402", title: "لا", titleKey: "ind.no", options: [], weight: 1 },
+      // { id: "0402", title: "لا", titleKey: "ind.no", options: [], weight: 1 },
     ],
   },
   {
@@ -211,7 +211,7 @@ export const Indicators = [
     color: "grey",
     items: [
       { id: "0501", title: "نعم", titleKey: "ind.yes", options: [], weight: 1 },
-      { id: "0502", title: "لا", titleKey: "ind.no", options: [], weight: 1 },
+      // { id: "0502", title: "لا", titleKey: "ind.no", options: [], weight: 1 },
     ],
   },
 ];

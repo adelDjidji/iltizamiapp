@@ -11,21 +11,33 @@
       "backgroundColor": "#ffffff"
     },
     "updates": {
+      "url": "https://u.expo.dev/0223f06c-c383-4c15-8ddc-aba1cffd817e",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0223f06c-c383-4c15-8ddc-aba1cffd817e"
+      }
+    },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "versionCode":4,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF00"
       },
-      "permissions": ["android.permission.RECEIVE_BOOT_COMPLETED", "android.permission.POST_NOTIFICATIONS"],
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
       "package": "com.djidjikdadi.iltizamiapp"
     },
     "web": {
@@ -39,6 +51,7 @@
           "project": "iltizami"
         }
       ]
-    ]
+    ],
+    "owner": "djidjikdadi"
   }
 }

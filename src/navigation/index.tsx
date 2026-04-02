@@ -237,15 +237,23 @@ const RootStack = () => {
   };
 
   const loadLocation = async () => {
-    let location;
-    let savedPos = (await SecureStore.getItemAsync("user-position")) || "";
-    if (savedPos !== "") {
-      location = JSON.parse(savedPos);
-    } else {
-      location = await getLocationHandler();
-      await SecureStore.setItemAsync("user-position", JSON.stringify(location));
+    try {
+      let location;
+      const savedPos = (await SecureStore.getItemAsync("user-position")) || "";
+      const isValidSaved = savedPos !== "" && savedPos !== "null" && savedPos !== "undefined";
+      if (isValidSaved) {
+        location = JSON.parse(savedPos);
+      } else {
+        location = await getLocationHandler();
+        // Only store if we got a valid location — JSON.stringify(undefined) is not a string
+        if (location) {
+          await SecureStore.setItemAsync("user-position", JSON.stringify(location));
+        }
+      }
+      dispatch({ type: "USER_POSITION", payload: location ?? null });
+    } catch {
+      // SecureStore or location APIs failed; userPosition remains as persisted by Redux
     }
-    dispatch({ type: "USER_POSITION", payload: location });
   };
 
   React.useEffect(() => {

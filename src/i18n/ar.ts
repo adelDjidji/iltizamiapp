@@ -61,6 +61,9 @@ export default {
     days: "أيام",
     avg: "المتوسط",
     best: "الأفضل",
+    resetTitle: "حذف الإحصائيات",
+    resetMsg: "سيتم حذف جميع بياناتك المسجّلة نهائيًا. هل أنت متأكد؟",
+    resetConfirm: "حذف",
   },
 
   // About

@@ -9,6 +9,8 @@ import {
   Dimensions,
   ScrollView,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import React, { useState, useCallback, memo, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -110,7 +112,7 @@ const GoalFormModal = memo(
     isEditing?: boolean;
   }) => {
     const { t } = useTranslation();
-    const { flexRow } = useRTL();
+    const { isRTL } = useRTL();
     const theme = useTheme();
     const [text, setText] = useState(initialValue);
 
@@ -121,10 +123,12 @@ const GoalFormModal = memo(
     const handleSubmit = useCallback(() => {
       if (text.trim()) {
         Keyboard.dismiss();
-        onSubmit(text);
+        onSubmit(text.trim());
         setText("");
       }
     }, [text, onSubmit]);
+
+    const canSubmit = text.trim().length > 0;
 
     return (
       <Modal
@@ -133,12 +137,22 @@ const GoalFormModal = memo(
         visible={visible}
         onRequestClose={onClose}
       >
-        <Pressable style={styles.modalOverlay} onPress={onClose}>
-          <View style={styles.centeredView} onStartShouldSetResponder={() => true}>
-            <View style={[styles.modalView, { backgroundColor: theme.bgCard }]}>
-              <Text style={[styles.modalTitle, { color: theme.text }]} bold>
-                {isEditing ? t("goals.editGoal") : t("goals.newGoal")}
-              </Text>
+        <KeyboardAvoidingView
+          style={styles.sheetWrapper}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+          <View style={[styles.sheetContainer, { backgroundColor: theme.bgCard }]}>
+            {/* Drag handle */}
+            <View style={[styles.sheetHandle, { backgroundColor: theme.border }]} />
+
+            {/* Title */}
+            <Text bold style={[styles.sheetTitle, { color: theme.text }]}>
+              {isEditing ? t("goals.editGoal") : t("goals.newGoal")}
+            </Text>
+
+            {/* Input + char counter */}
+            <View style={styles.inputWrapper}>
               <TextInput
                 style={[
                   styles.textInput,
@@ -146,6 +160,7 @@ const GoalFormModal = memo(
                     backgroundColor: theme.inputBg,
                     borderColor: theme.border,
                     color: theme.inputText,
+                    textAlign: isRTL ? "right" : "left",
                   },
                 ]}
                 onChangeText={setText}
@@ -157,28 +172,30 @@ const GoalFormModal = memo(
                 returnKeyType="done"
                 autoFocus
               />
-              <View style={[styles.buttonContainer, { flexDirection: flexRow }]}>
-                <Pressable
-                  style={[
-                    styles.button,
-                    styles.buttonConfirm,
-                    !text.trim() && styles.buttonDisabled,
-                  ]}
-                  disabled={!text.trim()}
-                  onPress={handleSubmit}
-                >
-                  <AntDesign name="check" size={20} color="white" />
-                </Pressable>
-                <Pressable
-                  style={[styles.button, styles.buttonCancel]}
-                  onPress={onClose}
-                >
-                  <AntDesign name="close" size={20} color="white" />
-                </Pressable>
-              </View>
+              <Text style={[styles.charCount, { color: theme.textMuted }]}>
+                {text.length}/50
+              </Text>
+            </View>
+
+            {/* Actions */}
+            <View style={styles.sheetActions}>
+              <Pressable style={styles.sheetBtnCancel} onPress={onClose}>
+                <Text bold style={{ color: theme.textSub, fontSize: 15 }}>
+                  {t("cancel")}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.sheetBtnConfirm, !canSubmit && styles.sheetBtnDisabled]}
+                disabled={!canSubmit}
+                onPress={handleSubmit}
+              >
+                <Text bold style={{ color: "white", fontSize: 15 }}>
+                  {t("save")}
+                </Text>
+              </Pressable>
             </View>
           </View>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     );
   },
@@ -425,62 +442,78 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginTop: 2,
   },
-  // ── Modal
-  modalOverlay: {
+  // ── Bottom sheet modal
+  sheetWrapper: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
   },
-  centeredView: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: "80%",
-    maxWidth: 340,
+  sheetBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.45)",
   },
-  modalView: {
-    borderRadius: 20,
-    padding: 30,
-    alignItems: "center",
-    width: "100%",
-    elevation: 5,
+  sheetContainer: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    paddingTop: 12,
+    elevation: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
-  modalTitle: {
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  sheetTitle: {
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  inputWrapper: {
+    marginBottom: 8,
   },
   textInput: {
-    padding: 16,
-    marginVertical: 16,
-    textAlign: "center",
+    padding: 14,
     borderWidth: 1,
-    borderRadius: 8,
-    width: "100%",
+    borderRadius: 12,
+    fontSize: 14,
+    minHeight: 56,
+    fontFamily: "Cairo_400Regular",
   },
-  buttonContainer: {
-    justifyContent: "space-around",
-    width: "70%",
+  charCount: {
+    fontSize: 11,
+    textAlign: "right",
+    marginTop: 4,
+    marginRight: 2,
+  },
+  sheetActions: {
+    flexDirection: "row",
+    gap: 10,
     marginTop: 16,
   },
-  button: {
-    borderRadius: 25,
-    padding: 12,
-    elevation: 2,
-    minWidth: 60,
+  sheetBtnCancel: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: "center",
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "rgba(128,128,128,0.3)",
   },
-  buttonConfirm: {
+  sheetBtnConfirm: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
     backgroundColor: Colors.gold,
   },
-  buttonCancel: {
-    backgroundColor: "grey",
-  },
-  buttonDisabled: {
-    backgroundColor: "#ccc",
-    opacity: 0.7,
+  sheetBtnDisabled: {
+    opacity: 0.4,
   },
 });

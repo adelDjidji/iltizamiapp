@@ -14,6 +14,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import moment from "moment";
 
+import * as Notifications from "expo-notifications";
+
 import Container from "../components/Container";
 import Text from "../components/Text";
 import Colors from "../constants/Colors";
@@ -434,6 +436,37 @@ export default function Dashboard({ navigation }: any) {
 
             {/* Row 3 — Challenge */}
             <ChallengeCard onPress={() => navigation.push("challenge")} />
+
+            {/* ── DEV: test push notification ───────────────────── */}
+            {/* {__DEV__ && (
+              <TouchableOpacity
+                style={[
+                  styles.devTestBtn,
+                  { backgroundColor: theme.bgCard, borderColor: theme.border },
+                ]}
+                activeOpacity={0.7}
+                onPress={async () => {
+                  await Notifications.scheduleNotificationAsync({
+                    content: {
+                      title: "تذكير الصلاة 🕌",
+                      body: "لا تنسَ تسجيل تقييم صلاتك 🕌",
+                      data: { screen: "form" },
+                      sound: true,
+                    },
+                    trigger: {
+                      type: "timeInterval",
+                      seconds: 3,
+                      repeats: false,
+                    } as any,
+                  });
+                }}
+              >
+                <Feather name="bell" size={14} color={theme.textMuted} />
+                <Text style={[styles.devTestLabel, { color: theme.textMuted }]}>
+                  TEST NOTIF (3s)
+                </Text>
+              </TouchableOpacity>
+            )} */}
           </View>
         </ImageBackground>
       </Container>
@@ -580,5 +613,21 @@ const styles = StyleSheet.create({
   },
   badgeLabel: {
     fontSize: 10,
+  },
+  devTestBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderRadius: 10,
+    paddingVertical: 10,
+    opacity: 0.6,
+  },
+  devTestLabel: {
+    fontSize: 11,
+    fontFamily: "Cairo_400Regular",
+    letterSpacing: 0.5,
   },
 });

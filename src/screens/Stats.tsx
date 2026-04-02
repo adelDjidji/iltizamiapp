@@ -4,11 +4,12 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Alert,
 } from "react-native";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Container from "../components/Container";
 import { LineChart } from "react-native-chart-kit";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, MaterialIcons } from "@expo/vector-icons";
 
 import * as React from "react";
 import Text from "../components/Text";
@@ -212,7 +213,19 @@ export default function Stats({ navigation }: any) {
   const { isRTL, flexRow } = useRTL();
   const theme = useTheme();
   const styles = React.useMemo(() => makeStyles(theme), [theme]);
+  const dispatch = useDispatch();
   const { results } = useSelector((state: any) => state.stats);
+
+  const confirmReset = () => {
+    Alert.alert(t("stats.resetTitle"), t("stats.resetMsg"), [
+      { text: t("cancel"), style: "cancel" },
+      {
+        text: t("stats.resetConfirm"),
+        style: "destructive",
+        onPress: () => dispatch({ type: "CLEAR" }),
+      },
+    ]);
+  };
   const [chartWidth, setChartWidth] = React.useState(
     Dimensions.get("window").width - 32,
   );
@@ -256,8 +269,12 @@ export default function Stats({ navigation }: any) {
     return () => ScreenOrientation.removeOrientationChangeListener(sub);
   }, []);
 
-  const allClean = results.filter(
-    (res: any) => !!res?.data && !!res.data.length && res.data[0].length,
+  const allClean = React.useMemo(
+    () =>
+      results.filter(
+        (res: any) => !!res?.data && !!res.data.length && res.data[0].length,
+      ),
+    [results],
   );
 
   const filtered = React.useMemo(() => {
@@ -265,10 +282,18 @@ export default function Stats({ navigation }: any) {
     const days = dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : 90;
     const cutoff = moment().subtract(days, "days").startOf("day");
     return allClean.filter((r: any) => moment(r.date).isSameOrAfter(cutoff));
-  }, [results, dateRange]);
+  }, [allClean, dateRange]);
 
-  const dates = filtered.map((res: any) => res.date);
-  const datas: number[][] = filtered.map((res: any) =>
+  const sorted = React.useMemo(
+    () =>
+      [...filtered].sort((a, b) =>
+        a.date < b.date ? -1 : a.date > b.date ? 1 : 0,
+      ),
+    [filtered],
+  );
+
+  const dates = sorted.map((res: any) => res.date);
+  const datas: number[][] = sorted.map((res: any) =>
     res.data.map((section: number[]) =>
       section.reduce((a: number, b: number) => a + b, 0),
     ),
@@ -336,6 +361,9 @@ export default function Stats({ navigation }: any) {
           >
             {t("stats.title")}
           </Text>
+          {/* <TouchableOpacity onPress={confirmReset} style={styles.backBtn}>
+            <MaterialIcons name="delete-outline" size={18} color="#e74c3c" />
+          </TouchableOpacity> */}
         </View>
 
         {/* Date range filter */}
@@ -392,10 +420,21 @@ export default function Stats({ navigation }: any) {
             {/* Chart */}
             <View style={styles.chartCard}>
               <LineChart
+                key={`${dateRange}-${dates.length}`}
                 data={{
-                  labels: dates.map((d: string) =>
-                    moment(d).locale("en").format("MM/DD"),
-                  ),
+                  labels: dates.map((d: string, i: number) => {
+                    const step =
+                      dates.length > 60
+                        ? 14
+                        : dates.length > 20
+                          ? 7
+                          : dates.length > 10
+                            ? 3
+                            : 1;
+                    return i % step === 0
+                      ? moment(d).locale("en").format("MM/DD")
+                      : "";
+                  }),
                   datasets:
                     chartDatasets.length > 0 ? chartDatasets : [{ data: [0] }],
                 }}

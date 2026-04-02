@@ -64,6 +64,12 @@ export default function Home({ navigation }: HomeProps) {
     (state: any) => state.notificationSettings
   );
 
+  // Keep a ref to current cached data so callbacks can check it without stale closures
+  const dataRef = React.useRef(data);
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
+
   const dispatch = useDispatch();
 
   // Move API URL construction to useMemo to prevent unnecessary recalculations
@@ -115,14 +121,19 @@ export default function Home({ navigation }: HomeProps) {
             ).catch(() => {});
           }
         } else {
-          Alert.alert(
-            t("nav.serverErrTitle"),
-            responseData.data || t("home.errorLoadingPrayers"),
-          );
+          // Only alert if there is no cached data to fall back on
+          if (!dataRef.current) {
+            Alert.alert(
+              t("nav.serverErrTitle"),
+              responseData.data || t("home.errorLoadingPrayers"),
+            );
+          }
         }
       } catch (error) {
-        console.error("API Error:", error);
-        Alert.alert(t("nav.connErrTitle"), t("nav.connErrMsg"));
+        // Only alert the user if there is no cached data — otherwise silently use the cache
+        if (!dataRef.current) {
+          Alert.alert(t("nav.connErrTitle"), t("nav.connErrMsg"));
+        }
       } finally {
         setIsFetching(false);
       }
@@ -150,12 +161,14 @@ export default function Home({ navigation }: HomeProps) {
 
   useEffect(() => {
     if (!userPosition) return;
-    Location.reverseGeocodeAsync(userPosition).then((results) => {
-      if (results.length > 0) {
-        const { city, district, subregion, region } = results[0];
-        setLocationName(city || district || subregion || region || null);
-      }
-    });
+    Location.reverseGeocodeAsync(userPosition)
+      .then((results) => {
+        if (results.length > 0) {
+          const { city, district, subregion, region } = results[0];
+          setLocationName(city || district || subregion || region || null);
+        }
+      })
+      .catch(() => {});
   }, [userPosition]);
 
   // Memoize the date display component to prevent unnecessary re-renders
