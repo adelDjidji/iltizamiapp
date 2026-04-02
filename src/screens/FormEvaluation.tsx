@@ -16,8 +16,9 @@ import Text from "../components/Text";
 import Colors from "../constants/Colors";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import moment from "moment";
-import "moment/locale/ar";
+import dayjs from "dayjs";
+import "dayjs/locale/ar";
+import "dayjs/locale/en";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
 
 import {
@@ -261,7 +262,7 @@ export default function FormEvaluation({ navigation, route }: any) {
     route.params?.day?.timestamp || new Date().getTime(),
   );
   const formattedDate = useMemo(
-    () => moment(day).locale("en").format("YYYY-MM-DD"),
+    () => dayjs(day).format("YYYY-MM-DD"),
     [day],
   );
   const dispatch = useDispatch();
@@ -351,14 +352,11 @@ export default function FormEvaluation({ navigation, route }: any) {
   );
 
   const dateDisplay = useMemo(() => {
-    const m = moment(day).local();
+    const d = dayjs(day);
     return {
-      day: m.clone().locale("en").format("D"),
-      month: m
-        .clone()
-        .locale(isRTL ? "ar" : "en")
-        .format("MMMM"),
-      year: m.clone().locale("en").format("YYYY"),
+      day: d.locale("en").format("D"),
+      month: d.locale(isRTL ? "ar" : "en").format("MMMM"),
+      year: d.locale("en").format("YYYY"),
     };
   }, [day, isRTL]);
 
@@ -415,7 +413,7 @@ export default function FormEvaluation({ navigation, route }: any) {
       )}
       <View style={[styles.dateNavRow, { flexDirection: "row-reverse" }]}>
         <TouchableOpacity
-          onPress={() => setDay(moment(day).subtract(1, "day").valueOf())}
+          onPress={() => setDay(dayjs(day).subtract(1, "day").valueOf())}
           style={styles.navArrow}
         >
           <AntDesign name="caret-right" size={20} color={theme.text} />
@@ -429,15 +427,15 @@ export default function FormEvaluation({ navigation, route }: any) {
         </Text>
 
         <TouchableOpacity
-          onPress={() => setDay(moment(day).add(1, "day").valueOf())}
+          onPress={() => setDay(dayjs(day).add(1, "day").valueOf())}
           style={styles.navArrow}
-          disabled={moment(day).isSameOrAfter(moment(), "day")}
+          disabled={!dayjs(day).isBefore(dayjs(), "day")}
         >
           <AntDesign
             name="caret-left"
             size={20}
             color={
-              moment(day).isSameOrAfter(moment(), "day")
+              !dayjs(day).isBefore(dayjs(), "day")
                 ? theme.textMuted
                 : theme.text
             }

@@ -16,8 +16,6 @@ import * as Sentry from "@sentry/react-native";
 import * as Updates from "expo-updates";
 import * as Notifications from "expo-notifications";
 import Constants, { ExecutionEnvironment } from "expo-constants";
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, setDoc, doc } from "firebase/firestore";
 import "./src/i18n";
 import i18n from "./src/i18n";
 
@@ -32,31 +30,31 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDTbWCgl_bhDJKwqHZKUmQ-PMxHIbppVA4",
-  authDomain: "iltizami.firebaseapp.com",
-  projectId: "iltizami",
-  storageBucket: "iltizami.appspot.com",
-  messagingSenderId: "751375864465",
-  appId: "1:751375864465:web:8ee2ed805b469bf5612530",
-  measurementId: "G-QWYH2Z6QYD",
-};
-
 Sentry.init({
   dsn: "https://118ae08f494c461eac2ae218b3d8ce49@o1173031.ingest.sentry.io/6267923",
   debug: __DEV__,
 });
 
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
-
 const storeExpoToken = async (token: string) => {
-  const firestore = getFirestore();
-  await setDoc(doc(firestore, "expoTokens", token), {
-    token: token,
-    lastActive: new Date().toISOString(),
-  });
+  try {
+    const projectId = "iltizami";
+    const apiKey = "AIzaSyDTbWCgl_bhDJKwqHZKUmQ-PMxHIbppVA4";
+    await fetch(
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/expoTokens/${encodeURIComponent(token)}?key=${apiKey}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            token: { stringValue: token },
+            lastActive: { stringValue: new Date().toISOString() },
+          },
+        }),
+      }
+    );
+  } catch {
+    // Token storage is non-critical
+  }
 };
 
 const lookForUpdates = async () => {

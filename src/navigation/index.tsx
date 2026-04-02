@@ -5,7 +5,6 @@ import {
   NavigationContainer,
   createNavigationContainerRef,
 } from "@react-navigation/native";
-import { createDrawerNavigator } from "@react-navigation/drawer";
 
 export const navigationRef = createNavigationContainerRef<any>();
 import Home from "../screens/Home";
@@ -19,7 +18,6 @@ import {
 import Dashboard from "../screens/Dashboard";
 import Colors from "../constants/Colors";
 import { View, Text, Alert } from "react-native";
-import DrawerScreen from "../screens/DrawerScreen";
 import FormEvaluation from "../screens/FormEvaluation";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
@@ -38,7 +36,6 @@ import FortyDaysChallenge from "../screens/FortyDaysChallenge";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-const Drawer = createDrawerNavigator();
 
 function TabsStack() {
   const theme = useTheme();

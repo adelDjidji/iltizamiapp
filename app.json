@@ -24,7 +24,7 @@
         "projectId": "0223f06c-c383-4c15-8ddc-aba1cffd817e"
       }
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": ["assets/**/*"],
     "ios": {
       "supportsTablet": true
     },

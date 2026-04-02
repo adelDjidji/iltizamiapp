@@ -17,7 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Text from "./Text";
 import Colors from "../constants/Colors";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
 import { useTheme } from "../hooks/useTheme";
@@ -217,9 +217,9 @@ export default function GoalsManager() {
   const dispatch = useDispatch();
 
   const { filtredGoals, filtredGoalsDone } = useMemo(() => {
-    const today = moment(new Date()).locale("en").format("YYYY-MM-DD");
+    const today = dayjs().format("YYYY-MM-DD");
     const filtered = (goals || []).filter(
-      (i: Goal) => !!i && moment(i.date).locale("en").format("YYYY-MM-DD") === today,
+      (i: Goal) => !!i && dayjs(i.date).format("YYYY-MM-DD") === today,
     );
     return {
       filtredGoals: filtered,

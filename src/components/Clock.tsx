@@ -1,7 +1,7 @@
 import { View, StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
 // import { useTime } from "react-timer-hook";
-import moment from "moment";
+import dayjs from "dayjs";
 import Text from "./Text";
 
 const styles = StyleSheet.create({
@@ -17,7 +17,7 @@ export default function Clock() {
   const [time, settime] = useState("");
   useEffect(() => {
     let it = setInterval(() => {
-      settime(moment().locale("en").format("HH : mm : ss"));
+      settime(dayjs().format("HH : mm : ss"));
     }, 1000);
 
     return () => {

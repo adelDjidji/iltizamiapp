@@ -12,7 +12,7 @@ import {
 import { AntDesign, Feather } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import moment from "moment";
+import dayjs from "dayjs";
 
 import * as Notifications from "expo-notifications";
 
@@ -347,7 +347,7 @@ export default function Dashboard({ navigation }: any) {
   );
 
   const todayRecorded = useMemo(() => {
-    const today = moment().locale("en").format("YYYY-MM-DD");
+    const today = dayjs().format("YYYY-MM-DD");
     return results.some((r: any) => r.date === today && r.data?.length > 0);
   }, [results]);
 

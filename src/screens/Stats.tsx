@@ -13,7 +13,7 @@ import { AntDesign, MaterialIcons } from "@expo/vector-icons";
 
 import * as React from "react";
 import Text from "../components/Text";
-import moment from "moment";
+import dayjs from "dayjs";
 import Colors from "../constants/Colors";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { Indicators } from "../constants";
@@ -280,8 +280,8 @@ export default function Stats({ navigation }: any) {
   const filtered = React.useMemo(() => {
     if (dateRange === "all") return allClean;
     const days = dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : 90;
-    const cutoff = moment().subtract(days, "days").startOf("day");
-    return allClean.filter((r: any) => moment(r.date).isSameOrAfter(cutoff));
+    const cutoff = dayjs().subtract(days, "days").startOf("day").format("YYYY-MM-DD");
+    return allClean.filter((r: any) => r.date >= cutoff);
   }, [allClean, dateRange]);
 
   const sorted = React.useMemo(
@@ -432,7 +432,7 @@ export default function Stats({ navigation }: any) {
                             ? 3
                             : 1;
                     return i % step === 0
-                      ? moment(d).locale("en").format("MM/DD")
+                      ? dayjs(d).format("MM/DD")
                       : "";
                   }),
                   datasets:

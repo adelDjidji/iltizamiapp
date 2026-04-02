@@ -15,7 +15,7 @@
     "production": {
       "channel": "production",
       "env": {
-        "ENV": "dev"
+        "ENV": "production"
       }
     }
   },

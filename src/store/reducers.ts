@@ -1,4 +1,4 @@
-import moment from "moment";
+import dayjs from "dayjs";
 import { Goal } from "../components/GoalsManager";
 const initialAuthState = {
   user: null,
@@ -130,7 +130,7 @@ export const StatsReducer = (
       const payloadData = action.payload.data;
       const day = action.payload.day;
       // look for current date if exist: update data, else create new record
-      const dayKey = moment(day).locale("en").format("YYYY-MM-DD");
+      const dayKey = dayjs(day).format("YYYY-MM-DD");
       let date_exist = !!state.results.find((el) => el.date === dayKey);
       let tmp;
       let exist = false;

@@ -1,7 +1,7 @@
 import { View, StyleSheet } from "react-native";
 import React, { useMemo } from "react";
 import { Calendar, LocaleConfig } from "react-native-calendars";
-import moment from "moment";
+import dayjs from "dayjs";
 import Colors from "../constants/Colors";
 import { useSelector } from "react-redux";
 import { MONTHS_AR, MONTHS_EN } from "../constants";
@@ -90,7 +90,7 @@ export default function CalendarScreen({ navigation }: any) {
   const { results } = useSelector((state: any) => state.stats);
 
   const markedDates = useMemo(() => {
-    const today = moment().locale("en").format("YYYY-MM-DD");
+    const today = dayjs().format("YYYY-MM-DD");
     const dates: any = {};
 
     results.forEach((res: any) => {

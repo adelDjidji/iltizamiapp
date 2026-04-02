@@ -1,4 +1,4 @@
-import moment from "moment";
+import dayjs from "dayjs";
 
 export interface ChallengeState {
   totalStars: number;
@@ -54,7 +54,7 @@ export function computeChallengeState(
   for (const r of sorted) {
     if (isPerfectDay(r.data)) {
       const isConsecutive =
-        prevDate !== "" && moment(r.date).diff(moment(prevDate), "days") === 1;
+        prevDate !== "" && dayjs(r.date).diff(dayjs(prevDate), "days") === 1;
 
       if (isConsecutive) {
         runLen++;
@@ -84,7 +84,7 @@ export function computeChallengeState(
   let currentStreak = 0;
   if (allRuns.length > 0) {
     const lastRun = allRuns[allRuns.length - 1];
-    const diffDays = moment().startOf("day").diff(moment(lastRun.end).startOf("day"), "days");
+    const diffDays = dayjs().startOf("day").diff(dayjs(lastRun.end).startOf("day"), "days");
     if (diffDays <= 1) currentStreak = lastRun.length;
   }
 
@@ -94,7 +94,7 @@ export function computeChallengeState(
   const completionDates = new Set<string>();
   for (const run of allRuns) {
     for (let i = 40; i <= run.length; i += 40) {
-      completionDates.add(moment(run.start).add(i - 1, "days").locale("en").format("YYYY-MM-DD"));
+      completionDates.add(dayjs(run.start).add(i - 1, "days").format("YYYY-MM-DD"));
     }
   }
 

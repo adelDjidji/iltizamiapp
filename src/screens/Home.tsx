@@ -12,7 +12,7 @@ import * as Location from "expo-location";
 import Container from "../components/Container";
 import Text from "../components/Text";
 import { useDispatch, useSelector } from "react-redux";
-import moment from "moment";
+import dayjs from "dayjs";
 import Clock from "../components/Clock";
 import SalatTable from "../components/SalatTable";
 import { Ionicons } from "@expo/vector-icons";
@@ -75,7 +75,7 @@ export default function Home({ navigation }: HomeProps) {
   // Move API URL construction to useMemo to prevent unnecessary recalculations
   const getApiUrl = useCallback((location: LocationState) => {
     const defaultMethod = 3;
-    const formattedDate = moment(new Date()).format("DD-MM-YYYY");
+    const formattedDate = dayjs().format("DD-MM-YYYY");
 
     return `http://api.aladhan.com/v1/timings/${formattedDate}?latitude=${location?.latitude}&longitude=${location?.longitude}&method=${defaultMethod}&adjustment=1`;
   }, []);
@@ -98,7 +98,7 @@ export default function Home({ navigation }: HomeProps) {
           dispatch({
             type: "LOAD_DATA",
             payload: {
-              current_date: moment(new Date()).format("DD-MM-YYYY"),
+              current_date: dayjs().format("DD-MM-YYYY"),
               data: responseData.data,
             },
           });
@@ -148,7 +148,7 @@ export default function Home({ navigation }: HomeProps) {
 
   // Check if we need to reload data based on date
   const needsReload = useMemo(() => {
-    const today = moment(new Date()).format("DD-MM-YYYY");
+    const today = dayjs().format("DD-MM-YYYY");
     return !data || current_date !== today;
   }, [data, current_date]);
 

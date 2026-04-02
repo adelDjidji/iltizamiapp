@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Easing,
 } from "react-native";
-// import ProgressCircle from "react-native-progress-circle";
 import Text from "../components/Text";
 import Colors from "../constants/Colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -146,18 +145,6 @@ const Counter = (props) => {
         activeOpacity={0.8}
         style={{ margin: 40, alignItems: "center" }}
       >
-        {/* <ProgressCircle
-          percent={number % 100}
-          radius={80}
-          borderWidth={10}
-          color={Colors.gold}
-          shadowColor={Colors.secondary}
-          bgColor={Colors.primary}
-        >
-          <Text color="white" style={{ fontSize: 18 }}>
-            {number % 100}
-          </Text>
-        </ProgressCircle> */}
         <Text color="white" align="center" h1 style={{ marginTop: 40 }}>
           {props.label}
         </Text>

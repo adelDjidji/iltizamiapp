@@ -10,7 +10,7 @@ import { Calendar, LocaleConfig } from "react-native-calendars";
 import { AntDesign, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import moment from "moment";
+import dayjs from "dayjs";
 import Colors from "../constants/Colors";
 import Text from "../components/Text";
 import { computeChallengeState } from "../utils/challenge";
@@ -217,13 +217,13 @@ export default function FortyDaysChallenge({ navigation }: any) {
 
   // ------- Calendar marking ----------------------------------------
   const markedDates = useMemo(() => {
-    const today = moment().locale("en").format("YYYY-MM-DD");
+    const today = dayjs().format("YYYY-MM-DD");
     const marks: Record<string, any> = {};
 
     // Mark every day that has data
     results.forEach((r: any) => {
       if (!r.date || !r.data?.length) return;
-      const date = moment(r.date).locale("en").format("YYYY-MM-DD");
+      const date = dayjs(r.date).format("YYYY-MM-DD");
       const isPerfect = perfectSet.has(date);
 
       marks[date] = {
