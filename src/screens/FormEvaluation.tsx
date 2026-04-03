@@ -19,7 +19,11 @@ import { RootState } from "../store/store";
 import dayjs from "dayjs";
 import "dayjs/locale/ar";
 import "dayjs/locale/en";
-import { Ionicons, AntDesign } from "@expo/vector-icons";
+import {
+  Ionicons,
+  AntDesign,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 
 import {
   Menu,
@@ -28,7 +32,7 @@ import {
   MenuTrigger,
   renderers,
 } from "react-native-popup-menu";
-import { Indicators } from "../constants";
+import { Indicators, MONTHS_AR, MONTHS_EN } from "../constants";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
 import { useTheme } from "../hooks/useTheme";
@@ -261,10 +265,7 @@ export default function FormEvaluation({ navigation, route }: any) {
   const [day, setDay] = useState(
     route.params?.day?.timestamp || new Date().getTime(),
   );
-  const formattedDate = useMemo(
-    () => dayjs(day).format("YYYY-MM-DD"),
-    [day],
-  );
+  const formattedDate = useMemo(() => dayjs(day).format("YYYY-MM-DD"), [day]);
   const dispatch = useDispatch();
 
   const initialData = useMemo(() => {
@@ -287,7 +288,11 @@ export default function FormEvaluation({ navigation, route }: any) {
             onPress={() => navigation.push("calendar")}
             style={styles.headerButton}
           >
-            <AntDesign name="calendar" size={24} color={theme.headerText} />
+            <MaterialCommunityIcons
+              name="calendar-month"
+              size={24}
+              color={theme.headerText}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.push("Stats")}
@@ -355,7 +360,7 @@ export default function FormEvaluation({ navigation, route }: any) {
     const d = dayjs(day);
     return {
       day: d.locale("en").format("D"),
-      month: d.locale(isRTL ? "ar" : "en").format("MMMM"),
+      month: isRTL ? MONTHS_AR[d.month()] : MONTHS_EN[d.month()],
       year: d.locale("en").format("YYYY"),
     };
   }, [day, isRTL]);

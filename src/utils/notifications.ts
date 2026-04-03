@@ -1,6 +1,10 @@
 import * as Notifications from "expo-notifications";
 import { SchedulableTriggerInputTypes } from "expo-notifications";
+import { Platform } from "react-native";
 import { NotificationSettingsState, PrayerKey } from "../store/reducers";
+
+// Must match the channel created in App.tsx
+export const PRAYER_CHANNEL_ID = "prayer-reminders";
 
 // Aladhan API timings keys map to our prayer keys
 const PRAYER_TIMINGS_KEYS: Record<PrayerKey, string> = {
@@ -34,8 +38,9 @@ export async function cancelAllPrayerNotifications(): Promise<void> {
 }
 
 /**
- * Schedule (or re-schedule) prayer reminder notifications based on today's
- * prayer times and the user's notification settings.
+ * Schedule (or re-schedule) daily repeating prayer reminder notifications.
+ * Uses a DAILY trigger so notifications fire every day at the same time
+ * even when the app is not open.
  *
  * @param timings  - The `timings` object from Aladhan API (e.g. { Fajr: "05:30", ... })
  * @param settings - The user's per-prayer notification settings from Redux
@@ -50,8 +55,6 @@ export async function schedulePrayerNotifications(
   // Cancel existing prayer reminders first
   await cancelAllPrayerNotifications();
 
-  const now = new Date();
-
   for (const prayerKey of Object.keys(PRAYER_TIMINGS_KEYS) as PrayerKey[]) {
     const config = settings[prayerKey];
     if (!config.enabled) continue;
@@ -63,12 +66,10 @@ export async function schedulePrayerNotifications(
     const parsed = parseTime(timeStr);
     if (!parsed) continue;
 
-    // Build trigger date = today at prayer time + delay minutes
-    const trigger = new Date();
-    trigger.setHours(parsed.hours, parsed.minutes + config.delay, 0, 0);
-
-    // Skip if already in the past
-    if (trigger <= now) continue;
+    // Apply delay offset, handling minute overflow into the next hour
+    const totalMinutes = parsed.hours * 60 + parsed.minutes + config.delay;
+    const hour = Math.floor(totalMinutes / 60) % 24;
+    const minute = totalMinutes % 60;
 
     await Notifications.scheduleNotificationAsync({
       identifier: `${NOTIF_ID_PREFIX}${prayerKey}`,
@@ -78,7 +79,12 @@ export async function schedulePrayerNotifications(
         data: { screen: "form" },
         sound: true,
       },
-      trigger: { type: SchedulableTriggerInputTypes.DATE, date: trigger },
+      trigger: {
+        type: SchedulableTriggerInputTypes.DAILY,
+        hour,
+        minute,
+        ...(Platform.OS === "android" && { channelId: PRAYER_CHANNEL_ID }),
+      },
     });
   }
 }

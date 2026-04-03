@@ -26,7 +26,8 @@
     },
     "assetBundlePatterns": ["assets/**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.djidjikdadi.iltizamiapp"
     },
     "android": {
       "versionCode": 4,
@@ -44,6 +45,15 @@
       "favicon": "./assets/iltizamiIcon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1A1A2E",
+          "defaultChannel": "prayer-reminders",
+          "sounds": []
+        }
+      ],
       [
         "@sentry/react-native/expo",
         {

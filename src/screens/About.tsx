@@ -151,9 +151,7 @@ export default function About() {
             style={styles.messengerIcon}
             source={require("../../assets/messenger-icon.png")}
           />
-          <Text h3 color="white">
-            {t("about.feedback")}
-          </Text>
+          <Text h3>{t("about.feedback")}</Text>
         </TouchableOpacity>
       </View>
 

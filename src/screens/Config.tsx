@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
@@ -43,6 +44,7 @@ export default function ConfigScreen() {
     ...savedSettings,
   });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const togglePrayer = useCallback((prayer: PrayerKey, value: boolean) => {
     setSettings((prev) => ({
@@ -62,52 +64,57 @@ export default function ConfigScreen() {
   }, []);
 
   const handleSave = useCallback(async () => {
+    setSaving(true);
     const anyEnabled = PRAYERS.some((p) => settings[p].enabled);
 
-    if (anyEnabled && !prayerTimings) {
-      Alert.alert(t("config.title"), t("config.noPrayerTimes"));
-      return;
-    }
+    try {
+      if (anyEnabled && !prayerTimings) {
+        Alert.alert(t("config.title"), t("config.noPrayerTimes"));
+        return;
+      }
 
-    dispatch({ type: "UPDATE_NOTIF_SETTINGS", payload: settings });
+      dispatch({ type: "UPDATE_NOTIF_SETTINGS", payload: settings });
 
-    if (!anyEnabled) {
-      await cancelAllPrayerNotifications();
-      setSaved(true);
-      return;
-    }
+      if (!anyEnabled) {
+        await cancelAllPrayerNotifications();
+        setSaved(true);
+        return;
+      }
 
-    if (Constants.executionEnvironment !== ExecutionEnvironment.StoreClient) {
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status !== "granted") {
-        const { status: newStatus } =
-          await Notifications.requestPermissionsAsync();
-        if (newStatus !== "granted") {
-          Alert.alert(
-            t("nav.locationPermTitle"),
-            "Notification permission is required to send prayer reminders."
-          );
-          return;
+      if (Constants.executionEnvironment !== ExecutionEnvironment.StoreClient) {
+        const { status } = await Notifications.getPermissionsAsync();
+        if (status !== "granted") {
+          const { status: newStatus } =
+            await Notifications.requestPermissionsAsync();
+          if (newStatus !== "granted") {
+            Alert.alert(
+              t("nav.locationPermTitle"),
+              "Notification permission is required to send prayer reminders."
+            );
+            return;
+          }
         }
       }
+
+      const labels: Record<PrayerKey, string> = {
+        fajr: t("ind.fajr"),
+        dhuhr: t("ind.dhuhr"),
+        asr: t("ind.asr"),
+        maghrib: t("ind.maghrib"),
+        isha: t("ind.isha"),
+      };
+
+      await schedulePrayerNotifications(
+        prayerTimings!,
+        settings,
+        labels,
+        t("config.notifBody")
+      );
+
+      setSaved(true);
+    } finally {
+      setSaving(false);
     }
-
-    const labels: Record<PrayerKey, string> = {
-      fajr: t("ind.fajr"),
-      dhuhr: t("ind.dhuhr"),
-      asr: t("ind.asr"),
-      maghrib: t("ind.maghrib"),
-      isha: t("ind.isha"),
-    };
-
-    await schedulePrayerNotifications(
-      prayerTimings!,
-      settings,
-      labels,
-      t("config.notifBody")
-    );
-
-    setSaved(true);
   }, [settings, prayerTimings, dispatch, t]);
 
   const styles = useMemo(() => makeStyles(theme), [theme]);
@@ -181,10 +188,15 @@ export default function ConfigScreen() {
         style={[styles.saveBtn, saved && styles.saveBtnDone]}
         onPress={handleSave}
         activeOpacity={0.8}
+        disabled={saving}
       >
-        <Text bold style={styles.saveBtnText}>
-          {saved ? t("config.saved") : t("config.save")}
-        </Text>
+        {saving ? (
+          <ActivityIndicator color={Colors.primary} />
+        ) : (
+          <Text bold style={styles.saveBtnText}>
+            {saved ? t("config.saved") : t("config.save")}
+          </Text>
+        )}
       </TouchableOpacity>
     </ScrollView>
   );

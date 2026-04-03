@@ -9,7 +9,7 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import Container from "../components/Container";
 import { LineChart } from "react-native-chart-kit";
-import { AntDesign, MaterialIcons } from "@expo/vector-icons";
+import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import * as React from "react";
 import Text from "../components/Text";
@@ -280,7 +280,10 @@ export default function Stats({ navigation }: any) {
   const filtered = React.useMemo(() => {
     if (dateRange === "all") return allClean;
     const days = dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : 90;
-    const cutoff = dayjs().subtract(days, "days").startOf("day").format("YYYY-MM-DD");
+    const cutoff = dayjs()
+      .subtract(days, "days")
+      .startOf("day")
+      .format("YYYY-MM-DD");
     return allClean.filter((r: any) => r.date >= cutoff);
   }, [allClean, dateRange]);
 
@@ -431,9 +434,7 @@ export default function Stats({ navigation }: any) {
                           : dates.length > 10
                             ? 3
                             : 1;
-                    return i % step === 0
-                      ? dayjs(d).format("MM/DD")
-                      : "";
+                    return i % step === 0 ? dayjs(d).format("MM/DD") : "";
                   }),
                   datasets:
                     chartDatasets.length > 0 ? chartDatasets : [{ data: [0] }],
@@ -525,7 +526,11 @@ export default function Stats({ navigation }: any) {
             style={styles.fabSecondary}
             onPress={() => navigation.navigate("calendar")}
           >
-            <AntDesign name="calendar" size={20} color={theme.text} />
+            <MaterialCommunityIcons
+              name="calendar-month"
+              size={20}
+              color={theme.text}
+            />
           </TouchableOpacity>
         </View>
       </Container>
