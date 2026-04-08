@@ -57,7 +57,7 @@
       [
         "@sentry/react-native/expo",
         {
-          "organization": "adel-tech",
+          "organization": "adel-dev",
           "project": "iltizami"
         }
       ]

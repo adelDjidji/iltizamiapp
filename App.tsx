@@ -17,7 +17,10 @@ import * as Updates from "expo-updates";
 import * as Notifications from "expo-notifications";
 import "./src/i18n";
 import i18n from "./src/i18n";
-import { schedulePrayerNotifications, cancelAllPrayerNotifications } from "./src/utils/notifications";
+import {
+  schedulePrayerNotifications,
+  cancelAllPrayerNotifications,
+} from "./src/utils/notifications";
 import { PrayerKey, NotificationSettingsState } from "./src/store/reducers";
 
 // Android 8+ requires a notification channel — without one notifications are silently dropped.
@@ -66,15 +69,15 @@ const lookForUpdates = async () => {
  */
 const NotificationSync = () => {
   const notificationSettings: NotificationSettingsState = useSelector(
-    (state: any) => state.notificationSettings
+    (state: any) => state.notificationSettings,
   );
   const prayerTimings: Record<string, string> | undefined = useSelector(
-    (state: any) => state.prayer?.data?.timings
+    (state: any) => state.prayer?.data?.timings,
   );
 
   useEffect(() => {
     const anyEnabled = (Object.keys(notificationSettings) as PrayerKey[]).some(
-      (k) => notificationSettings[k].enabled
+      (k) => notificationSettings[k].enabled,
     );
 
     if (!anyEnabled) {
@@ -96,9 +99,9 @@ const NotificationSync = () => {
       prayerTimings,
       notificationSettings,
       labels,
-      i18n.t("config.notifBody")
+      i18n.t("config.notifBody"),
     ).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount after PersistGate hydrates the store
 
   return null;
@@ -107,7 +110,7 @@ const NotificationSync = () => {
 /** Syncs the persisted Redux language to the i18n singleton on every change. */
 const LanguageSync = () => {
   const language = useSelector(
-    (state: any) => (state.settings?.language as "ar" | "en") ?? "ar"
+    (state: any) => (state.settings?.language as "ar" | "en") ?? "ar",
   );
   useEffect(() => {
     i18n.changeLanguage(language);
@@ -136,7 +139,7 @@ const App = () => {
         if (data?.screen === "form" && navigationRef.isReady()) {
           navigationRef.navigate("form");
         }
-      }
+      },
     );
     return () => subscription.remove();
   }, []);
@@ -159,4 +162,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default Sentry.wrap(App);
