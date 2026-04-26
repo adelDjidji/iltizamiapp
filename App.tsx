@@ -12,7 +12,7 @@ import {
 import { useEffect } from "react";
 import { Platform } from "react-native";
 import { MenuProvider } from "react-native-popup-menu";
-import * as Sentry from "@sentry/react-native";
+// import * as Sentry from "@sentry/react-native";
 import * as Updates from "expo-updates";
 import * as Notifications from "expo-notifications";
 import "./src/i18n";
@@ -45,10 +45,10 @@ Notifications.setNotificationHandler({
   }),
 });
 
-Sentry.init({
-  dsn: "https://118ae08f494c461eac2ae218b3d8ce49@o1173031.ingest.sentry.io/6267923",
-  debug: __DEV__,
-});
+// Sentry.init({
+//   dsn: "https://118ae08f494c461eac2ae218b3d8ce49@o1173031.ingest.sentry.io/6267923",
+//   debug: __DEV__,
+// });
 
 const lookForUpdates = async () => {
   try {
@@ -162,4 +162,4 @@ const App = () => {
   );
 };
 
-export default Sentry.wrap(App);
+export default App;

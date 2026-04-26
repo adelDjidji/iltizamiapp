@@ -54,13 +54,13 @@
           "sounds": []
         }
       ],
-      [
-        "@sentry/react-native/expo",
-        {
-          "organization": "adel-dev",
-          "project": "iltizami"
-        }
-      ]
+      // [
+      //   "@sentry/react-native/expo",
+      //   {
+      //     "organization": "adel-dev",
+      //     "project": "iltizami"
+      //   }
+      // ]
     ],
     "owner": "djidjikdadi"
   }
