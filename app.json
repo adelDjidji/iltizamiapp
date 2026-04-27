@@ -27,7 +27,7 @@
     "assetBundlePatterns": ["assets/**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.djidjikdadi.iltizamiapp"
+      "bundleIdentifier": "com.djidjikdadi.iltizami"
     },
     "android": {
       "versionCode": 4,
@@ -39,7 +39,7 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "package": "com.djidjikdadi.iltizamiapp"
+      "package": "com.djidjikdadi.iltizami"
     },
     "web": {
       "favicon": "./assets/iltizamiIcon.png"
