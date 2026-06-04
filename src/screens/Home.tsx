@@ -61,7 +61,7 @@ export default function Home({ navigation }: HomeProps) {
   );
   const { userPosition } = useSelector((state: RootState) => state.settings);
   const notificationSettings = useSelector(
-    (state: any) => state.notificationSettings
+    (state: any) => state.notificationSettings,
   );
 
   // Keep a ref to current cached data so callbacks can check it without stale closures
@@ -103,8 +103,9 @@ export default function Home({ navigation }: HomeProps) {
             },
           });
           // Reschedule prayer notifications with fresh times
-          const anyEnabled = (Object.keys(notificationSettings) as PrayerKey[])
-            .some((k) => notificationSettings[k].enabled);
+          const anyEnabled = (
+            Object.keys(notificationSettings) as PrayerKey[]
+          ).some((k) => notificationSettings[k].enabled);
           if (anyEnabled) {
             const labels: Record<PrayerKey, string> = {
               fajr: t("ind.fajr"),
@@ -117,7 +118,7 @@ export default function Home({ navigation }: HomeProps) {
               responseData.data.timings,
               notificationSettings,
               labels,
-              t("config.notifBody")
+              t("config.notifBody"),
             ).catch(() => {});
           }
         } else {
@@ -187,7 +188,10 @@ export default function Home({ navigation }: HomeProps) {
   }, [data, isFetching]);
 
   return (
-    <Container navigation={navigation} style={[styles.container, { backgroundColor: theme.bg }]}>
+    <Container
+      navigation={navigation}
+      style={[styles.container, { backgroundColor: theme.bg }]}
+    >
       <ImageBackground
         resizeMode="cover"
         style={styles.coverImage}
@@ -195,17 +199,27 @@ export default function Home({ navigation }: HomeProps) {
       >
         <Clock />
 
-        <TouchableOpacity
-          style={[styles.locationContainer, { flexDirection: flexRow }]}
-          onPress={() => setLocationModalVisible(true)}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="location" size={16} color="white" />
-          <Text style={styles.locationText}>
-            {locationName ?? t("home.setLocation")}
-          </Text>
-          <Ionicons name="pencil" size={12} color="rgba(255,255,255,0.6)" />
-        </TouchableOpacity>
+        <View style={[styles.topControlsContainer, { flexDirection: flexRow }]}>
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={loadTimings}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="refresh" size={18} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.locationContainer, { flexDirection: flexRow }]}
+            onPress={() => setLocationModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="location" size={16} color="white" />
+            <Text style={styles.locationText}>
+              {locationName ?? t("home.setLocation")}
+            </Text>
+            <Ionicons name="pencil" size={12} color="rgba(255,255,255,0.6)" />
+          </TouchableOpacity>
+        </View>
 
         <LocationPickerModal
           visible={locationModalVisible}
@@ -225,7 +239,18 @@ export default function Home({ navigation }: HomeProps) {
           </View>
         ) : !data ? (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{t("home.errorLoadingPrayers")}</Text>
+            <Text style={styles.errorText}>
+              {t("home.errorLoadingPrayers")}
+            </Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={loadTimings}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.retryButtonText}>
+                {t("home.retry") || "Retry"}
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <SalatTable data={data} />
@@ -260,13 +285,26 @@ const styles = StyleSheet.create({
     marginRight: 40,
     marginBottom: 20,
   },
-  locationContainer: {
+  topControlsContainer: {
     marginRight: 40,
     marginBottom: 6,
     display: "flex",
     alignItems: "center",
-    gap: 4,
+    gap: 16,
     paddingBottom: 20,
+  },
+  locationContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    flex: 1,
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   locationText: {
     color: "white",
@@ -299,5 +337,18 @@ const styles = StyleSheet.create({
   errorText: {
     color: "white",
     textAlign: "center",
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  retryButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
