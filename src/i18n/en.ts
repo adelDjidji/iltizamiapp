@@ -65,7 +65,8 @@ export default {
     avg: "Average",
     best: "Best",
     resetTitle: "Reset Stats",
-    resetMsg: "This will permanently delete all your recorded data. Are you sure?",
+    resetMsg:
+      "This will permanently delete all your recorded data. Are you sure?",
     resetConfirm: "Delete",
   },
 
