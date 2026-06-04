@@ -201,14 +201,6 @@ export default function Home({ navigation }: HomeProps) {
 
         <View style={[styles.topControlsContainer, { flexDirection: flexRow }]}>
           <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={loadTimings}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="refresh" size={18} color="white" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
             style={[styles.locationContainer, { flexDirection: flexRow }]}
             onPress={() => setLocationModalVisible(true)}
             activeOpacity={0.7}

@@ -49,6 +49,7 @@ export default {
     loadingPrayers: "Loading prayer times...",
     errorLoadingPrayers:
       "Failed to load prayer times. Please check your internet connection.",
+    retry: "Retry",
   },
 
   // Stats

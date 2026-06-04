@@ -47,6 +47,7 @@ export default {
     loadingPrayers: "جاري تحميل أوقات الصلاة...",
     errorLoadingPrayers:
       "تعذّر تحميل أوقات الصلاة. يرجى التحقق من اتصالك بالإنترنت.",
+    retry: "حاول مرة أخرى",
   },
 
   // Stats
