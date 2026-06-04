@@ -93,6 +93,7 @@ export default function Home({ navigation }: HomeProps) {
         const API_URL = getApiUrl(location);
         const response = await fetch(API_URL);
         const responseData = await response.json();
+        alert(API_URL);
 
         if (responseData.code === 200) {
           dispatch({
