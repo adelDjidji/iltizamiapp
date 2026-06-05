@@ -77,7 +77,7 @@ export default function Home({ navigation }: HomeProps) {
     const defaultMethod = 3;
     const formattedDate = dayjs().format("DD-MM-YYYY");
 
-    return `http://api.aladhan.com/v1/timings/${formattedDate}?latitude=${location?.latitude}&longitude=${location?.longitude}&method=${defaultMethod}&adjustment=1`;
+    return `https://api.aladhan.com/v1/timings/${formattedDate}?latitude=${location?.latitude}&longitude=${location?.longitude}&method=${defaultMethod}&adjustment=1`;
   }, []);
 
   // Improved error handling and loading state management
@@ -92,8 +92,10 @@ export default function Home({ navigation }: HomeProps) {
         setIsFetching(true);
         const API_URL = getApiUrl(location);
         const response = await fetch(API_URL);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
         const responseData = await response.json();
-        alert(API_URL);
 
         if (responseData.code === 200) {
           dispatch({
