@@ -3,7 +3,7 @@ import { useTheme } from "./src/hooks/useTheme";
 import { store, persistor } from "./src/store/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { Provider, useSelector } from "react-redux";
-import RootStack, { navigationRef } from "./src/navigation";
+import RootStack, { navigateFromNotificationResponse } from "./src/navigation";
 import {
   useFonts,
   Cairo_400Regular,
@@ -133,14 +133,9 @@ const App = () => {
   useEffect(() => {
     if (process.env.NODE_ENV !== "development") lookForUpdates();
 
-    // Navigate to form screen when user taps a prayer reminder notification
+    // Foreground / background: user taps a notification while app is running
     const subscription = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
-        const data = response.notification.request.content.data;
-        if (data?.screen === "form" && navigationRef.isReady()) {
-          navigationRef.navigate("form");
-        }
-      },
+      navigateFromNotificationResponse,
     );
     return () => subscription.remove();
   }, []);

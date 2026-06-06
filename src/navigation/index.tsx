@@ -5,8 +5,7 @@ import {
   NavigationContainer,
   createNavigationContainerRef,
 } from "@react-navigation/native";
-
-export const navigationRef = createNavigationContainerRef<any>();
+import * as Notifications from "expo-notifications";
 import Home from "../screens/Home";
 import Stats from "../screens/Stats";
 import {
@@ -29,6 +28,29 @@ import CalendarScreen from "../screens/Calendar";
 import AdkarList from "../screens/AdkarList";
 import About from "../screens/About";
 import FortyDaysChallenge from "../screens/FortyDaysChallenge";
+
+export const navigationRef = createNavigationContainerRef<any>();
+
+/** Navigate to the evaluation form when the user taps a prayer reminder. */
+export function navigateFromNotificationResponse(
+  response: Notifications.NotificationResponse | null | undefined,
+): void {
+  if (!response) return;
+
+  const screen = response.notification.request.content.data?.screen;
+  if (screen !== "form") return;
+
+  if (navigationRef.isReady()) {
+    navigationRef.navigate("form");
+  }
+}
+
+/** Handle notification taps that launched the app from a killed state. */
+function handleColdStartNotification(): void {
+  Notifications.getLastNotificationResponseAsync().then((response) => {
+    navigateFromNotificationResponse(response);
+  });
+}
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -202,7 +224,10 @@ const RootStack = () => {
   // It is requested only when the user opens the Prayers (Home) screen,
   // so the app never prompts for location on startup.
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={handleColdStartNotification}
+    >
       <MainStack />
     </NavigationContainer>
   );
