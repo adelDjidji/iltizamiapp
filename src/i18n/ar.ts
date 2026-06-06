@@ -138,6 +138,10 @@ export default {
 
   // Navigation / Alerts
   nav: {
+    tabHome: "الرئيسية",
+    tabPrayer: "الصلاة",
+    tabStats: "الإحصائيات",
+    tabAbout: "حول",
     formTitle: "دفتر المحاسبة",
     configTitle: "إعدادات",
     adkarTitle: "أذكار المسلم",

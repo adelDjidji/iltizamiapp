@@ -5,11 +5,6 @@
     "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/iltizamiIcon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#ffffff"
-    },
     "updates": {
       "url": "https://u.expo.dev/0223f06c-c383-4c15-8ddc-aba1cffd817e",
       "enabled": true,
@@ -24,10 +19,15 @@
         "projectId": "0223f06c-c383-4c15-8ddc-aba1cffd817e"
       }
     },
-    "assetBundlePatterns": ["assets/**/*"],
+    "assetBundlePatterns": [
+      "assets/**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.djidjikdadi.iltizami"
+      "bundleIdentifier": "com.djidjikdadi.iltizami",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "versionCode": 4,
@@ -46,6 +46,14 @@
     },
     "plugins": [
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
@@ -53,14 +61,7 @@
           "defaultChannel": "prayer-reminders",
           "sounds": []
         }
-      ],
-      // [
-      //   "@sentry/react-native/expo",
-      //   {
-      //     "organization": "adel-dev",
-      //     "project": "iltizami"
-      //   }
-      // ]
+      ]
     ],
     "owner": "djidjikdadi"
   }

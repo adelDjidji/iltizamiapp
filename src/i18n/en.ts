@@ -141,6 +141,10 @@ export default {
 
   // Navigation / Alerts
   nav: {
+    tabHome: "Home",
+    tabPrayer: "Prayers",
+    tabStats: "Stats",
+    tabAbout: "About",
     formTitle: "Accountability Journal",
     configTitle: "Settings",
     adkarTitle: "Muslim Adhkar",

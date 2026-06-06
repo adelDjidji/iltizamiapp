@@ -3,7 +3,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 import Colors from "../constants/Colors";
 
-export default function Text(props) {
+export default function Text(props: any) {
   const themeMode = useSelector((state: any) => state.settings?.theme ?? "dark") as "dark" | "light";
   const defaultColor = themeMode === "light" ? Colors.primary : "#ffffff";
 

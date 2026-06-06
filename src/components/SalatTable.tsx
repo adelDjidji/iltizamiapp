@@ -117,8 +117,6 @@ export default function SalatTable({ data }: SalatTableProps) {
     };
   }, [data, timeCalcul]);
 
-  console.log(listData);
-
   return (
     <View style={[staticStyles.salatsContainer, { backgroundColor: theme.bgCard }]}>
       <Text bold style={staticStyles.title} align="center">

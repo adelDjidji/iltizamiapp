@@ -12,6 +12,7 @@ import {
 import { useEffect } from "react";
 import { Platform } from "react-native";
 import { MenuProvider } from "react-native-popup-menu";
+import ErrorBoundary from "./src/components/ErrorBoundary";
 // import * as Sentry from "@sentry/react-native";
 import * as Updates from "expo-updates";
 import * as Notifications from "expo-notifications";
@@ -149,16 +150,18 @@ const App = () => {
   }
 
   return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <NotificationSync />
-        <LanguageSync />
-        <ThemeStatusBar />
-        <MenuProvider>
-          <RootStack />
-        </MenuProvider>
-      </PersistGate>
-    </Provider>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <NotificationSync />
+          <LanguageSync />
+          <ThemeStatusBar />
+          <MenuProvider>
+            <RootStack />
+          </MenuProvider>
+        </PersistGate>
+      </Provider>
+    </ErrorBoundary>
   );
 };
 

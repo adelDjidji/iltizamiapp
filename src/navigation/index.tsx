@@ -17,15 +17,11 @@ import {
 } from "@expo/vector-icons";
 import Dashboard from "../screens/Dashboard";
 import Colors from "../constants/Colors";
-import { View, Text, Alert } from "react-native";
 import FormEvaluation from "../screens/FormEvaluation";
-import { Provider, useSelector, useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
 
-import * as SecureStore from "expo-secure-store";
 import { useTheme } from "../hooks/useTheme";
 
-import * as Location from "expo-location";
 import ConfigScreen from "../screens/Config";
 import Tasbih from "../screens/Tasbih";
 import Adkar from "../screens/Adkar";
@@ -39,10 +35,15 @@ const Stack = createNativeStackNavigator();
 
 function TabsStack() {
   const theme = useTheme();
+  const { t } = useTranslation();
   return (
     <Tab.Navigator
       screenOptions={({ navigation, route }) => ({
-        tabBarStyle: { backgroundColor: theme.tabBar, borderTopWidth: 0 },
+        tabBarStyle: {
+          backgroundColor: theme.bg,
+          borderTopWidth: 1,
+          borderTopColor: theme.border,
+        },
         tabBarShowLabel: false,
         tabBarInactiveTintColor: theme.tabBarInactive,
         tabBarActiveTintColor: Colors.gold,
@@ -197,66 +198,9 @@ const MainStack = () => {
 };
 
 const RootStack = () => {
-  const dispatch = useDispatch();
-  const { t } = useTranslation();
-
-  const { userPosition } = useSelector((state: any) => state.settings);
-
-  const verifyPermissions = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(t("nav.locationPermTitle"), t("nav.locationPermMsg"), [
-        { text: t("cancel") },
-      ]);
-      return false;
-    }
-    return true;
-  };
-
-  const getLocationHandler = async () => {
-    let loc = null;
-    const hasPermission = await verifyPermissions();
-    if (!hasPermission) return;
-
-    try {
-      const location = await Location.getCurrentPositionAsync({});
-      loc = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
-    } catch (err) {
-      Alert.alert(t("nav.locationErrTitle"), t("nav.locationErrMsg"), [
-        { text: t("cancel") },
-      ]);
-    }
-
-    return loc;
-  };
-
-  const loadLocation = async () => {
-    try {
-      let location;
-      const savedPos = (await SecureStore.getItemAsync("user-position")) || "";
-      const isValidSaved = savedPos !== "" && savedPos !== "null" && savedPos !== "undefined";
-      if (isValidSaved) {
-        location = JSON.parse(savedPos);
-      } else {
-        location = await getLocationHandler();
-        // Only store if we got a valid location — JSON.stringify(undefined) is not a string
-        if (location) {
-          await SecureStore.setItemAsync("user-position", JSON.stringify(location));
-        }
-      }
-      dispatch({ type: "USER_POSITION", payload: location ?? null });
-    } catch {
-      // SecureStore or location APIs failed; userPosition remains as persisted by Redux
-    }
-  };
-
-  React.useEffect(() => {
-    loadLocation();
-  }, []);
-
+  // Location permission is intentionally NOT requested here.
+  // It is requested only when the user opens the Prayers (Home) screen,
+  // so the app never prompts for location on startup.
   return (
     <NavigationContainer ref={navigationRef}>
       <MainStack />

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import * as Location from "expo-location";
+import * as SecureStore from "expo-secure-store";
 import Container from "../components/Container";
 import Text from "../components/Text";
 import { useDispatch, useSelector } from "react-redux";
@@ -150,18 +151,57 @@ export default function Home({ navigation }: HomeProps) {
     loadPrayersTimings(userPosition);
   }, [loadPrayersTimings, userPosition]);
 
+  // Request the device location. This is the ONLY place the app asks for the
+  // location permission — it runs when the user opens the Prayers screen and
+  // we don't already have a stored position. Timings load via the effect below
+  // once `userPosition` updates in the store.
+  const acquireLocation = useCallback(async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(t("nav.locationPermTitle"), t("nav.locationPermMsg"));
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({});
+      const coords = {
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+      };
+      try {
+        await SecureStore.setItemAsync("user-position", JSON.stringify(coords));
+      } catch {
+        // SecureStore unavailable — Redux persistence still keeps the value.
+      }
+      dispatch({ type: "USER_POSITION", payload: coords });
+    } catch {
+      Alert.alert(t("nav.locationErrTitle"), t("nav.locationErrMsg"));
+    }
+  }, [dispatch, t]);
+
   // Check if we need to reload data based on date
   const needsReload = useMemo(() => {
     const today = dayjs().format("DD-MM-YYYY");
     return !data || current_date !== today;
   }, [data, current_date]);
 
-  // Use effect with proper dependencies
+  // Ask for location only on first open of the Prayers screen when missing.
   useEffect(() => {
-    if (needsReload) {
+    if (!userPosition) acquireLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load prayer timings whenever we have a position and data is stale.
+  useEffect(() => {
+    if (userPosition && needsReload) {
       loadTimings();
     }
-  }, [needsReload, loadTimings]);
+  }, [userPosition, needsReload, loadTimings]);
+
+  // Retry handler: re-acquire location if we still don't have one, else refetch.
+  const handleRetry = useCallback(() => {
+    if (userPosition) loadTimings();
+    else acquireLocation();
+  }, [userPosition, loadTimings, acquireLocation]);
 
   useEffect(() => {
     if (!userPosition) return;
@@ -239,7 +279,7 @@ export default function Home({ navigation }: HomeProps) {
             </Text>
             <TouchableOpacity
               style={styles.retryButton}
-              onPress={loadTimings}
+              onPress={handleRetry}
               activeOpacity={0.7}
             >
               <Text style={styles.retryButtonText}>

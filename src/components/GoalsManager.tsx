@@ -102,12 +102,14 @@ const GoalFormModal = memo(
     visible,
     onClose,
     onSubmit,
+    onDelete,
     initialValue = "",
     isEditing = false,
   }: {
     visible: boolean;
     onClose: () => void;
     onSubmit: (title: string) => void;
+    onDelete?: () => void;
     initialValue?: string;
     isEditing?: boolean;
   }) => {
@@ -146,10 +148,20 @@ const GoalFormModal = memo(
             {/* Drag handle */}
             <View style={[styles.sheetHandle, { backgroundColor: theme.border }]} />
 
-            {/* Title */}
-            <Text bold style={[styles.sheetTitle, { color: theme.text }]}>
-              {isEditing ? t("goals.editGoal") : t("goals.newGoal")}
-            </Text>
+            {/* Title row */}
+            <View style={styles.sheetTitleRow}>
+              <Text bold style={[styles.sheetTitle, { color: theme.text }]}>
+                {isEditing ? t("goals.editGoal") : t("goals.newGoal")}
+              </Text>
+              {isEditing && onDelete && (
+                <TouchableOpacity
+                  onPress={onDelete}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <AntDesign name="delete" size={20} color={Colors.danger} />
+                </TouchableOpacity>
+              )}
+            </View>
 
             {/* Input + char counter */}
             <View style={styles.inputWrapper}>
@@ -303,6 +315,7 @@ export default function GoalsManager() {
           visible={editModalVisible}
           onClose={closeEditModal}
           onSubmit={handleEdit}
+          onDelete={() => handleDelete(currentGoal.id)}
           initialValue={currentGoal.title}
           isEditing
         />
@@ -470,9 +483,15 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: 16,
   },
+  sheetTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
   sheetTitle: {
     fontSize: 16,
-    marginBottom: 16,
+    flex: 1,
     textAlign: "center",
   },
   inputWrapper: {

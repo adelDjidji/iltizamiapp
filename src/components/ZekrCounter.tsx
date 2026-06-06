@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Vibration } from "react-native";
 import React from "react";
 import Card from "./Card";
 import Text from "./Text";
@@ -11,13 +11,20 @@ type Props = { item: Zekr };
 export default function ZekrCounter({ item }: Props) {
   const { t } = useTranslation();
   const [count, setCount] = React.useState(0);
-  const done = count >= item.reps;
+  const totalReps = item.reps > 0 ? item.reps : 1;
+  const done = count >= totalReps;
 
   const handlePress = () => {
-    if (!done) setCount((c) => c + 1);
+    if (done) return;
+    setCount((c) => {
+      const next = c + 1;
+      // Gentle confirmation buzz when the dhikr target is reached.
+      if (next >= totalReps) Vibration.vibrate(60);
+      return next;
+    });
   };
 
-  const pct = Math.min(count / item.reps, 1);
+  const pct = Math.min(count / totalReps, 1);
 
   return (
     <TouchableOpacity onPress={handlePress} activeOpacity={done ? 1 : 0.8}>
@@ -65,7 +72,7 @@ export default function ZekrCounter({ item }: Props) {
                 </Text>
                 <Text color="#bbb"> / </Text>
                 <Text h3 color="#888">
-                  {item.reps}
+                  {totalReps}
                 </Text>
               </>
             )}

@@ -663,13 +663,13 @@ const ListAdkar: zekrMap = {
       header: "أذكار من قلق في فراشه ولم ينم",
       body: 'عن بريدة رضي الله عنه، قال: شكا خالد بن الوليد رضي الله عنه إلى النبي صلى الله عليه وسلم فقال: يا رسول الله! ما أنام الليل من الأرق، فقال النبي صلى الله عليه وسلم: "إذا أويت إلى فراشك فقل: اللهم رب السموات السبع وما أظلت، ورب الأرضين وما أقلت، ورب الشياطين وما أضلت، كن لي جارا من خلقك كلهم جميعا أن يفرط علي أحد منهم أو أن يبغي علي، عز جارك، وجل ثناؤك ولا إله غيرك، ولا إله إلا أنت"',
       footer: "",
-      resp: 1,
+      reps: 1,
     },
     {
       header: "أذكار الأحلام",
       body: 'عن أبي قتادة رضي الله عنه قال: قال رسول الله صلى الله عليه وسلم: "الرؤيا الصالحة" وفي رواية "الرؤيا الحسنة من الله، والحلم من الشيطان، فمن رأى شيئا يكرهه فلينفث عن شماله ثلاثا وليتعوذ من الشيطان، فإنها لا تضره". ',
       footer: "",
-      resp: 1,
+      reps: 1,
     },
   ],
   [AdkarTypes.SALAT_DIVERS]: [
@@ -1001,7 +1001,7 @@ const ListAdkar: zekrMap = {
 //   return JSON.stringify(result);
 // }
 
-export default function AdkarList({ navigation, route }) {
+export default function AdkarList({ navigation, route }: any) {
   const { id, title } = route.params;
   const theme = useTheme();
   const data = ListAdkar[id] ?? null;
@@ -1009,13 +1009,13 @@ export default function AdkarList({ navigation, route }) {
     navigation.setOptions({
       title,
     });
-  });
+  }, [navigation, title]);
 
   return (
     <ScrollView style={{ backgroundColor: theme.bg }}>
       {data &&
-        data.map((item) => (
-          <ZekrCounter item={item}/>
+        data.map((item, index) => (
+          <ZekrCounter key={`${id}-${index}`} item={item} />
         ))}
     </ScrollView>
   );

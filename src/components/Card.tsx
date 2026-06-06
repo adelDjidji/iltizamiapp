@@ -18,10 +18,10 @@ const styles = StyleSheet.create({
           backgroundColor: "white"
       }
 });
-export default function Card(props) {
+export default function Card(props: any) {
   return <View style={styles.container}>{props.children}</View>;
 }
-Card.Header = (props) => (
+Card.Header = (props: any) => (
   <View
     style={{
       marginBottom: 10,
@@ -32,6 +32,6 @@ Card.Header = (props) => (
     {props.children}
   </View>
 );
-Card.Body = (props) => (
+Card.Body = (props: any) => (
   <View style={styles.body}>{props.children}</View>
 );

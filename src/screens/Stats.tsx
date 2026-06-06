@@ -350,12 +350,14 @@ export default function Stats({ navigation }: any) {
       <Container navigation={navigation}>
         {/* Header */}
         <View style={[styles.header, { flexDirection: "row" }]}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-          >
-            <AntDesign name="arrow-left" size={18} color={theme.text} />
-          </TouchableOpacity>
+          {navigation.canGoBack() && (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backBtn}
+            >
+              <AntDesign name="arrow-left" size={18} color={theme.text} />
+            </TouchableOpacity>
+          )}
           <Text
             h3
             bold

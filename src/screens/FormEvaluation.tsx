@@ -268,10 +268,17 @@ export default function FormEvaluation({ navigation, route }: any) {
   const formattedDate = useMemo(() => dayjs(day).format("YYYY-MM-DD"), [day]);
   const dispatch = useDispatch();
 
+  // Always normalise to the current Indicators shape. Reading stored values
+  // positionally (with fallbacks) prevents out-of-bounds crashes when the
+  // indicator schema changes between app versions.
   const initialData = useMemo(() => {
-    const resultsData = results.find((res: any) => res.date === formattedDate);
-    if (resultsData?.data) return resultsData.data;
-    return Indicators.map((indicator) => Array(indicator.items.length).fill(0));
+    const stored = results.find((res: any) => res.date === formattedDate)?.data;
+    return Indicators.map((indicator, secIdx) =>
+      indicator.items.map((_, itemIdx) => {
+        const v = stored?.[secIdx]?.[itemIdx];
+        return typeof v === "number" ? v : 0;
+      }),
+    );
   }, [results, formattedDate]);
 
   const [data, setData] = useState(initialData);
@@ -504,13 +511,13 @@ export default function FormEvaluation({ navigation, route }: any) {
                           styles.scoreBadge,
                           {
                             backgroundColor: getScoreColor(
-                              data[indexInd][indexItem],
+                              data[indexInd]?.[indexItem] ?? 0,
                             ),
                           },
                         ]}
                       >
                         <Text bold color="white">
-                          {data[indexInd][indexItem]}
+                          {data[indexInd]?.[indexItem] ?? 0}
                         </Text>
                       </View>
                     </View>

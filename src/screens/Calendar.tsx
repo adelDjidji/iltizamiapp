@@ -144,7 +144,6 @@ export default function CalendarScreen({ navigation }: any) {
       };
     }
 
-    console.log("dates =", dates);
     return dates;
   }, [results, theme.text]);
 

@@ -18,7 +18,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
-export default function Tasbih({ navigation }) {
+export default function Tasbih({ navigation }: any) {
   const [vibrationActive, setvibrationActive] = React.useState(false);
   const handleTasbih = () => {};
   return (
@@ -85,7 +85,7 @@ export default function Tasbih({ navigation }) {
   );
 }
 
-const Counter = (props) => {
+const Counter = (props: any) => {
   const [number, setnumber] = React.useState<number>(props.initNumber || 0);
   const shakeAnimation = React.useRef(new Animated.Value(0)).current;
 
@@ -167,7 +167,7 @@ const Counter = (props) => {
 };
 
 const xOffset = new Animated.Value(0);
-const transitionAnimation = (index) => {
+const transitionAnimation = (index: number) => {
   return {
     transform: [
       { perspective: 800 },
@@ -204,7 +204,7 @@ const transitionAnimation = (index) => {
     ],
   };
 };
-const Screen = (props) => {
+const Screen = (props: any) => {
   const MAX_TABS = 2;
   return (
     <View style={styles.scrollPage}>
@@ -217,12 +217,12 @@ const Screen = (props) => {
       >
         <View>
           {props.index < MAX_TABS && (
-            <AntDesign name="swapright" size={30} color={Colors.gold} />
+            <AntDesign name="swap-right" size={30} color={Colors.gold} />
           )}
         </View>
         <View>
           {props.index > 0 && (
-            <AntDesign name="swapleft" size={30} color={Colors.gold} />
+            <AntDesign name="swap-left" size={30} color={Colors.gold} />
           )}
         </View>
       </View>
