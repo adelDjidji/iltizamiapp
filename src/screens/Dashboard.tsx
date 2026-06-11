@@ -2,28 +2,30 @@ import React, { useMemo } from "react";
 import {
   View,
   Image,
-  TouchableOpacity,
   Dimensions,
-  ImageBackground,
   StatusBar,
   ScrollView,
   StyleSheet,
 } from "react-native";
 import { AntDesign, Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
-
-import * as Notifications from "expo-notifications";
 
 import Container from "../components/Container";
 import Text from "../components/Text";
 import Colors from "../constants/Colors";
 import GoalsManager from "../components/GoalsManager";
 import ChallengeCard from "../components/ChallengeCard";
+import {
+  GlassBackdrop,
+  GlassButton,
+  GlassCard,
+  GlassPill,
+} from "../components/GlassSurface";
 import { useRTL } from "../hooks/useRTL";
 import { useTheme } from "../hooks/useTheme";
-import { Theme } from "../constants/Theme";
 
 const { width: SW } = Dimensions.get("window");
 const HALF_W = SW / 2 - 15;
@@ -38,65 +40,63 @@ const LanguageSelector = () => {
     dispatch({ type: "SET_LANGUAGE", payload: lang });
 
   return (
-    <View style={[langStyles.pill, { backgroundColor: theme.bgCard + "cc" }]}>
-      <TouchableOpacity
-        style={[
-          langStyles.btn,
-          { borderColor: theme.border },
-          !isRTL && { backgroundColor: Colors.gold, borderColor: Colors.gold },
-        ]}
-        onPress={() => select("en")}
-        activeOpacity={0.8}
-      >
-        <Text
-          style={[
-            langStyles.btnText,
-            { color: theme.textMuted },
-            !isRTL && { color: Colors.primary, fontWeight: "700" },
-          ]}
+    <GlassPill intensity={theme.mode === "dark" ? 32 : 44}>
+      <View style={langStyles.pillInner}>
+        <GlassButton
+          onPress={() => select("en")}
+          active={!isRTL}
+          activeColor={Colors.gold + "cc"}
+          style={langStyles.btn}
         >
-          EN
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[
-          langStyles.btn,
-          { borderColor: theme.border },
-          isRTL && { backgroundColor: Colors.gold, borderColor: Colors.gold },
-        ]}
-        onPress={() => select("ar")}
-        activeOpacity={0.8}
-      >
-        <Text
-          style={[
-            langStyles.btnText,
-            { color: theme.text },
-            isRTL && { color: Colors.primary, fontWeight: "700" },
-          ]}
+          <Text
+            style={[
+              langStyles.btnText,
+              { color: theme.text },
+              !isRTL && { color: Colors.primary, fontWeight: "700" },
+            ]}
+          >
+            EN
+          </Text>
+        </GlassButton>
+        <GlassButton
+          onPress={() => select("ar")}
+          active={isRTL}
+          activeColor={Colors.gold + "cc"}
+          style={langStyles.btn}
         >
-          عربي
-        </Text>
-      </TouchableOpacity>
-    </View>
+          <Text
+            style={[
+              langStyles.btnText,
+              { color: theme.text },
+              isRTL && { color: Colors.primary, fontWeight: "700" },
+            ]}
+          >
+            عربي
+          </Text>
+        </GlassButton>
+      </View>
+    </GlassPill>
   );
 };
 
 const langStyles = StyleSheet.create({
-  pill: {
+  pillInner: {
     flexDirection: "row",
-    borderRadius: 20,
-    overflow: "hidden",
-    gap: 4,
     padding: 3,
+    gap: 4,
+    zIndex: 1,
   },
   btn: {
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderRadius: 20,
+    paddingVertical: 7,
+    borderRadius: 18,
+    minWidth: 44,
+    alignItems: "center",
+    justifyContent: "center",
   },
   btnText: {
     fontSize: 13,
+    letterSpacing: 0.2,
   },
 });
 
@@ -106,21 +106,14 @@ const ThemeToggle = () => {
   const theme = useTheme();
   const isDark = theme.mode === "dark";
   return (
-    <TouchableOpacity
-      style={[
-        iconBtn.base,
-        {
-          backgroundColor: theme.bgCard,
-          borderColor: theme.border,
-        },
-      ]}
+    <GlassButton
+      style={iconBtn.base}
       onPress={() =>
         dispatch({ type: "SET_THEME", payload: isDark ? "light" : "dark" })
       }
-      activeOpacity={0.8}
     >
-      <Feather name={isDark ? "sun" : "moon"} size={18} color={theme.textSub} />
-    </TouchableOpacity>
+      <Feather name={isDark ? "sun" : "moon"} size={17} color={theme.textSub} />
+    </GlassButton>
   );
 };
 
@@ -128,27 +121,19 @@ const ThemeToggle = () => {
 const SettingsButton = ({ onPress }: { onPress: () => void }) => {
   const theme = useTheme();
   return (
-    <TouchableOpacity
-      style={[
-        iconBtn.base,
-        {
-          backgroundColor: theme.bgCard,
-          borderColor: theme.border,
-        },
-      ]}
-      onPress={onPress}
-      activeOpacity={0.8}
-    >
-      <Feather name="settings" size={18} color={theme.textSub} />
-    </TouchableOpacity>
+    <GlassButton style={iconBtn.base} onPress={onPress}>
+      <Feather name="settings" size={17} color={theme.textSub} />
+    </GlassButton>
   );
 };
 
 const iconBtn = StyleSheet.create({
   base: {
-    padding: 8,
-    borderWidth: 1,
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 
@@ -168,59 +153,52 @@ const HalfCard = ({
 }) => {
   const { isRTL } = useRTL();
   const theme = useTheme();
-  const cardBg = theme.mode === "dark" ? "rgba(1,19,35,0.82)" : theme.bgCard;
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.halfCard,
-        {
-          backgroundColor: cardBg,
-          borderColor: accentColor + "40",
-        },
-      ]}
+    <GlassCard
+      style={styles.halfCard}
+      accentColor={accentColor}
       onPress={onPress}
-      activeOpacity={0.82}
     >
-      {/* Accent top-bar */}
-      <View style={[styles.accentBar, { backgroundColor: accentColor }]} />
+      <View style={styles.halfCardBody}>
+        <View
+          style={[
+            styles.iconCircle,
+            {
+              backgroundColor: accentColor + "14",
+              borderColor: accentColor + "30",
+            },
+          ]}
+        >
+          {icon}
+        </View>
 
-      {/* Icon circle */}
-      <View
-        style={[
-          styles.iconCircle,
-          {
-            backgroundColor: accentColor + "18",
-            borderColor: accentColor + "45",
-          },
-        ]}
-      >
-        {icon}
+        <Text
+          style={[styles.halfTitle, { color: theme.text, textAlign: "center" }]}
+        >
+          {title}
+        </Text>
+        <Text
+          style={[
+            styles.halfSub,
+            { color: theme.textSub, textAlign: "center" },
+          ]}
+        >
+          {subtitle}
+        </Text>
+
+        <AntDesign
+          name="right"
+          size={10}
+          color={theme.textMuted}
+          style={[
+            styles.chevron,
+            isRTL ? { left: 12, right: undefined } : { right: 12 },
+            isRTL && { transform: [{ scaleX: -1 }] },
+          ]}
+        />
       </View>
-
-      {/* Title + subtitle */}
-      <Text
-        style={[styles.halfTitle, { color: theme.text, textAlign: "center" }]}
-      >
-        {title}
-      </Text>
-      <Text
-        style={[styles.halfSub, { color: theme.textSub, textAlign: "center" }]}
-      >
-        {subtitle}
-      </Text>
-
-      {/* Chevron */}
-      <AntDesign
-        name="right"
-        size={11}
-        color={accentColor + "99"}
-        style={[
-          styles.chevron,
-          isRTL ? { left: 10, right: undefined } : { right: 10 },
-          isRTL && { transform: [{ scaleX: -1 }] },
-        ]}
-      />
-    </TouchableOpacity>
+    </GlassCard>
   );
 };
 
@@ -230,8 +208,6 @@ const FullCard = ({
   title,
   subtitle,
   accentColor,
-  badgeValue,
-  badgeLabel,
   onPress,
 }: {
   icon: React.ReactNode;
@@ -244,38 +220,27 @@ const FullCard = ({
 }) => {
   const { isRTL, flexRow } = useRTL();
   const theme = useTheme();
-  const cardBg = theme.mode === "dark" ? "rgba(1,19,35,0.82)" : theme.bgCard;
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.fullCard,
-        {
-          backgroundColor: cardBg,
-          borderColor: accentColor + "40",
-        },
-      ]}
+    <GlassCard
+      style={styles.fullCard}
+      accentColor={accentColor}
+      accentPosition={isRTL ? "right" : "left"}
       onPress={onPress}
-      activeOpacity={0.82}
     >
-      {/* Accent side-bar */}
       <View
         style={[
-          styles.accentBarLeft,
-          {
-            backgroundColor: accentColor,
-            [isRTL ? "right" : "left"]: 0,
-          },
+          styles.fullCardInner,
+          { flexDirection: flexRow },
+          isRTL && styles.fullCardInnerRtl,
         ]}
-      />
-
-      <View style={[styles.fullCardInner, { flexDirection: flexRow }]}>
-        {/* Icon */}
+      >
         <View
           style={[
             styles.fullCardIcon,
             {
-              backgroundColor: accentColor + "18",
-              borderColor: accentColor + "45",
+              backgroundColor: accentColor + "14",
+              borderColor: accentColor + "30",
               marginRight: isRTL ? 0 : 14,
               marginLeft: isRTL ? 14 : 0,
             },
@@ -284,7 +249,6 @@ const FullCard = ({
           {icon}
         </View>
 
-        {/* Text */}
         <View
           style={[
             styles.fullCardText,
@@ -297,47 +261,24 @@ const FullCard = ({
           </Text>
         </View>
 
-        {/* Live badge */}
-        {/* {badgeValue !== undefined && (
-          <View
-            style={[
-              styles.badge,
-              {
-                backgroundColor: accentColor + "18",
-                borderColor: accentColor + "50",
-                marginLeft: isRTL ? 0 : "auto",
-                marginRight: isRTL ? "auto" : 0,
-              },
-            ]}
-          >
-            <Text style={[styles.badgeValue, { color: accentColor }]}>
-              {badgeValue}
-            </Text>
-            <Text style={[styles.badgeLabel, { color: theme.textMuted }]}>
-              {badgeLabel}
-            </Text>
-          </View>
-        )} */}
-
-        {/* Chevron */}
         <AntDesign
           name="right"
-          size={12}
-          color={accentColor + "88"}
+          size={11}
+          color={theme.textMuted}
           style={[
-            { marginLeft: isRTL ? 0 : 8, marginRight: isRTL ? 8 : 0 },
+            { marginLeft: isRTL ? 0 : 6, marginRight: isRTL ? 6 : 0 },
             isRTL && { transform: [{ scaleX: -1 }] },
           ]}
         />
       </View>
-    </TouchableOpacity>
+    </GlassCard>
   );
 };
 
 // ── Dashboard ────────────────────────────────────────────────────────
 export default function Dashboard({ navigation }: any) {
   const { t } = useTranslation();
-  const { flexRow, isRTL } = useRTL();
+  const { flexRow } = useRTL();
   const theme = useTheme();
   const { results } = useSelector((state: any) => state.stats);
 
@@ -356,19 +297,25 @@ export default function Dashboard({ navigation }: any) {
       ? require("../../assets/26080.jpg")
       : require("../../assets/bg-w.png");
 
-  const overlay =
-    theme.mode === "dark" ? "rgba(1,19,35,0.45)" : "rgba(255,255,255,0.35)";
+  const overlayColors = (
+    theme.mode === "dark"
+      ? ["rgba(1,19,35,0.10)", "rgba(1,19,35,0.22)", "rgba(1,19,35,0.38)"]
+      : [
+          "rgba(255,255,255,0.04)",
+          "rgba(255,255,255,0.12)",
+          "rgba(245,246,248,0.28)",
+        ]
+  ) as [string, string, string];
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <Container navigation={navigation}>
-        <ImageBackground source={bgImage} resizeMode="cover" style={styles.bg}>
-          {/* Tint overlay */}
-          <View
-            style={[StyleSheet.absoluteFill, { backgroundColor: overlay }]}
+        <GlassBackdrop source={bgImage} style={styles.bg}>
+          <LinearGradient
+            colors={overlayColors}
+            style={StyleSheet.absoluteFill}
           />
 
-          {/* Header */}
           <View
             style={[
               styles.header,
@@ -376,12 +323,7 @@ export default function Dashboard({ navigation }: any) {
             ]}
           >
             <LanguageSelector />
-            <View
-              style={[
-                styles.headerRight,
-                { flexDirection: isRTL ? "row-reverse" : "row" },
-              ]}
-            >
+            <View style={[styles.headerRight, { flexDirection: flexRow }]}>
               <ThemeToggle />
               <SettingsButton onPress={() => navigation.push("config")} />
             </View>
@@ -389,12 +331,10 @@ export default function Dashboard({ navigation }: any) {
 
           <GoalsManager />
 
-          {/* ── Card grid ─────────────────────────────── */}
           <View style={styles.grid}>
-            {/* Row 1 — Adkar + Journal */}
             <View style={[styles.row, { flexDirection: flexRow }]}>
               <HalfCard
-                accentColor="#3d9de8"
+                accentColor="#eee"
                 title={t("dashboard.adkar")}
                 subtitle={t("dashboard.adkarSub")}
                 icon={
@@ -406,7 +346,7 @@ export default function Dashboard({ navigation }: any) {
                 onPress={() => navigation.push("adkar")}
               />
               <HalfCard
-                accentColor="#e07e3c"
+                accentColor="#eee"
                 title={t("dashboard.form")}
                 subtitle={
                   todayRecorded
@@ -423,58 +363,24 @@ export default function Dashboard({ navigation }: any) {
               />
             </View>
 
-            {/* Row 2 — Stats */}
             <FullCard
               accentColor="#9b59b6"
               title={t("dashboard.stats")}
               subtitle={t("dashboard.statsSub")}
-              icon={<Feather name="bar-chart-2" size={22} color="#9b59b6" />}
+              icon={<Feather name="bar-chart-2" size={20} color="#9b59b6" />}
               badgeValue={recordedDays}
               badgeLabel={t("stats.days")}
               onPress={() => navigation.push("Stats")}
             />
 
-            {/* Row 3 — Challenge */}
             <ChallengeCard onPress={() => navigation.push("challenge")} />
-
-            {/* ── DEV: test push notification ───────────────────── */}
-            {/* {__DEV__ && (
-              <TouchableOpacity
-                style={[
-                  styles.devTestBtn,
-                  { backgroundColor: theme.bgCard, borderColor: theme.border },
-                ]}
-                activeOpacity={0.7}
-                onPress={async () => {
-                  await Notifications.scheduleNotificationAsync({
-                    content: {
-                      title: "تذكير الصلاة 🕌",
-                      body: "لا تنسَ تسجيل تقييم صلاتك 🕌",
-                      data: { screen: "form" },
-                      sound: true,
-                    },
-                    trigger: {
-                      type: "timeInterval",
-                      seconds: 3,
-                      repeats: false,
-                    } as any,
-                  });
-                }}
-              >
-                <Feather name="bell" size={14} color={theme.textMuted} />
-                <Text style={[styles.devTestLabel, { color: theme.textMuted }]}>
-                  TEST NOTIF (3s)
-                </Text>
-              </TouchableOpacity>
-            )} */}
           </View>
-        </ImageBackground>
+        </GlassBackdrop>
       </Container>
     </ScrollView>
   );
 }
 
-// ── Styles ───────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   bg: {
     minHeight: Dimensions.get("window").height,
@@ -497,137 +403,86 @@ const styles = StyleSheet.create({
   },
   grid: {
     paddingHorizontal: 10,
-    paddingTop: 4,
-    paddingBottom: 30,
-    gap: 10,
+    paddingTop: 6,
+    paddingBottom: 36,
+    gap: 14,
   },
   row: {
     gap: 10,
   },
-
-  // ─ Half card
   halfCard: {
     width: HALF_W,
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingTop: 0,
-    paddingBottom: 18,
-    paddingHorizontal: 12,
-    alignItems: "center",
-    overflow: "hidden",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderRadius: 24,
   },
-  accentBar: {
-    width: "100%",
-    height: 3,
-    marginBottom: 16,
-    borderRadius: 2,
+  halfCardBody: {
+    paddingTop: 22,
+    paddingBottom: 22,
+    paddingHorizontal: 14,
+    alignItems: "center",
   },
   iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: StyleSheet.hairlineWidth * 2,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
   },
   cardImg: {
     width: 26,
     height: 26,
   },
   halfTitle: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0.1,
     marginBottom: 4,
   },
   halfSub: {
-    fontSize: 11,
+    fontSize: 11.5,
     lineHeight: 16,
+    letterSpacing: 0.1,
   },
   chevron: {
     position: "absolute",
-    bottom: 10,
+    bottom: 12,
+    opacity: 0.7,
   },
-
-  // ─ Full card
   fullCard: {
     width: FULL_W,
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: "hidden",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  accentBarLeft: {
-    position: "absolute",
-    top: 0,
-    width: 3,
-    height: "100%",
-    borderRadius: 2,
+    borderRadius: 24,
   },
   fullCardInner: {
-    paddingVertical: 14,
+    paddingVertical: 18,
     paddingHorizontal: 18,
+    paddingLeft: 20,
     alignItems: "center",
+  },
+  fullCardInnerRtl: {
+    paddingLeft: 18,
+    paddingRight: 20,
   },
   fullCardIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth * 2,
     justifyContent: "center",
     alignItems: "center",
   },
   fullCardText: {
     flex: 1,
-    paddingHorizontal: 12,
-    gap: 3,
+    paddingHorizontal: 10,
+    gap: 2,
   },
   fullTitle: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "600",
+    letterSpacing: 0.1,
   },
   fullSub: {
-    fontSize: 11,
-  },
-  badge: {
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    alignItems: "center",
-    minWidth: 52,
-  },
-  badgeValue: {
-    fontSize: 18,
-    fontWeight: "700",
-    lineHeight: 22,
-  },
-  badgeLabel: {
-    fontSize: 10,
-  },
-  devTestBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderRadius: 10,
-    paddingVertical: 10,
-    opacity: 0.6,
-  },
-  devTestLabel: {
-    fontSize: 11,
-    fontFamily: "Cairo_400Regular",
-    letterSpacing: 0.5,
+    fontSize: 11.5,
+    letterSpacing: 0.1,
   },
 });

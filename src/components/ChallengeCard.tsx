@@ -1,10 +1,11 @@
 import React, { useMemo } from "react";
-import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import { View, StyleSheet, Dimensions } from "react-native";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import Colors from "../constants/Colors";
 import Text from "./Text";
+import { GlassCard } from "./GlassSurface";
 import { computeChallengeState } from "../utils/challenge";
 import { useRTL } from "../hooks/useRTL";
 import { useTheme } from "../hooks/useTheme";
@@ -42,148 +43,146 @@ export default function ChallengeCard({ onPress }: { onPress: () => void }) {
           : "challenge.progressMsg";
 
   const starsToShow = Math.min(totalStars, 12);
-
   const isComplete = daysInCurrentCycle === 0 && currentStreak > 0;
 
-  // Theme-aware values
-  const cardBg = theme.mode === "dark" ? "rgba(1,19,35,0.82)" : theme.bgCard;
   const trackBg =
-    theme.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+    theme.mode === "dark" ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.06)";
   const milestoneEmpty =
-    theme.mode === "dark" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)";
+    theme.mode === "dark" ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)";
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.card,
-        {
-          backgroundColor: cardBg,
-          borderColor: Colors.gold + "40",
-        },
-      ]}
+    <GlassCard
+      style={styles.card}
+      accentColor={Colors.gold}
       onPress={onPress}
-      activeOpacity={0.85}
     >
-      {/* Header row */}
-      <View style={[styles.headerRow, { flexDirection: flexRow }]}>
-        <View style={[styles.titleGroup, { flexDirection: flexRow }]}>
-          <MaterialCommunityIcons
-            name="trophy-award"
-            size={20}
-            color={Colors.gold}
+      <View style={styles.cardBody}>
+        <View style={[styles.headerRow, { flexDirection: flexRow }]}>
+          <View style={[styles.titleGroup, { flexDirection: flexRow }]}>
+            <View style={styles.trophyWrap}>
+              <MaterialCommunityIcons
+                name="trophy-award"
+                size={18}
+                color={Colors.gold}
+              />
+            </View>
+            <Text style={styles.title}>{t("challenge.title")}</Text>
+          </View>
+          <AntDesign
+            name="right"
+            size={11}
+            color={theme.textMuted}
+            style={isRTL && { transform: [{ scaleX: -1 }] }}
           />
-          <Text style={styles.title}>{t("challenge.title")}</Text>
         </View>
-        <AntDesign
-          name="right"
-          size={14}
-          color={Colors.gold}
-          style={isRTL && { transform: [{ scaleX: -1 }] }}
-        />
-      </View>
 
-      {/* Stars row */}
-      {totalStars > 0 && (
-        <View style={[styles.starsRow, { flexDirection: flexRow }]}>
-          {Array.from({ length: starsToShow }).map((_, i) => (
-            <AntDesign key={i} name="star" size={15} color={Colors.gold} />
-          ))}
-          {totalStars > 12 && (
-            <Text style={styles.starsMore}>+{totalStars - 12}</Text>
-          )}
-          <Text style={styles.starsLabel}>
-            {" "}
-            {t("challenge.completions", { count: totalStars })}
-          </Text>
-        </View>
-      )}
-
-      {/* Progress area */}
-      <View style={styles.progressArea}>
-        <View style={[styles.progressHeader, { flexDirection: flexRow }]}>
-          <Text style={[styles.dayCount, { color: theme.text }]}>
-            {displayDays}
-            <Text style={[styles.dayMax, { color: theme.textMuted }]}>
+        {totalStars > 0 && (
+          <View style={[styles.starsRow, { flexDirection: flexRow }]}>
+            {Array.from({ length: starsToShow }).map((_, i) => (
+              <AntDesign key={i} name="star" size={14} color={Colors.gold} />
+            ))}
+            {totalStars > 12 && (
+              <Text style={styles.starsMore}>+{totalStars - 12}</Text>
+            )}
+            <Text style={styles.starsLabel}>
               {" "}
-              / {CHALLENGE_DAYS}
+              {t("challenge.completions", { count: totalStars })}
             </Text>
-          </Text>
-          <Text style={[styles.dayLabel, { color: theme.textSub }]}>
-            {t("challenge.days")}
-          </Text>
-        </View>
+          </View>
+        )}
 
-        {/* Track */}
-        <View
-          style={[
-            styles.trackBg,
-            { width: progressWidth, backgroundColor: trackBg },
-          ]}
-        >
+        <View style={styles.progressArea}>
+          <View style={[styles.progressHeader, { flexDirection: flexRow }]}>
+            <Text style={[styles.dayCount, { color: theme.text }]}>
+              {displayDays}
+              <Text style={[styles.dayMax, { color: theme.textMuted }]}>
+                {" "}
+                / {CHALLENGE_DAYS}
+              </Text>
+            </Text>
+            <Text style={[styles.dayLabel, { color: theme.textSub }]}>
+              {t("challenge.days")}
+            </Text>
+          </View>
+
           <View
             style={[
-              styles.trackFill,
-              { width: progressWidth * progress },
-              isComplete && styles.trackComplete,
+              styles.trackBg,
+              { width: progressWidth, backgroundColor: trackBg },
             ]}
-          />
-          {[10, 20, 30].map((milestone) => (
+          >
             <View
-              key={milestone}
               style={[
-                styles.milestone,
-                {
-                  left: (progressWidth * milestone) / 40 - 1,
-                  backgroundColor:
-                    displayDays >= milestone ? Colors.primary : milestoneEmpty,
-                },
+                styles.trackFill,
+                { width: progressWidth * progress },
+                isComplete && styles.trackComplete,
               ]}
             />
-          ))}
+            {[10, 20, 30].map((milestone) => (
+              <View
+                key={milestone}
+                style={[
+                  styles.milestone,
+                  {
+                    left: (progressWidth * milestone) / 40 - 1,
+                    backgroundColor:
+                      displayDays >= milestone
+                        ? Colors.primary
+                        : milestoneEmpty,
+                  },
+                ]}
+              />
+            ))}
+          </View>
         </View>
-      </View>
 
-      {/* Motivation */}
-      <Text
-        style={[
-          styles.motivation,
-          { color: isComplete ? Colors.gold : theme.textSub },
-          { textAlign: isRTL ? "right" : "left" },
-        ]}
-      >
-        {t(motivationKey, { days: daysLeft, streak: currentStreak })}
-      </Text>
-    </TouchableOpacity>
+        <Text
+          style={[
+            styles.motivation,
+            { color: isComplete ? Colors.gold : theme.textSub },
+            { textAlign: isRTL ? "right" : "left" },
+          ]}
+        >
+          {t(motivationKey, { days: daysLeft, streak: currentStreak })}
+        </Text>
+      </View>
+    </GlassCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    // marginHorizontal: 10,
-    marginBottom: 12,
-    paddingVertical: 14,
+    marginBottom: 4,
+    borderRadius: 24,
+  },
+  cardBody: {
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   headerRow: {
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 10,
   },
   titleGroup: {
     alignItems: "center",
-    gap: 7,
+    gap: 8,
+  },
+  trophyWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.gold + "18",
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.gold + "35",
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     color: Colors.gold,
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "600",
+    letterSpacing: 0.1,
   },
   starsRow: {
     alignItems: "center",
@@ -193,11 +192,11 @@ const styles = StyleSheet.create({
   },
   starsMore: {
     color: Colors.gold,
-    fontSize: 13,
+    fontSize: 12,
   },
   starsLabel: {
     color: Colors.gold + "bb",
-    fontSize: 12,
+    fontSize: 11,
   },
   progressArea: {
     gap: 6,
@@ -207,26 +206,26 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dayCount: {
-    fontSize: 24,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "600",
   },
   dayMax: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "400",
   },
   dayLabel: {
-    fontSize: 12,
+    fontSize: 11,
   },
   trackBg: {
-    height: 8,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
     overflow: "visible",
     position: "relative",
   },
   trackFill: {
     height: "100%",
     backgroundColor: Colors.gold,
-    borderRadius: 4,
+    borderRadius: 3,
   },
   trackComplete: {
     backgroundColor: Colors.success,
@@ -239,7 +238,8 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
   motivation: {
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 8,
+    letterSpacing: 0.1,
   },
 });

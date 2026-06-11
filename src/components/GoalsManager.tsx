@@ -21,7 +21,7 @@ import dayjs from "dayjs";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
 import { useTheme } from "../hooks/useTheme";
-import { Theme } from "../constants/Theme";
+import { GlassCard, GlassButton, glassTokens } from "./GlassSurface";
 
 export type Goal = {
   id: string;
@@ -49,26 +49,45 @@ const GoalCard = memo(
   }) => {
     const { t } = useTranslation();
     const theme = useTheme();
+    const glass = glassTokens(theme.mode === "dark");
 
     const handleDone = useCallback(() => onToggleDone(id), [id, onToggleDone]);
-    const handleDelete = useCallback(() => onToggleDelete(id), [id, onToggleDelete]);
+    const handleDelete = useCallback(
+      () => onToggleDelete(id),
+      [id, onToggleDelete],
+    );
     const handleLongPress = useCallback(
       () => onLongPress({ id, title, done }),
       [id, title, done, onLongPress],
     );
 
     const cardBg = done
-      ? theme.mode === "dark" ? "#1a3d1a" : "#e0f7e9"
-      : theme.bgCard;
-
-    const borderColor = done ? Colors.success : Colors.gold;
+      ? theme.mode === "dark"
+        ? "rgba(43,139,43,0.22)"
+        : "rgba(43,139,43,0.12)"
+      : glass.fill;
+    const borderColor = done ? Colors.success + "55" : glass.border;
 
     return (
       <TouchableOpacity
-        style={[styles.cardGoal, { backgroundColor: cardBg, borderColor }]}
+        style={[styles.cardGoal, { borderColor }]}
         onLongPress={handleLongPress}
         delayLongPress={500}
       >
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: cardBg }]}
+        />
+        <View
+          pointerEvents="none"
+          style={[
+            styles.goalRim,
+            {
+              borderColor,
+              borderTopColor: glass.highlight,
+            },
+          ]}
+        />
         <Text
           style={{ lineHeight: 20, marginBottom: 4, fontSize: 13 }}
           color={theme.text}
@@ -79,17 +98,29 @@ const GoalCard = memo(
           {title} {done ? "✅" : ""}
         </Text>
         {!done ? (
-          <TouchableOpacity onPress={handleDone} style={styles.doneButton}>
+          <GlassButton
+            onPress={handleDone}
+            active
+            activeColor={Colors.gold + "dd"}
+            style={styles.doneButton}
+          >
             <Text bold color={Colors.primary} size={11}>
               {t("goals.done")}
             </Text>
-          </TouchableOpacity>
+          </GlassButton>
         ) : (
-          <TouchableOpacity onPress={handleDelete} style={[styles.deleteButton, { backgroundColor: theme.mode === "dark" ? Colors.secondary : Colors.dark }]}>
+          <GlassButton
+            onPress={handleDelete}
+            active
+            activeColor={
+              (theme.mode === "dark" ? Colors.secondary : Colors.dark) + "cc"
+            }
+            style={styles.deleteButton}
+          >
             <Text bold color="white" size={11}>
               {t("goals.delete")}
             </Text>
-          </TouchableOpacity>
+          </GlassButton>
         )}
       </TouchableOpacity>
     );
@@ -144,9 +175,13 @@ const GoalFormModal = memo(
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <Pressable style={styles.sheetBackdrop} onPress={onClose} />
-          <View style={[styles.sheetContainer, { backgroundColor: theme.bgCard }]}>
+          <View
+            style={[styles.sheetContainer, { backgroundColor: theme.bgCard }]}
+          >
             {/* Drag handle */}
-            <View style={[styles.sheetHandle, { backgroundColor: theme.border }]} />
+            <View
+              style={[styles.sheetHandle, { backgroundColor: theme.border }]}
+            />
 
             {/* Title row */}
             <View style={styles.sheetTitleRow}>
@@ -197,7 +232,10 @@ const GoalFormModal = memo(
                 </Text>
               </Pressable>
               <Pressable
-                style={[styles.sheetBtnConfirm, !canSubmit && styles.sheetBtnDisabled]}
+                style={[
+                  styles.sheetBtnConfirm,
+                  !canSubmit && styles.sheetBtnDisabled,
+                ]}
                 disabled={!canSubmit}
                 onPress={handleSubmit}
               >
@@ -240,7 +278,10 @@ export default function GoalsManager() {
   }, [goals]);
 
   const sortedGoals = useMemo(
-    () => [...filtredGoals].sort((a, b) => (b.done === a.done ? 0 : b.done ? 1 : -1)),
+    () =>
+      [...filtredGoals].sort((a, b) =>
+        b.done === a.done ? 0 : b.done ? 1 : -1,
+      ),
     [filtredGoals],
   );
 
@@ -263,7 +304,12 @@ export default function GoalsManager() {
     (title: string) => {
       dispatch({
         type: "ADD_GOAL",
-        payload: { id: Date.now().toString(), title, done: false, date: new Date() },
+        payload: {
+          id: Date.now().toString(),
+          title,
+          done: false,
+          date: new Date(),
+        },
       });
       setModalVisible(false);
     },
@@ -304,12 +350,14 @@ export default function GoalsManager() {
     [dispatch, t],
   );
 
-  // Semi-transparent card background matching the Dashboard cards style
-  const containerBg = theme.mode === "dark" ? "rgba(1,19,35,0.82)" : theme.bgCard;
-
+  // Semi-transparent glass container matching Dashboard cards
   return (
     <View style={styles.container}>
-      <GoalFormModal visible={modalVisible} onClose={closeModal} onSubmit={handleAdd} />
+      <GoalFormModal
+        visible={modalVisible}
+        onClose={closeModal}
+        onSubmit={handleAdd}
+      />
       {currentGoal && (
         <GoalFormModal
           visible={editModalVisible}
@@ -321,21 +369,22 @@ export default function GoalsManager() {
         />
       )}
 
-      <View
-        style={[
-          styles.card,
-          {
-            backgroundColor: containerBg,
-            borderColor: Colors.gold + "30",
-          },
-        ]}
-      >
-        {/* Header */}
+      <GlassCard style={styles.card} accentColor={Colors.gold}>
+        <View style={styles.cardBody}>
+          {/* Header */}
         <View style={[styles.header, { flexDirection: flexRow }]}>
           <Text bold style={[styles.headerText, { color: theme.text }]}>
             {t("goals.myGoals")}
           </Text>
-          <View style={[styles.progressBadge, { backgroundColor: Colors.gold + "22", borderColor: Colors.gold + "55" }]}>
+          <View
+            style={[
+              styles.progressBadge,
+              {
+                backgroundColor: Colors.gold + "18",
+                borderColor: Colors.gold + "40",
+              },
+            ]}
+          >
             <Text bold color={Colors.gold} size={12}>
               {filtredGoalsDone.length}/{filtredGoals.length}
             </Text>
@@ -345,10 +394,23 @@ export default function GoalsManager() {
         {/* Content */}
         {sortedGoals.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={{ color: theme.textSub, fontSize: 14, textAlign: "center" }}>
+            <Text
+              style={{
+                color: theme.textSub,
+                fontSize: 14,
+                textAlign: "center",
+              }}
+            >
               {t("goals.noGoals")}
             </Text>
-            <Text style={{ color: theme.textMuted, fontSize: 12, textAlign: "center", marginTop: 4 }}>
+            <Text
+              style={{
+                color: theme.textMuted,
+                fontSize: 12,
+                textAlign: "center",
+                marginTop: 4,
+              }}
+            >
               {t("goals.addHint")}
             </Text>
           </View>
@@ -373,10 +435,15 @@ export default function GoalsManager() {
         )}
 
         {/* Add button */}
-        <TouchableOpacity style={styles.addButton} onPress={openModal} activeOpacity={0.7}>
-          <Ionicons name="add-circle" size={40} color={Colors.gold} />
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={openModal}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="add-circle" size={38} color={Colors.gold} />
         </TouchableOpacity>
-      </View>
+        </View>
+      </GlassCard>
     </View>
   );
 }
@@ -387,15 +454,12 @@ const styles = StyleSheet.create({
   },
   card: {
     margin: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 10,
+    borderRadius: 24,
     overflow: "hidden",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+  },
+  cardBody: {
+    padding: 12,
+    minHeight: 120,
   },
   header: {
     marginBottom: 0,
@@ -429,31 +493,33 @@ const styles = StyleSheet.create({
   // ── Goal card
   cardGoal: {
     padding: 8,
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderRadius: 14,
     marginHorizontal: 6,
     width: 150,
     height: 90,
     alignItems: "center",
     justifyContent: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    overflow: "hidden",
+  },
+  goalRim: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderRadius: 14,
   },
   doneButton: {
-    backgroundColor: Colors.gold,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
-    marginTop: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginTop: 4,
+    minWidth: 72,
   },
   deleteButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
-    marginTop: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginTop: 4,
+    minWidth: 72,
   },
   // ── Bottom sheet modal
   sheetWrapper: {
