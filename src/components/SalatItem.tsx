@@ -4,12 +4,7 @@ import Text from "./Text";
 import Colors from "../constants/Colors";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
-
-const SalatText = ({ children }: { children: React.ReactNode }) => (
-  <Text h3 style={styles.flex1}>
-    {children}
-  </Text>
-);
+import { useTheme } from "../hooks/useTheme";
 
 const getPrayerName = (salat: string, t: (key: string) => string): string => {
   switch (salat) {
@@ -61,29 +56,59 @@ export default function SalatItem({
 }: SalatItemProps) {
   const { t } = useTranslation();
   const { flexRow } = useRTL();
+  const theme = useTheme();
 
   const formattedDiff = formatTimeDiff(diff - 1);
+  const separator =
+    theme.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(2,16,27,0.08)";
 
   return (
-    <View style={[styles.salatItem, { flexDirection: flexRow }]}>
-      <SalatText> {time}</SalatText>
-      <SalatText>{getPrayerName(salat, t)}</SalatText>
-      <SalatText>
-        {" "}
-        {!!showDiff && <Text p>⌛️</Text>}{" "}
-        {showDiff ? `  ${signedDiff > 0 ? "+" : "-"} ${formattedDiff} ` : " "}
-      </SalatText>
+    <View
+      style={[
+        styles.salatItem,
+        { flexDirection: flexRow },
+        showDiff
+          ? styles.salatItemActive
+          : {
+              borderBottomWidth: StyleSheet.hairlineWidth,
+              borderBottomColor: separator,
+            },
+      ]}
+    >
+      <Text h3 style={[styles.flex1, showDiff && styles.activeText]}>
+        {time}
+      </Text>
+      <Text h3 style={[styles.flex1, showDiff && styles.activeText]}>
+        {getPrayerName(salat, t)}
+      </Text>
+      <Text style={[styles.flex1, styles.diffText]}>
+        {showDiff ? `${signedDiff > 0 ? "+" : "-"} ${formattedDiff}` : ""}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   salatItem: {
+    alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
-    paddingVertical: 5,
-    borderBottomWidth: 0.17,
-    borderColor: Colors.goldDark,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+  },
+  salatItemActive: {
+    backgroundColor: Colors.gold + "1a",
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: Colors.gold + "40",
+  },
+  activeText: {
+    color: Colors.gold,
+  },
+  diffText: {
+    fontSize: 13,
+    color: Colors.gold,
+    fontVariant: ["tabular-nums"],
   },
   flex1: {
     flex: 1,

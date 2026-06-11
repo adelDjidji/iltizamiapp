@@ -55,39 +55,37 @@ const CategoryProgressBar = ({
   score: number;
   max: number;
 }) => {
+  const theme = useTheme();
   const pct = max > 0 ? Math.min(score / max, 1) : 0;
   const barColor =
-    pct === 0
-      ? "#e0e0e0"
-      : pct < 0.5
-        ? "#e07373"
-        : pct < 0.8
-          ? Colors.gold
-          : "#5cb85c";
+    pct < 0.5 ? "#e07373" : pct < 0.8 ? Colors.gold : "#5cb85c";
+  const track =
+    theme.mode === "dark" ? "rgba(255,255,255,0.09)" : "rgba(2,16,27,0.07)";
   return (
-    <View style={progressStyles.progressTrack}>
-      <View
-        style={[
-          progressStyles.progressFill,
-          { width: `${pct * 100}%` as any, backgroundColor: barColor },
-        ]}
-      />
+    <View style={[progressStyles.progressTrack, { backgroundColor: track }]}>
+      {pct > 0 && (
+        <View
+          style={[
+            progressStyles.progressFill,
+            { width: `${pct * 100}%` as any, backgroundColor: barColor },
+          ]}
+        />
+      )}
     </View>
   );
 };
 
 const progressStyles = StyleSheet.create({
   progressTrack: {
-    height: 4,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 2,
+    height: 5,
+    borderRadius: 2.5,
     marginHorizontal: 5,
     marginBottom: 10,
     overflow: "hidden",
   },
   progressFill: {
-    height: 4,
-    borderRadius: 2,
+    height: "100%",
+    borderRadius: 2.5,
   },
 });
 
@@ -105,16 +103,29 @@ function makeStyles(theme: Theme) {
       marginBottom: 10,
     },
     navArrow: {
-      padding: 8,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor:
+        theme.mode === "dark"
+          ? "rgba(255,255,255,0.08)"
+          : "rgba(2,16,27,0.05)",
     },
     dateHeader: {
       flex: 1,
       textAlign: "center",
     },
     card: {
-      ...Classes.containerCard,
+      marginHorizontal: 10,
+      marginBottom: 14,
+      padding: 12,
+      borderRadius: 20,
+      borderCurve: "continuous",
       backgroundColor: theme.bgCard,
-      marginBottom: 15,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.border,
     },
     cardHeader: {
       marginBottom: 6,
@@ -124,19 +135,26 @@ function makeStyles(theme: Theme) {
     },
     cardContent: {
       backgroundColor: theme.bgCard,
-      borderRadius: 8,
+      borderRadius: 14,
+      borderCurve: "continuous",
       overflow: "hidden",
-      borderWidth: 1,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.border,
     },
     itemRow: {
       width: "100%",
       justifyContent: "space-between",
-      paddingHorizontal: 16,
-      height: 52,
+      paddingHorizontal: 14,
+      minHeight: 52,
       borderBottomColor: theme.border,
-      borderBottomWidth: 1,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       alignItems: "center",
+    },
+    itemRowLast: {
+      borderBottomWidth: 0,
+    },
+    itemLabel: {
+      flex: 1,
     },
     scoreBadge: {
       borderRadius: 14,
@@ -153,31 +171,42 @@ function makeStyles(theme: Theme) {
       alignItems: "center",
     },
     menuOptionsWrapper: {
-      backgroundColor: Colors.goldLight,
+      backgroundColor: theme.bgCard,
       maxHeight: Dimensions.get("window").height / 2,
       alignItems: "center",
       justifyContent: "flex-start",
       overflow: "hidden",
-      borderTopWidth: 4,
-      borderTopColor: Colors.gold,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
     },
     menuOptionText: {
-      color: "black",
+      color: theme.text,
       fontSize: 14,
       fontFamily: Classes.textReg.fontFamily,
     },
     menuOptionWrapper: {
       width: "100%",
-      borderBottomWidth: 1,
-      borderBottomColor: "#eee",
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.border,
       alignItems: "center",
     },
     menuOptionsContainer: {
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
-      backgroundColor: "white",
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      backgroundColor: theme.bgCard,
+    },
+    sheetHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.border,
+      marginTop: 10,
+      marginBottom: 6,
+    },
+    sheetTitle: {
+      fontSize: 15,
+      marginBottom: 6,
+      paddingHorizontal: 20,
     },
     menuScroll: {
       width: "100%",
@@ -189,16 +218,16 @@ function makeStyles(theme: Theme) {
       alignItems: "center",
     },
     numberInput: {
-      borderColor: Colors.gold,
+      borderColor: theme.inputBorder,
       borderWidth: 1.5,
-      borderRadius: 10,
+      borderRadius: 12,
       paddingVertical: 10,
       paddingHorizontal: 16,
       fontSize: 22,
       width: "100%",
       marginTop: 10,
-      color: "#222",
-      backgroundColor: "#fafafa",
+      color: theme.inputText,
+      backgroundColor: theme.inputBg,
       textAlign: "center",
     },
     numberPreview: {
@@ -212,7 +241,8 @@ function makeStyles(theme: Theme) {
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: Colors.gold,
-      borderRadius: 10,
+      borderRadius: 14,
+      borderCurve: "continuous",
       paddingVertical: 10,
       paddingHorizontal: 24,
       marginTop: 14,
@@ -222,7 +252,7 @@ function makeStyles(theme: Theme) {
     inputLabel: {
       fontSize: 12,
       marginTop: 5,
-      color: "#666",
+      color: theme.textSub,
     },
     optionRow: {
       width: "100%",
@@ -233,6 +263,7 @@ function makeStyles(theme: Theme) {
     },
     headerButtonsContainer: {
       flexDirection: "row",
+      gap: 8,
     },
     submitButton: {
       alignItems: "center",
@@ -246,9 +277,12 @@ function makeStyles(theme: Theme) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: "rgba(255,255,255,0.15)",
+      backgroundColor:
+        theme.mode === "dark"
+          ? "rgba(255,255,255,0.12)"
+          : "rgba(2,16,27,0.06)",
       padding: 8,
-      borderRadius: 8,
+      borderRadius: 12,
     },
   });
 }
@@ -258,6 +292,14 @@ export default function FormEvaluation({ navigation, route }: any) {
   const { isRTL, flexRow, textAlign } = useRTL();
   const theme = useTheme();
   const styles = useMemo(() => makeStyles(theme), [theme]);
+
+  // Zero scores get a neutral chip instead of a colored one
+  const zeroBadgeBg =
+    theme.mode === "dark" ? "rgba(255,255,255,0.10)" : "rgba(2,16,27,0.06)";
+  const badgeBg = (value: number) =>
+    value === 0 ? zeroBadgeBg : getScoreColor(value);
+  const badgeText = (value: number) =>
+    value === 0 ? theme.textMuted : "white";
 
   const { results } = useSelector(
     (state: RootState) => state.stats,
@@ -378,16 +420,16 @@ export default function FormEvaluation({ navigation, route }: any) {
         return (
           <MenuOption key={`${itemId}-${index}`} value={option.value}>
             <View style={[styles.optionRow, { flexDirection: flexRow }]}>
-              <Text color="black">
+              <Text color={theme.text}>
                 {option.key ? t(option.key) : option.label}
               </Text>
               <View
                 style={[
                   styles.optionBadge,
-                  { backgroundColor: getScoreColor(option.value) },
+                  { backgroundColor: badgeBg(option.value) },
                 ]}
               >
-                <Text bold color="white">
+                <Text bold color={badgeText(option.value)}>
                   {option.value}
                 </Text>
               </View>
@@ -399,7 +441,7 @@ export default function FormEvaluation({ navigation, route }: any) {
         <MenuOption key={`${itemId}-${index}`} value={option} text={option} />
       );
     },
-    [flexRow, t, styles],
+    [flexRow, t, styles, theme],
   );
 
   if (!data) {
@@ -407,7 +449,10 @@ export default function FormEvaluation({ navigation, route }: any) {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 30 }}
+    >
       {showCelebration && (
         <LottieView
           source={celebrationAnimation}
@@ -420,6 +465,7 @@ export default function FormEvaluation({ navigation, route }: any) {
             position: "absolute",
             top: 0,
             zIndex: 12,
+            pointerEvents: "none",
           }}
         />
       )}
@@ -461,7 +507,14 @@ export default function FormEvaluation({ navigation, route }: any) {
           <View key={indicator.id} style={styles.card}>
             <View style={[styles.cardHeader, { flexDirection: flexRow }]}>
               <Text bold>{t(indicator.titleKey)}</Text>
-              <Text bold color={getScoreColor(scores[indexInd])}>
+              <Text
+                bold
+                color={
+                  scores[indexInd] === 0
+                    ? theme.textMuted
+                    : getScoreColor(scores[indexInd])
+                }
+              >
                 {scores[indexInd]}
                 <Text color={theme.textMuted}> / {maxScore}</Text>
               </Text>
@@ -495,8 +548,17 @@ export default function FormEvaluation({ navigation, route }: any) {
                       },
                     }}
                   >
-                    <View style={[styles.itemRow, { flexDirection: flexRow }]}>
+                    <View
+                      style={[
+                        styles.itemRow,
+                        { flexDirection: flexRow },
+                        indexItem === indicator.items.length - 1 &&
+                          styles.itemRowLast,
+                      ]}
+                    >
                       <Text
+                        style={styles.itemLabel}
+                        align={textAlign}
                         color={
                           selectedItem === indexItem &&
                           selectedModule === indexInd
@@ -510,13 +572,16 @@ export default function FormEvaluation({ navigation, route }: any) {
                         style={[
                           styles.scoreBadge,
                           {
-                            backgroundColor: getScoreColor(
+                            backgroundColor: badgeBg(
                               data[indexInd]?.[indexItem] ?? 0,
                             ),
                           },
                         ]}
                       >
-                        <Text bold color="white">
+                        <Text
+                          bold
+                          color={badgeText(data[indexInd]?.[indexItem] ?? 0)}
+                        >
                           {data[indexInd]?.[indexItem] ?? 0}
                         </Text>
                       </View>
@@ -531,6 +596,10 @@ export default function FormEvaluation({ navigation, route }: any) {
                       optionsContainer: styles.menuOptionsContainer,
                     }}
                   >
+                    <View style={styles.sheetHandle} />
+                    <Text bold align="center" style={styles.sheetTitle}>
+                      {t(item.titleKey)}
+                    </Text>
                     <ScrollView style={styles.menuScroll}>
                       {item.options && item.options.length ? (
                         item.options.map((op, idx) =>
@@ -538,11 +607,7 @@ export default function FormEvaluation({ navigation, route }: any) {
                         )
                       ) : (
                         <View style={styles.numberPadContainer}>
-                          <Text
-                            align={textAlign}
-                            style={styles.inputLabel}
-                            color="#666"
-                          >
+                          <Text align={textAlign} style={styles.inputLabel}>
                             {t("form.enterValue")}
                           </Text>
                           <TextInput
@@ -568,13 +633,17 @@ export default function FormEvaluation({ navigation, route }: any) {
                               style={[
                                 styles.numberPreview,
                                 {
-                                  backgroundColor: getScoreColor(
+                                  backgroundColor: badgeBg(
                                     parseInt(number) || 0,
                                   ),
                                 },
                               ]}
                             >
-                              <Text bold color="white" style={{ fontSize: 20 }}>
+                              <Text
+                                bold
+                                color={badgeText(parseInt(number) || 0)}
+                                style={{ fontSize: 20 }}
+                              >
                                 {number}
                               </Text>
                             </View>

@@ -3,14 +3,15 @@ import {
   View,
   StyleSheet,
   Dimensions,
-  ImageBackground,
   Alert,
   ActivityIndicator,
-  TouchableOpacity,
+  ImageBackground,
 } from "react-native";
 import * as Location from "expo-location";
 import Container from "../components/Container";
 import Text from "../components/Text";
+import Colors from "../constants/Colors";
+import { GlassButton, GlassCard } from "../components/GlassSurface";
 import { useDispatch, useSelector } from "react-redux";
 import dayjs from "dayjs";
 import Clock from "../components/Clock";
@@ -53,7 +54,7 @@ interface RootState {
 
 export default function Home({ navigation }: HomeProps) {
   const { t } = useTranslation();
-  const { isRTL, flexRow } = useRTL();
+  const { flexRow } = useRTL();
   const theme = useTheme();
   const [isFetching, setIsFetching] = useState(false);
   const [locationName, setLocationName] = useState<string | null>(null);
@@ -186,29 +187,26 @@ export default function Home({ navigation }: HomeProps) {
   }, [data, isFetching]);
 
   return (
-    <Container
-      navigation={navigation}
-      style={[styles.container, { backgroundColor: theme.bg }]}
-    >
+    <Container navigation={navigation} style={[styles.container]}>
       <ImageBackground
+        source={require("../../assets/26080.jpg")}
         resizeMode="cover"
         style={styles.coverImage}
-        source={require("../../assets/26080.jpg")}
       >
         <Clock />
 
         <View style={[styles.topControlsContainer, { flexDirection: flexRow }]}>
-          <TouchableOpacity
-            style={[styles.locationContainer, { flexDirection: flexRow }]}
+          <GlassButton
+            style={styles.locationChip}
             onPress={() => setLocationModalVisible(true)}
-            activeOpacity={0.7}
           >
-            <Ionicons name="location" size={13} color={theme.textMuted} />
-            <Text style={styles.locationText} color={theme.textMuted}>
-              {locationName ?? t("home.setLocation")}
-            </Text>
-            {/* <Ionicons name="pencil" size={12} color="rgba(255,255,255,0.6)" /> */}
-          </TouchableOpacity>
+            <View style={[styles.locationInner, { flexDirection: flexRow }]}>
+              <Ionicons name="location-sharp" size={12} color={Colors.gold} />
+              <Text style={styles.locationText} color={theme.textSub}>
+                {locationName ?? t("home.setLocation")}
+              </Text>
+            </View>
+          </GlassButton>
         </View>
 
         <LocationPickerModal
@@ -229,22 +227,29 @@ export default function Home({ navigation }: HomeProps) {
             <Text style={styles.loadingText}>{t("home.loadingPrayers")}</Text>
           </View>
         ) : !data ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>
-              {!userPosition
-                ? t("home.locationRequired")
-                : t("home.errorLoadingPrayers")}
-            </Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={handleRetry}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.retryButtonText}>
-                {!userPosition ? t("home.setLocation") : t("home.retry")}
+          <GlassCard style={styles.errorCard}>
+            <View style={styles.errorBody}>
+              <Text style={styles.errorText}>
+                {!userPosition
+                  ? t("home.locationRequired")
+                  : t("home.errorLoadingPrayers")}
               </Text>
-            </TouchableOpacity>
-          </View>
+              <GlassButton
+                style={styles.retryButton}
+                onPress={handleRetry}
+                active
+                activeColor={Colors.gold + "dd"}
+              >
+                <Text
+                  bold
+                  color={Colors.primary}
+                  style={styles.retryButtonText}
+                >
+                  {!userPosition ? t("home.setLocation") : t("home.retry")}
+                </Text>
+              </GlassButton>
+            </View>
+          </GlassCard>
         ) : (
           <SalatTable data={data} />
         )}
@@ -264,47 +269,39 @@ const styles = StyleSheet.create({
   coverImage: {
     width: Dimensions.get("window").width,
     height: Dimensions.get("window").height,
+    paddingBottom: 20,
     justifyContent: "flex-end",
   },
   dateText: {
-    color: "white",
+    color: "rgba(255,255,255,0.92)",
     textAlign: "right",
-    fontSize: 16,
-    textShadowColor: "rgba(0, 0, 0, 0.75)",
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
   dateContainer: {
-    marginRight: 40,
+    paddingHorizontal: 32,
     marginBottom: 20,
+    gap: 2,
   },
   topControlsContainer: {
-    marginRight: 40,
+    paddingHorizontal: 32,
     marginBottom: 6,
-    display: "flex",
     alignItems: "center",
     gap: 16,
-    paddingBottom: 20,
+    paddingBottom: 16,
   },
-  locationContainer: {
-    display: "flex",
-    alignItems: "center",
-    gap: 4,
-    flex: 1,
+  locationChip: {
+    borderRadius: 16,
   },
-  refreshButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    justifyContent: "center",
+  locationInner: {
     alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
   },
   locationText: {
-    textAlign: "right",
-    fontSize: 14,
-    textShadowColor: "rgba(0, 0, 0, 0.75)",
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    fontSize: 13,
+    letterSpacing: 0.1,
   },
   loaderContainer: {
     alignItems: "center",
@@ -315,32 +312,28 @@ const styles = StyleSheet.create({
     color: "white",
     marginTop: 10,
     fontSize: 16,
-    textShadowColor: "rgba(0, 0, 0, 0.75)",
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
   },
-  errorContainer: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  errorCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 24,
+  },
+  errorBody: {
     padding: 20,
-    margin: 20,
-    borderRadius: 10,
     alignItems: "center",
   },
   errorText: {
-    color: "white",
     textAlign: "center",
     marginBottom: 16,
+    fontSize: 14,
   },
   retryButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
     paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 12,
+    borderRadius: 18,
+    minWidth: 130,
   },
   retryButtonText: {
-    color: "white",
     fontSize: 14,
-    fontWeight: "600",
   },
 });

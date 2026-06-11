@@ -3,19 +3,23 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import Text from "./Text";
 import SalatItem from "./SalatItem";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "../hooks/useTheme";
+import Colors from "../constants/Colors";
+import { GlassCard } from "./GlassSurface";
 
 const staticStyles = StyleSheet.create({
   salatsContainer: {
-    flex: 0.6,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 20,
     marginHorizontal: 10,
+    marginBottom: 14,
+    borderRadius: 24,
+  },
+  body: {
+    paddingVertical: 18,
+    paddingHorizontal: 14,
   },
   title: {
-    fontSize: 20,
-    marginBottom: 15,
+    fontSize: 16,
+    marginBottom: 12,
+    letterSpacing: 0.2,
   },
 });
 
@@ -28,7 +32,6 @@ interface SalatTableProps {
 
 export default function SalatTable({ data }: SalatTableProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
   const [listData, setListData] = useState<
     Array<{
       salat: string;
@@ -118,29 +121,31 @@ export default function SalatTable({ data }: SalatTableProps) {
   }, [data, timeCalcul]);
 
   return (
-    <View style={[staticStyles.salatsContainer, { backgroundColor: theme.bgCard }]}>
-      <Text bold style={staticStyles.title} align="center">
-        {t("salat.prayerTimes")}
-      </Text>
-      {listData.length > 0 ? (
-        listData
-          .filter((i) => !["Midnight", "Imsak"].includes(i.salat))
-          .map((item) => (
-            <SalatItem
-              showDiff={minDiff === item.diff}
-              key={`${item.salat}-${item.time}`}
-              diff_str={item.diff_str}
-              salat={item.salat}
-              time={item.time}
-              diff={item.diff}
-              signedDiff={item.signedDiff}
-            />
-          ))
-      ) : (
-        <Text style={{ textAlign: "center", marginTop: 10 }} align="center">
-          {t("salat.loading")}
+    <GlassCard style={staticStyles.salatsContainer} accentColor={Colors.gold}>
+      <View style={staticStyles.body}>
+        <Text bold style={staticStyles.title} align="center">
+          {t("salat.prayerTimes")}
         </Text>
-      )}
-    </View>
+        {listData.length > 0 ? (
+          listData
+            .filter((i) => !["Midnight", "Imsak"].includes(i.salat))
+            .map((item) => (
+              <SalatItem
+                showDiff={minDiff === item.diff}
+                key={`${item.salat}-${item.time}`}
+                diff_str={item.diff_str}
+                salat={item.salat}
+                time={item.time}
+                diff={item.diff}
+                signedDiff={item.signedDiff}
+              />
+            ))
+        ) : (
+          <Text style={{ textAlign: "center", marginTop: 10 }} align="center">
+            {t("salat.loading")}
+          </Text>
+        )}
+      </View>
+    </GlassCard>
   );
 }

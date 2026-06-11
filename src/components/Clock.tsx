@@ -1,33 +1,44 @@
 import { View, StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
-// import { useTime } from "react-timer-hook";
 import dayjs from "dayjs";
 import Text from "./Text";
 
-const styles = StyleSheet.create({
-  clockDigital: {
-    fontSize: 40,
-    color: "#eee",
-    textAlign: "center",
-    margin: 20,
-  },
-});
 export default function Clock() {
-  // const { seconds, minutes, hours } = useTime({});
-  const [time, settime] = useState("");
-  useEffect(() => {
-    let it = setInterval(() => {
-      settime(dayjs().format("HH : mm : ss"));
-    }, 1000);
+  const [now, setNow] = useState(dayjs());
 
-    return () => {
-      clearInterval(it);
-    };
+  useEffect(() => {
+    const it = setInterval(() => setNow(dayjs()), 1000);
+    return () => clearInterval(it);
   }, []);
 
   return (
-    <View>
-      <Text style={styles.clockDigital}>{time}</Text>
+    <View style={styles.wrap}>
+      <Text style={styles.time}>{now.format("HH:mm")}</Text>
+      <Text style={styles.seconds}>{now.format("ss")}</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    gap: 6,
+    margin: 20,
+  },
+  time: {
+    fontSize: 54,
+    lineHeight: 62,
+    color: "#ffffff",
+    letterSpacing: 1.5,
+    fontVariant: ["tabular-nums"],
+  },
+  seconds: {
+    fontSize: 18,
+    lineHeight: 38,
+    color: "rgba(255,255,255,0.65)",
+    letterSpacing: 1,
+    fontVariant: ["tabular-nums"],
+  },
+});
