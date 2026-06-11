@@ -12,8 +12,6 @@ import {
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import * as Notifications from "expo-notifications";
-import Constants, { ExecutionEnvironment } from "expo-constants";
 import Text from "../components/Text";
 import Colors from "../constants/Colors";
 import { useRTL } from "../hooks/useRTL";
@@ -23,6 +21,7 @@ import { PrayerKey, NotificationSettingsState } from "../store/reducers";
 import {
   schedulePrayerNotifications,
   cancelAllPrayerNotifications,
+  ensureNotificationPermission,
 } from "../utils/notifications";
 
 const PRAYERS: PrayerKey[] = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
@@ -81,19 +80,13 @@ export default function ConfigScreen() {
         return;
       }
 
-      if (Constants.executionEnvironment !== ExecutionEnvironment.StoreClient) {
-        const { status } = await Notifications.getPermissionsAsync();
-        if (status !== "granted") {
-          const { status: newStatus } =
-            await Notifications.requestPermissionsAsync();
-          if (newStatus !== "granted") {
-            Alert.alert(
-              t("nav.locationPermTitle"),
-              "Notification permission is required to send prayer reminders."
-            );
-            return;
-          }
-        }
+      const granted = await ensureNotificationPermission();
+      if (!granted) {
+        Alert.alert(
+          t("nav.locationPermTitle"),
+          "Notification permission is required to send prayer reminders.",
+        );
+        return;
       }
 
       const labels: Record<PrayerKey, string> = {
@@ -108,7 +101,8 @@ export default function ConfigScreen() {
         prayerTimings!,
         settings,
         labels,
-        t("config.notifBody")
+        t("config.notifBody"),
+        { force: true },
       );
 
       setSaved(true);

@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import * as Location from "expo-location";
-import * as SecureStore from "expo-secure-store";
 import Container from "../components/Container";
 import Text from "../components/Text";
 import { useDispatch, useSelector } from "react-redux";
@@ -20,7 +19,11 @@ import { Ionicons } from "@expo/vector-icons";
 import LocationPickerModal from "../components/LocationPickerModal";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
-import { schedulePrayerNotifications } from "../utils/notifications";
+import {
+  schedulePrayerNotifications,
+  ensureNotificationPermission,
+} from "../utils/notifications";
+import { fetchPrayerTimings } from "../utils/prayerApi";
 import { PrayerKey } from "../store/reducers";
 import { useTheme } from "../hooks/useTheme";
 
@@ -73,14 +76,6 @@ export default function Home({ navigation }: HomeProps) {
 
   const dispatch = useDispatch();
 
-  // Move API URL construction to useMemo to prevent unnecessary recalculations
-  const getApiUrl = useCallback((location: LocationState) => {
-    const defaultMethod = 3;
-    const formattedDate = dayjs().format("DD-MM-YYYY");
-
-    return `https://api.aladhan.com/v1/timings/${formattedDate}?latitude=${location?.latitude}&longitude=${location?.longitude}&method=${defaultMethod}&adjustment=1`;
-  }, []);
-
   // Improved error handling and loading state management
   const loadPrayersTimings = useCallback(
     async (location: LocationState | null) => {
@@ -91,26 +86,21 @@ export default function Home({ navigation }: HomeProps) {
 
       try {
         setIsFetching(true);
-        const API_URL = getApiUrl(location);
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        const responseData = await response.json();
-
-        if (responseData.code === 200) {
-          dispatch({
-            type: "LOAD_DATA",
-            payload: {
-              current_date: dayjs().format("DD-MM-YYYY"),
-              data: responseData.data,
-            },
-          });
-          // Reschedule prayer notifications with fresh times
-          const anyEnabled = (
-            Object.keys(notificationSettings) as PrayerKey[]
-          ).some((k) => notificationSettings[k].enabled);
-          if (anyEnabled) {
+        const prayerData = await fetchPrayerTimings(location);
+        dispatch({
+          type: "LOAD_DATA",
+          payload: {
+            current_date: dayjs().format("DD-MM-YYYY"),
+            data: prayerData,
+          },
+        });
+        // Re-register OS repeating alarms when fresh prayer times arrive.
+        const anyEnabled = (
+          Object.keys(notificationSettings) as PrayerKey[]
+        ).some((k) => notificationSettings[k].enabled);
+        if (anyEnabled) {
+          const granted = await ensureNotificationPermission();
+          if (granted) {
             const labels: Record<PrayerKey, string> = {
               fajr: t("ind.fajr"),
               dhuhr: t("ind.dhuhr"),
@@ -118,19 +108,12 @@ export default function Home({ navigation }: HomeProps) {
               maghrib: t("ind.maghrib"),
               isha: t("ind.isha"),
             };
-            schedulePrayerNotifications(
-              responseData.data.timings,
+            await schedulePrayerNotifications(
+              prayerData.timings,
               notificationSettings,
               labels,
               t("config.notifBody"),
-            ).catch(() => {});
-          }
-        } else {
-          // Only alert if there is no cached data to fall back on
-          if (!dataRef.current) {
-            Alert.alert(
-              t("nav.serverErrTitle"),
-              responseData.data || t("home.errorLoadingPrayers"),
+              { force: true },
             );
           }
         }
@@ -143,7 +126,7 @@ export default function Home({ navigation }: HomeProps) {
         setIsFetching(false);
       }
     },
-    [dispatch, getApiUrl, notificationSettings, t],
+    [dispatch, notificationSettings, t],
   );
 
   // Simplified loading function using the callback
@@ -151,44 +134,16 @@ export default function Home({ navigation }: HomeProps) {
     loadPrayersTimings(userPosition);
   }, [loadPrayersTimings, userPosition]);
 
-  // Request the device location. This is the ONLY place the app asks for the
-  // location permission — it runs when the user opens the Prayers screen and
-  // we don't already have a stored position. Timings load via the effect below
-  // once `userPosition` updates in the store.
-  const acquireLocation = useCallback(async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(t("nav.locationPermTitle"), t("nav.locationPermMsg"));
-        return;
-      }
-      const pos = await Location.getCurrentPositionAsync({});
-      const coords = {
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude,
-      };
-      try {
-        await SecureStore.setItemAsync("user-position", JSON.stringify(coords));
-      } catch {
-        // SecureStore unavailable — Redux persistence still keeps the value.
-      }
-      dispatch({ type: "USER_POSITION", payload: coords });
-    } catch {
-      Alert.alert(t("nav.locationErrTitle"), t("nav.locationErrMsg"));
-    }
-  }, [dispatch, t]);
-
   // Check if we need to reload data based on date
   const needsReload = useMemo(() => {
     const today = dayjs().format("DD-MM-YYYY");
     return !data || current_date !== today;
   }, [data, current_date]);
 
-  // Ask for location only on first open of the Prayers screen when missing.
+  // Open the location picker when the Prayers screen has no stored position.
   useEffect(() => {
-    if (!userPosition) acquireLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!userPosition) setLocationModalVisible(true);
+  }, [userPosition]);
 
   // Load prayer timings whenever we have a position and data is stale.
   useEffect(() => {
@@ -197,16 +152,16 @@ export default function Home({ navigation }: HomeProps) {
     }
   }, [userPosition, needsReload, loadTimings]);
 
-  // Retry handler: re-acquire location if we still don't have one, else refetch.
   const handleRetry = useCallback(() => {
     if (userPosition) loadTimings();
-    else acquireLocation();
-  }, [userPosition, loadTimings, acquireLocation]);
+    else setLocationModalVisible(true);
+  }, [userPosition, loadTimings]);
 
   useEffect(() => {
     if (!userPosition) return;
     Location.reverseGeocodeAsync(userPosition)
       .then((results) => {
+        console.log("reverseGeocodeAsync results", results);
         if (results.length > 0) {
           const { city, district, subregion, region } = results[0];
           setLocationName(city || district || subregion || region || null);
@@ -248,16 +203,17 @@ export default function Home({ navigation }: HomeProps) {
             onPress={() => setLocationModalVisible(true)}
             activeOpacity={0.7}
           >
-            <Ionicons name="location" size={16} color="white" />
-            <Text style={styles.locationText}>
+            <Ionicons name="location" size={13} color={theme.textMuted} />
+            <Text style={styles.locationText} color={theme.textMuted}>
               {locationName ?? t("home.setLocation")}
             </Text>
-            <Ionicons name="pencil" size={12} color="rgba(255,255,255,0.6)" />
+            {/* <Ionicons name="pencil" size={12} color="rgba(255,255,255,0.6)" /> */}
           </TouchableOpacity>
         </View>
 
         <LocationPickerModal
           visible={locationModalVisible}
+          required={!userPosition}
           onClose={() => setLocationModalVisible(false)}
           onLocationChange={(name, coords) => {
             setLocationName(name);
@@ -275,7 +231,9 @@ export default function Home({ navigation }: HomeProps) {
         ) : !data ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>
-              {t("home.errorLoadingPrayers")}
+              {!userPosition
+                ? t("home.locationRequired")
+                : t("home.errorLoadingPrayers")}
             </Text>
             <TouchableOpacity
               style={styles.retryButton}
@@ -283,7 +241,7 @@ export default function Home({ navigation }: HomeProps) {
               activeOpacity={0.7}
             >
               <Text style={styles.retryButtonText}>
-                {t("home.retry") || "Retry"}
+                {!userPosition ? t("home.setLocation") : t("home.retry")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -342,7 +300,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   locationText: {
-    color: "white",
     textAlign: "right",
     fontSize: 14,
     textShadowColor: "rgba(0, 0, 0, 0.75)",

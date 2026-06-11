@@ -46,6 +46,7 @@ export default {
   // Home
   home: {
     setLocation: "Set Location",
+    locationRequired: "Select your location to see prayer times.",
     loadingPrayers: "Loading prayer times...",
     errorLoadingPrayers:
       "Failed to load prayer times. Please check your internet connection.",
@@ -127,6 +128,7 @@ export default {
   // Location
   location: {
     title: "Set Location",
+    requiredHint: "Please select your location to see prayer times.",
     useCurrentLocation: "Use My Current Location",
     orSearch: "Or search for a city",
     cityPlaceholder: "City or region name...",

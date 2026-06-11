@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
     paddingVertical: 5,
-    borderBottomWidth: 0.2,
-    borderColor: Colors.gold,
+    borderBottomWidth: 0.17,
+    borderColor: Colors.goldDark,
   },
   flex1: {
     flex: 1,

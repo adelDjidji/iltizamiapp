@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Platform,
   KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
@@ -23,7 +24,12 @@ import { useTheme } from "../hooks/useTheme";
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onLocationChange: (name: string, coords: { latitude: number; longitude: number }) => void;
+  onLocationChange: (
+    name: string,
+    coords: { latitude: number; longitude: number },
+  ) => void;
+  /** When true the modal cannot be dismissed until a location is chosen. */
+  required?: boolean;
 }
 
 interface Suggestion {
@@ -35,13 +41,22 @@ interface Suggestion {
 
 const saveAndDispatch = async (
   dispatch: any,
-  coords: { latitude: number; longitude: number }
+  coords: { latitude: number; longitude: number },
 ) => {
-  await SecureStore.setItemAsync("user-position", JSON.stringify(coords));
+  try {
+    await SecureStore.setItemAsync("user-position", JSON.stringify(coords));
+  } catch {
+    // SecureStore unavailable — Redux persistence still keeps the value.
+  }
   dispatch({ type: "USER_POSITION", payload: coords });
 };
 
-export default function LocationPickerModal({ visible, onClose, onLocationChange }: Props) {
+export default function LocationPickerModal({
+  visible,
+  onClose,
+  onLocationChange,
+  required = false,
+}: Props) {
   const { t } = useTranslation();
   const { isRTL, flexRow } = useRTL();
   const theme = useTheme();
@@ -64,7 +79,12 @@ export default function LocationPickerModal({ visible, onClose, onLocationChange
       try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=6&addressdetails=1`,
-          { headers: { "Accept-Language": "ar,en", "User-Agent": "IltizamiApp/1.0" } }
+          {
+            headers: {
+              "Accept-Language": "ar,en",
+              "User-Agent": "IltizamiApp/1.0",
+            },
+          },
         );
         const json: Suggestion[] = await res.json();
         setSuggestions(json);
@@ -90,14 +110,17 @@ export default function LocationPickerModal({ visible, onClose, onLocationChange
       setSuggestions([]);
       onClose();
     },
-    [dispatch, onClose, onLocationChange]
+    [dispatch, onClose, onLocationChange],
   );
 
   const handleUseCurrentLocation = useCallback(async () => {
     setLocating(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
+      if (status !== "granted") {
+        Alert.alert(t("nav.locationPermTitle"), t("nav.locationPermMsg"));
+        return;
+      }
       const pos = await Location.getCurrentPositionAsync({});
       const coords = {
         latitude: pos.coords.latitude,
@@ -105,25 +128,36 @@ export default function LocationPickerModal({ visible, onClose, onLocationChange
       };
       await saveAndDispatch(dispatch, coords);
 
-      // reverse geocode to get name
       const results = await Location.reverseGeocodeAsync(coords);
       if (results.length > 0) {
         const { city, district, subregion, region } = results[0];
-        onLocationChange(city || district || subregion || region || t("location.currentLocation"), coords);
+        onLocationChange(
+          city ||
+            district ||
+            subregion ||
+            region ||
+            t("location.currentLocation"),
+          coords,
+        );
+      } else {
+        onLocationChange(t("location.currentLocation"), coords);
       }
+      setQuery("");
+      setSuggestions([]);
       onClose();
     } catch {
-      // silently fail — location remains unchanged
+      Alert.alert(t("nav.locationErrTitle"), t("nav.locationErrMsg"));
     } finally {
       setLocating(false);
     }
-  }, [dispatch, onClose, onLocationChange]);
+  }, [dispatch, onClose, onLocationChange, t]);
 
   const handleClose = useCallback(() => {
+    if (required) return;
     setQuery("");
     setSuggestions([]);
     onClose();
-  }, [onClose]);
+  }, [onClose, required]);
 
   return (
     <Modal
@@ -132,7 +166,11 @@ export default function LocationPickerModal({ visible, onClose, onLocationChange
       animationType="slide"
       onRequestClose={handleClose}
     >
-      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
+      <TouchableOpacity
+        style={styles.backdrop}
+        activeOpacity={1}
+        onPress={required ? undefined : handleClose}
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -141,7 +179,14 @@ export default function LocationPickerModal({ visible, onClose, onLocationChange
         {/* Handle */}
         <View style={[styles.handle, { backgroundColor: theme.border }]} />
 
-        <Text bold style={[styles.title, { color: theme.text }]}>{t("location.title")}</Text>
+        <Text bold style={[styles.title, { color: theme.text }]}>
+          {t("location.title")}
+        </Text>
+        {required && (
+          <Text style={[styles.requiredHint, { color: theme.textSub }]}>
+            {t("location.requiredHint")}
+          </Text>
+        )}
 
         {/* Current location button */}
         <TouchableOpacity
@@ -160,14 +205,28 @@ export default function LocationPickerModal({ visible, onClose, onLocationChange
         </TouchableOpacity>
 
         <View style={styles.dividerRow}>
-          <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+          <View
+            style={[styles.dividerLine, { backgroundColor: theme.border }]}
+          />
           <Text style={styles.dividerText}>{t("location.orSearch")}</Text>
-          <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+          <View
+            style={[styles.dividerLine, { backgroundColor: theme.border }]}
+          />
         </View>
 
         {/* Search input */}
-        <View style={[styles.inputWrapper, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-          <Ionicons name="search" size={18} color={theme.inputPlaceholder} style={styles.searchIcon} />
+        <View
+          style={[
+            styles.inputWrapper,
+            { backgroundColor: theme.inputBg, borderColor: theme.border },
+          ]}
+        >
+          <Ionicons
+            name="search"
+            size={18}
+            color={theme.inputPlaceholder}
+            style={styles.searchIcon}
+          />
           <TextInput
             style={[styles.input, { color: theme.inputText }]}
             placeholder={t("location.cityPlaceholder")}
@@ -178,7 +237,11 @@ export default function LocationPickerModal({ visible, onClose, onLocationChange
             autoCorrect={false}
           />
           {searching && (
-            <ActivityIndicator size="small" color={Colors.gold} style={styles.inputLoader} />
+            <ActivityIndicator
+              size="small"
+              color={Colors.gold}
+              style={styles.inputLoader}
+            />
           )}
         </View>
 
@@ -189,9 +252,25 @@ export default function LocationPickerModal({ visible, onClose, onLocationChange
           style={styles.list}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.suggestionRow, { borderBottomColor: theme.border }]} onPress={() => handleSelect(item)}>
-              <Ionicons name="location-outline" size={16} color={theme.textMuted} style={styles.suggestionIcon} />
-              <Text style={styles.suggestionText} numberOfLines={2}>
+            <TouchableOpacity
+              style={[
+                styles.suggestionRow,
+                { borderBottomColor: theme.border },
+              ]}
+              onPress={() => handleSelect(item)}
+            >
+              <Ionicons
+                name="location-outline"
+                size={16}
+                color={theme.textMuted}
+                style={styles.suggestionIcon}
+              />
+              <Text
+                style={styles.suggestionText}
+                numberOfLines={2}
+                textAlign={isRTL ? "right" : "left"}
+                color={theme.textMuted}
+              >
                 {item.display_name}
               </Text>
             </TouchableOpacity>
@@ -234,6 +313,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
     color: Colors.primary,
+  },
+  requiredHint: {
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: -12,
+    marginBottom: 16,
+    lineHeight: 20,
   },
   currentLocBtn: {
     alignItems: "center",
@@ -303,7 +389,6 @@ const styles = StyleSheet.create({
   suggestionText: {
     flex: 1,
     fontSize: 14,
-    color: "#333",
   },
   emptyText: {
     textAlign: "center",

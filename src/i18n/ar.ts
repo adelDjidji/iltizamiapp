@@ -44,6 +44,7 @@ export default {
   // Home
   home: {
     setLocation: "تحديد الموقع",
+    locationRequired: "حدّد موقعك لعرض أوقات الصلاة.",
     loadingPrayers: "جاري تحميل أوقات الصلاة...",
     errorLoadingPrayers:
       "تعذّر تحميل أوقات الصلاة. يرجى التحقق من اتصالك بالإنترنت.",
@@ -124,6 +125,7 @@ export default {
   // Location
   location: {
     title: "تحديد الموقع",
+    requiredHint: "يرجى تحديد موقعك لعرض أوقات الصلاة.",
     useCurrentLocation: "استخدم موقعي الحالي",
     orSearch: "أو ابحث عن مدينة",
     cityPlaceholder: "اسم المدينة أو المنطقة...",

@@ -103,11 +103,11 @@ export interface PrayerNotifConfig {
 export type NotificationSettingsState = Record<PrayerKey, PrayerNotifConfig>;
 
 const initialNotificationSettings: NotificationSettingsState = {
-  fajr: { enabled: false, delay: 15 },
-  dhuhr: { enabled: false, delay: 15 },
-  asr: { enabled: false, delay: 15 },
-  maghrib: { enabled: false, delay: 15 },
-  isha: { enabled: false, delay: 15 },
+  fajr: { enabled: true, delay: 30 },
+  dhuhr: { enabled: true, delay: 30 },
+  asr: { enabled: true, delay: 30 },
+  maghrib: { enabled: true, delay: 30 },
+  isha: { enabled: true, delay: 30 },
 };
 
 export const NotificationSettingsReducer = (

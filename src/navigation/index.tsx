@@ -220,9 +220,8 @@ const MainStack = () => {
 };
 
 const RootStack = () => {
-  // Location permission is intentionally NOT requested here.
-  // It is requested only when the user opens the Prayers (Home) screen,
-  // so the app never prompts for location on startup.
+  // Location permission is requested only when the user chooses "Use My Current
+  // Location" in the location picker on the Prayers (Home) screen.
   return (
     <NavigationContainer
       ref={navigationRef}
