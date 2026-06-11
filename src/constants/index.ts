@@ -41,7 +41,60 @@ export const salatOptions = [
   { value: 1, label: "قضاء", key: "salatOpts.qada" },
 ];
 
-export const Indicators = [
+export type IndicatorOption = {
+  value: number;
+  label: string;
+  key: string;
+};
+
+export type IndicatorItem = {
+  id: string;
+  title: string;
+  titleKey: string;
+  options: IndicatorOption[];
+  // [min, max] → numeric range input; [true, false] → checkbox
+  range?: [number, number] | [boolean, boolean];
+  weight: number;
+};
+
+export type Indicator = {
+  title: string;
+  titleKey: string;
+  id: string;
+  color: string;
+  items: IndicatorItem[];
+};
+
+export const isNumberRange = (
+  range?: IndicatorItem["range"],
+): range is [number, number] => typeof range?.[0] === "number";
+
+export const isBooleanRange = (
+  range?: IndicatorItem["range"],
+): range is [boolean, boolean] => typeof range?.[0] === "boolean";
+
+export const MAX_ITEM_SCORE = 10;
+
+// An indicator made only of boolean items (e.g. fasting types) is a group of
+// mutually exclusive alternatives: checking any one of them earns the
+// indicator's full mark, and the indicator counts as a single item.
+export const isAlternativesIndicator = (indicator: Indicator) =>
+  indicator.items.length > 0 &&
+  indicator.items.every((item) => isBooleanRange(item.range));
+
+export const getSectionScore = (indicator: Indicator, values: number[]) =>
+  isAlternativesIndicator(indicator)
+    ? values.some((v) => v > 0)
+      ? MAX_ITEM_SCORE
+      : 0
+    : values.reduce((a, b) => a + b, 0);
+
+export const getSectionMaxScore = (indicator: Indicator) =>
+  isAlternativesIndicator(indicator)
+    ? MAX_ITEM_SCORE
+    : indicator.items.length * MAX_ITEM_SCORE;
+
+export const Indicators: Indicator[] = [
   {
     title: "🕌 مادة الصلاة",
     titleKey: "ind.prayer",
@@ -88,6 +141,7 @@ export const Indicators = [
         title: "🕋 السنن الرواتب ",
         titleKey: "ind.sunan",
         options: [],
+        range: [0, 12],
         weight: 0.7,
       },
       {
@@ -95,6 +149,7 @@ export const Indicators = [
         title: "🌙 القيام ",
         titleKey: "ind.qiyam",
         options: [],
+        range: [0, 12],
         weight: 1.3,
       },
     ],
@@ -110,6 +165,7 @@ export const Indicators = [
         title: "أذكار الصباح",
         titleKey: "ind.adkarSabah",
         options: [],
+        range: [0, 10],
         weight: 1,
       },
       {
@@ -117,6 +173,7 @@ export const Indicators = [
         title: "أذكار المساء",
         titleKey: "ind.adkarMasa",
         options: [],
+        range: [0, 10],
         weight: 1,
       },
       {
@@ -124,6 +181,7 @@ export const Indicators = [
         title: "الاستغفار",
         titleKey: "ind.istighfar",
         options: [],
+        range: [0, 10],
         weight: 1,
       },
       {
@@ -131,6 +189,7 @@ export const Indicators = [
         title: "التسبيح",
         titleKey: "ind.tasbih",
         options: [],
+        range: [0, 10],
         weight: 1,
       },
       {
@@ -138,6 +197,7 @@ export const Indicators = [
         title: "أذكار أخرى",
         titleKey: "ind.adkarOther",
         options: [],
+        range: [0, 10],
         weight: 1,
       },
     ],
@@ -153,6 +213,7 @@ export const Indicators = [
         title: "الورد اليومي ، تلاوة",
         titleKey: "ind.tilawa",
         options: [],
+        range: [0, 10],
         weight: 1,
       },
       {
@@ -160,6 +221,7 @@ export const Indicators = [
         title: "حفظ ما تيسر",
         titleKey: "ind.hifz",
         options: [],
+        range: [0, 10],
         weight: 1,
       },
     ],
@@ -175,6 +237,7 @@ export const Indicators = [
         title: "صيام التطوع",
         titleKey: "ind.fastingNafl",
         options: [],
+        range: [true, false],
         weight: 1,
       },
       {
@@ -182,6 +245,7 @@ export const Indicators = [
         title: "صيام الفرض",
         titleKey: "ind.fastingFard",
         options: [],
+        range: [true, false],
         weight: 1,
       },
       {
@@ -189,6 +253,7 @@ export const Indicators = [
         title: "صيام القضاء",
         titleKey: "ind.fastingQada",
         options: [],
+        range: [true, false],
         weight: 1,
       },
       // { id: "0304", title: "لا", titleKey: "ind.no", options: [], weight: 1 },
@@ -200,7 +265,14 @@ export const Indicators = [
     id: "0400",
     color: "grey",
     items: [
-      { id: "0401", title: "نعم", titleKey: "ind.yes", options: [], weight: 1 },
+      {
+        id: "0401",
+        title: "الصدقات",
+        titleKey: "ind.charities",
+        options: [],
+        range: [0, 10],
+        weight: 1,
+      },
       // { id: "0402", title: "لا", titleKey: "ind.no", options: [], weight: 1 },
     ],
   },
@@ -210,7 +282,14 @@ export const Indicators = [
     id: "0500",
     color: "grey",
     items: [
-      { id: "0501", title: "نعم", titleKey: "ind.yes", options: [], weight: 1 },
+      {
+        id: "0501",
+        title: "أعمال أخرى",
+        titleKey: "ind.otherWorks",
+        options: [],
+        range: [0, 10],
+        weight: 1,
+      },
       // { id: "0502", title: "لا", titleKey: "ind.no", options: [], weight: 1 },
     ],
   },

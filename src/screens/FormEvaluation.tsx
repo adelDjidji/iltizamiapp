@@ -7,10 +7,17 @@ import {
   ToastAndroid,
   TextInput,
   Platform,
+  PanResponder,
 } from "react-native";
 import celebrationAnimation from "../../assets/animations/Celebrations.json";
 import LottieView from "lottie-react-native";
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import Classes from "../constants/Classes";
 import Text from "../components/Text";
 import Colors from "../constants/Colors";
@@ -32,14 +39,22 @@ import {
   MenuTrigger,
   renderers,
 } from "react-native-popup-menu";
-import { Indicators, MONTHS_AR, MONTHS_EN } from "../constants";
+import {
+  Indicators,
+  MONTHS_AR,
+  MONTHS_EN,
+  MAX_ITEM_SCORE,
+  isBooleanRange,
+  isNumberRange,
+  getSectionScore,
+  getSectionMaxScore,
+} from "../constants";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
 import { useTheme } from "../hooks/useTheme";
 import { Theme } from "../constants/Theme";
 
 const { SlideInMenu } = renderers;
-const MAX_ITEM_SCORE = 10;
 
 const getScoreColor = (value: number) => {
   if (value === 0) return "#bbb";
@@ -57,8 +72,7 @@ const CategoryProgressBar = ({
 }) => {
   const theme = useTheme();
   const pct = max > 0 ? Math.min(score / max, 1) : 0;
-  const barColor =
-    pct < 0.5 ? "#e07373" : pct < 0.8 ? Colors.gold : "#5cb85c";
+  const barColor = pct < 0.5 ? "#e07373" : pct < 0.8 ? Colors.gold : "#5cb85c";
   const track =
     theme.mode === "dark" ? "rgba(255,255,255,0.09)" : "rgba(2,16,27,0.07)";
   return (
@@ -89,6 +103,133 @@ const progressStyles = StyleSheet.create({
   },
 });
 
+const THUMB_SIZE = 26;
+
+const StepSlider = ({
+  min,
+  max,
+  value,
+  onChange,
+}: {
+  min: number;
+  max: number;
+  value: number;
+  onChange: (v: number) => void;
+}) => {
+  const theme = useTheme();
+  const [trackWidth, setTrackWidth] = useState(0);
+  const trackWidthRef = useRef(0);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const panResponder = useMemo(() => {
+    const update = (x: number) => {
+      const w = trackWidthRef.current;
+      if (w <= 0 || max <= min) return;
+      const ratio = Math.min(1, Math.max(0, x / w));
+      onChangeRef.current(Math.round(min + ratio * (max - min)));
+    };
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      // Keep the gesture even when the surrounding ScrollView wants it
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: (evt) => update(evt.nativeEvent.locationX),
+      onPanResponderMove: (evt) => update(evt.nativeEvent.locationX),
+    });
+  }, [min, max]);
+
+  const clamped = Math.min(max, Math.max(min, value));
+  const pct = max > min ? (clamped - min) / (max - min) : 0;
+  const color = getScoreColor(clamped);
+  const trackBg =
+    theme.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(2,16,27,0.08)";
+
+  return (
+    <View style={{ width: "100%" }}>
+      <View
+        style={sliderStyles.touchArea}
+        onLayout={(e) => {
+          trackWidthRef.current = e.nativeEvent.layout.width;
+          setTrackWidth(e.nativeEvent.layout.width);
+        }}
+        {...panResponder.panHandlers}
+      >
+        <View style={[sliderStyles.track, { backgroundColor: trackBg }]}>
+          <View
+            style={[
+              sliderStyles.fill,
+              {
+                width: `${pct * 100}%` as any,
+                backgroundColor: clamped === min ? "transparent" : color,
+              },
+            ]}
+          />
+        </View>
+        {trackWidth > 0 && (
+          <View
+            pointerEvents="none"
+            style={[
+              sliderStyles.thumb,
+              {
+                left: pct * trackWidth - THUMB_SIZE / 2,
+                borderColor: clamped === min ? theme.border : color,
+                backgroundColor: theme.mode === "dark" ? "#e9e9e9" : "white",
+              },
+            ]}
+          />
+        )}
+      </View>
+      <View style={sliderStyles.labelsRow}>
+        <Text color={theme.textMuted} style={{ fontSize: 12 }}>
+          {min}
+        </Text>
+        <Text color={theme.textMuted} style={{ fontSize: 12 }}>
+          {max}
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+const sliderStyles = StyleSheet.create({
+  touchArea: {
+    width: "100%",
+    height: 44,
+    justifyContent: "center",
+  },
+  track: {
+    height: 8,
+    borderRadius: 4,
+    width: "100%",
+    overflow: "hidden",
+  },
+  fill: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 4,
+  },
+  thumb: {
+    position: "absolute",
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: THUMB_SIZE / 2,
+    borderWidth: 2.5,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+  },
+  labelsRow: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+});
+
 function makeStyles(theme: Theme) {
   return StyleSheet.create({
     container: {
@@ -109,9 +250,7 @@ function makeStyles(theme: Theme) {
       alignItems: "center",
       justifyContent: "center",
       backgroundColor:
-        theme.mode === "dark"
-          ? "rgba(255,255,255,0.08)"
-          : "rgba(2,16,27,0.05)",
+        theme.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(2,16,27,0.05)",
     },
     dateHeader: {
       flex: 1,
@@ -217,6 +356,12 @@ function makeStyles(theme: Theme) {
       paddingVertical: 20,
       alignItems: "center",
     },
+    sliderContainer: {
+      width: "100%",
+      paddingHorizontal: 28,
+      paddingVertical: 0,
+      alignItems: "center",
+    },
     numberInput: {
       borderColor: theme.inputBorder,
       borderWidth: 1.5,
@@ -236,6 +381,13 @@ function makeStyles(theme: Theme) {
       paddingHorizontal: 20,
       paddingVertical: 6,
       alignItems: "center",
+    },
+    // Overrides the sheet's default optionWrapper so the save button
+    // renders full-width without the row separator.
+    confirmOptionWrapper: {
+      width: "100%",
+      borderBottomWidth: 0,
+      padding: 0,
     },
     confirmButton: {
       alignItems: "center",
@@ -278,9 +430,7 @@ function makeStyles(theme: Theme) {
       alignItems: "center",
       justifyContent: "center",
       backgroundColor:
-        theme.mode === "dark"
-          ? "rgba(255,255,255,0.12)"
-          : "rgba(2,16,27,0.06)",
+        theme.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(2,16,27,0.06)",
       padding: 8,
       borderRadius: 12,
     },
@@ -366,8 +516,8 @@ export default function FormEvaluation({ navigation, route }: any) {
 
   const scores = useMemo(
     () =>
-      data.map((section: number[]) =>
-        section.reduce((acc: number, cur: number) => acc + cur, 0),
+      data.map((section: number[], idx: number) =>
+        getSectionScore(Indicators[idx], section),
       ),
     [data],
   );
@@ -403,6 +553,26 @@ export default function FormEvaluation({ navigation, route }: any) {
       }
     },
     [selectedModule, selectedItem, data, dispatch, day],
+  );
+
+  // Boolean-range items are a simple yes/no: toggle between 0 and the max
+  // item score so category totals and progress bars keep working unchanged.
+  const handleToggle = useCallback(
+    (moduleIdx: number, itemIdx: number) => {
+      const newData = data.map((section: number[], idx: number) =>
+        idx === moduleIdx
+          ? section.map((item: number, i: number) =>
+              i === itemIdx ? (item > 0 ? 0 : MAX_ITEM_SCORE) : item,
+            )
+          : section,
+      );
+      setData(newData);
+      dispatch({ type: "UPDATE_RESULT", payload: { data: newData, day } });
+      if (Platform.OS === "android") {
+        ToastAndroid.show(t("form.saved"), ToastAndroid.SHORT);
+      }
+    },
+    [data, dispatch, day, t],
   );
 
   const dateDisplay = useMemo(() => {
@@ -502,7 +672,7 @@ export default function FormEvaluation({ navigation, route }: any) {
       </View>
 
       {Indicators.map((indicator, indexInd) => {
-        const maxScore = indicator.items.length * MAX_ITEM_SCORE;
+        const maxScore = getSectionMaxScore(indicator);
         return (
           <View key={indicator.id} style={styles.card}>
             <View style={[styles.cardHeader, { flexDirection: flexRow }]}>
@@ -522,113 +692,140 @@ export default function FormEvaluation({ navigation, route }: any) {
             <CategoryProgressBar score={scores[indexInd]} max={maxScore} />
 
             <View style={styles.cardContent}>
-              {indicator.items.map((item, indexItem) => (
-                <Menu
-                  key={item.id}
-                  renderer={SlideInMenu}
-                  onSelect={handleInput}
-                  onClose={() => {
-                    setSelectedModule(null);
-                    setSelectedItem(null);
-                  }}
-                >
-                  <MenuTrigger
-                    onPress={() => {
-                      setSelectedModule(indexInd);
-                      setSelectedItem(indexItem);
-                      setNumber("");
-                    }}
-                    customStyles={{
-                      triggerWrapper: {
-                        backgroundColor:
-                          selectedItem === indexItem &&
-                          selectedModule === indexInd
-                            ? Colors.goldLight
-                            : theme.bgCard,
-                      },
-                    }}
-                  >
-                    <View
-                      style={[
-                        styles.itemRow,
-                        { flexDirection: flexRow },
-                        indexItem === indicator.items.length - 1 &&
-                          styles.itemRowLast,
-                      ]}
+              {indicator.items.map((item, indexItem) => {
+                const currentValue = data[indexInd]?.[indexItem] ?? 0;
+                const isLast = indexItem === indicator.items.length - 1;
+
+                // range: [true, false] → checkbox toggled directly on the row
+                if (isBooleanRange(item.range)) {
+                  const checked = currentValue > 0;
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      activeOpacity={0.7}
+                      onPress={() => handleToggle(indexInd, indexItem)}
                     >
-                      <Text
-                        style={styles.itemLabel}
-                        align={textAlign}
-                        color={
-                          selectedItem === indexItem &&
-                          selectedModule === indexInd
-                            ? Colors.goldDark
-                            : theme.text
-                        }
-                      >
-                        {t(item.titleKey)}
-                      </Text>
                       <View
                         style={[
-                          styles.scoreBadge,
-                          {
-                            backgroundColor: badgeBg(
-                              data[indexInd]?.[indexItem] ?? 0,
-                            ),
-                          },
+                          styles.itemRow,
+                          { flexDirection: flexRow },
+                          isLast && styles.itemRowLast,
                         ]}
                       >
                         <Text
-                          bold
-                          color={badgeText(data[indexInd]?.[indexItem] ?? 0)}
+                          style={styles.itemLabel}
+                          align={textAlign}
+                          color={theme.text}
                         >
-                          {data[indexInd]?.[indexItem] ?? 0}
+                          {t(item.titleKey)}
                         </Text>
+                        <MaterialCommunityIcons
+                          name={
+                            checked
+                              ? "checkbox-marked"
+                              : "checkbox-blank-outline"
+                          }
+                          size={26}
+                          color={checked ? "#5cb85c" : theme.textMuted}
+                        />
                       </View>
-                    </View>
-                  </MenuTrigger>
+                    </TouchableOpacity>
+                  );
+                }
 
-                  <MenuOptions
-                    customStyles={{
-                      optionsWrapper: styles.menuOptionsWrapper,
-                      optionText: styles.menuOptionText,
-                      optionWrapper: styles.menuOptionWrapper,
-                      optionsContainer: styles.menuOptionsContainer,
+                return (
+                  <Menu
+                    key={item.id}
+                    renderer={SlideInMenu}
+                    onSelect={handleInput}
+                    onClose={() => {
+                      setSelectedModule(null);
+                      setSelectedItem(null);
                     }}
                   >
-                    <View style={styles.sheetHandle} />
-                    <Text bold align="center" style={styles.sheetTitle}>
-                      {t(item.titleKey)}
-                    </Text>
-                    <ScrollView style={styles.menuScroll}>
-                      {item.options && item.options.length ? (
-                        item.options.map((op, idx) =>
-                          renderMenuOption(op, idx, item.id),
-                        )
-                      ) : (
-                        <View style={styles.numberPadContainer}>
-                          <Text align={textAlign} style={styles.inputLabel}>
-                            {t("form.enterValue")}
+                    <MenuTrigger
+                      onPress={() => {
+                        setSelectedModule(indexInd);
+                        setSelectedItem(indexItem);
+                        // Seed the slider with the saved value; free-text
+                        // input keeps starting empty.
+                        setNumber(
+                          isNumberRange(item.range) ? String(currentValue) : "",
+                        );
+                      }}
+                      customStyles={{
+                        triggerWrapper: {
+                          backgroundColor:
+                            selectedItem === indexItem &&
+                            selectedModule === indexInd
+                              ? Colors.goldLight
+                              : theme.bgCard,
+                        },
+                      }}
+                    >
+                      <View
+                        style={[
+                          styles.itemRow,
+                          { flexDirection: flexRow },
+                          indexItem === indicator.items.length - 1 &&
+                            styles.itemRowLast,
+                        ]}
+                      >
+                        <Text
+                          style={styles.itemLabel}
+                          align={textAlign}
+                          color={
+                            selectedItem === indexItem &&
+                            selectedModule === indexInd
+                              ? Colors.goldDark
+                              : theme.text
+                          }
+                        >
+                          {t(item.titleKey)}
+                        </Text>
+                        <View
+                          style={[
+                            styles.scoreBadge,
+                            {
+                              backgroundColor: badgeBg(
+                                data[indexInd]?.[indexItem] ?? 0,
+                              ),
+                            },
+                          ]}
+                        >
+                          <Text
+                            bold
+                            color={badgeText(data[indexInd]?.[indexItem] ?? 0)}
+                          >
+                            {data[indexInd]?.[indexItem] ?? 0}
                           </Text>
-                          <TextInput
-                            value={number}
-                            onChangeText={(text) => {
-                              const digits = text.replace(/[^0-9]/g, "");
-                              const num = parseInt(digits);
-                              if (
-                                digits === "" ||
-                                (!isNaN(num) && num <= MAX_ITEM_SCORE)
-                              ) {
-                                setNumber(digits);
-                              }
-                            }}
-                            style={styles.numberInput}
-                            placeholder="0 – 10"
-                            keyboardType="numeric"
-                            maxLength={2}
-                            textAlign="center"
-                          />
-                          {number !== "" && (
+                        </View>
+                      </View>
+                    </MenuTrigger>
+
+                    <MenuOptions
+                      customStyles={{
+                        optionsWrapper: styles.menuOptionsWrapper,
+                        optionText: styles.menuOptionText,
+                        optionWrapper: styles.menuOptionWrapper,
+                        optionsContainer: styles.menuOptionsContainer,
+                      }}
+                    >
+                      <View style={styles.sheetHandle} />
+                      <Text bold align="center" style={styles.sheetTitle}>
+                        {t(item.titleKey)}
+                      </Text>
+                      <ScrollView style={styles.menuScroll}>
+                        {item.options && item.options.length ? (
+                          item.options.map((op, idx) =>
+                            renderMenuOption(op, idx, item.id),
+                          )
+                        ) : isNumberRange(item.range) ? (
+                          // range: [min, max] → slider input
+                          <View style={styles.sliderContainer}>
+                            <Text align={textAlign} style={styles.inputLabel}>
+                              {t("form.enterValue")}
+                            </Text>
                             <View
                               style={[
                                 styles.numberPreview,
@@ -644,32 +841,119 @@ export default function FormEvaluation({ navigation, route }: any) {
                                 color={badgeText(parseInt(number) || 0)}
                                 style={{ fontSize: 20 }}
                               >
-                                {number}
+                                {parseInt(number) || 0}
                               </Text>
                             </View>
-                          )}
-                          <TouchableOpacity
-                            onPress={() => handleInput(number)}
-                            style={[
-                              styles.confirmButton,
-                              { flexDirection: flexRow },
-                            ]}
-                          >
-                            <Ionicons
-                              name="checkmark-circle"
-                              size={22}
-                              color="white"
+                            <StepSlider
+                              min={item.range[0]}
+                              max={item.range[1]}
+                              value={parseInt(number) || 0}
+                              onChange={(v) => setNumber(String(v))}
                             />
-                            <Text bold color="white" style={{ marginRight: 8 }}>
-                              {t("form.save")}
+
+                            <MenuOption
+                              value={parseInt(number) || 0}
+                              customStyles={{
+                                optionWrapper: styles.confirmOptionWrapper,
+                              }}
+                            >
+                              <View
+                                style={[
+                                  styles.confirmButton,
+                                  { flexDirection: flexRow },
+                                ]}
+                              >
+                                <Ionicons
+                                  name="checkmark-circle"
+                                  size={22}
+                                  color="white"
+                                />
+                                <Text
+                                  bold
+                                  color="white"
+                                  style={{ marginRight: 8 }}
+                                >
+                                  {t("form.save")}
+                                </Text>
+                              </View>
+                            </MenuOption>
+                          </View>
+                        ) : (
+                          <View style={styles.numberPadContainer}>
+                            <Text align={textAlign} style={styles.inputLabel}>
+                              {t("form.enterValue")}
                             </Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </ScrollView>
-                  </MenuOptions>
-                </Menu>
-              ))}
+                            <TextInput
+                              value={number}
+                              onChangeText={(text) => {
+                                const digits = text.replace(/[^0-9]/g, "");
+                                const num = parseInt(digits);
+                                if (
+                                  digits === "" ||
+                                  (!isNaN(num) && num <= MAX_ITEM_SCORE)
+                                ) {
+                                  setNumber(digits);
+                                }
+                              }}
+                              style={styles.numberInput}
+                              placeholder="0 – 10"
+                              keyboardType="numeric"
+                              maxLength={2}
+                              textAlign="center"
+                            />
+                            {number !== "" && (
+                              <View
+                                style={[
+                                  styles.numberPreview,
+                                  {
+                                    backgroundColor: badgeBg(
+                                      parseInt(number) || 0,
+                                    ),
+                                  },
+                                ]}
+                              >
+                                <Text
+                                  bold
+                                  color={badgeText(parseInt(number) || 0)}
+                                  style={{ fontSize: 20 }}
+                                >
+                                  {number}
+                                </Text>
+                              </View>
+                            )}
+                            <MenuOption
+                              value={parseInt(number) || 0}
+                              customStyles={{
+                                optionWrapper: styles.confirmOptionWrapper,
+                              }}
+                            >
+                              <View
+                                style={[
+                                  styles.confirmButton,
+                                  { flexDirection: flexRow },
+                                ]}
+                              >
+                                <Ionicons
+                                  name="checkmark-circle"
+                                  size={22}
+                                  color="white"
+                                />
+                                <Text
+                                  bold
+                                  color="white"
+                                  style={{ marginRight: 8 }}
+                                >
+                                  {t("form.save")}
+                                </Text>
+                              </View>
+                            </MenuOption>
+                          </View>
+                        )}
+                      </ScrollView>
+                    </MenuOptions>
+                  </Menu>
+                );
+              })}
             </View>
           </View>
         );

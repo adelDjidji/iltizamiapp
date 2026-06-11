@@ -27,7 +27,7 @@ import {
 import { useRTL } from "../hooks/useRTL";
 import { useTheme } from "../hooks/useTheme";
 
-const { width: SW } = Dimensions.get("window");
+const { width: SW, height: SH } = Dimensions.get("window");
 const HALF_W = SW / 2 - 15;
 const FULL_W = SW - 20;
 
@@ -308,9 +308,19 @@ export default function Dashboard({ navigation }: any) {
   ) as [string, string, string];
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
       <Container navigation={navigation}>
-        <GlassBackdrop source={bgImage} style={styles.bg}>
+        <GlassBackdrop
+          source={bgImage}
+          style={[
+            styles.bg,
+            theme.mode === "light" && { backgroundColor: theme.bg },
+          ]}
+          imageOpacity={theme.mode === "light" ? 0.5 : 1}
+        >
           <LinearGradient
             colors={overlayColors}
             style={StyleSheet.absoluteFill}
@@ -382,8 +392,12 @@ export default function Dashboard({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+  },
   bg: {
-    minHeight: Dimensions.get("window").height,
+    width: SW,
+    minHeight: SH,
     paddingTop: 100,
   },
   header: {

@@ -16,6 +16,7 @@ import {
   StyleProp,
   ViewStyle,
   ImageSourcePropType,
+  useWindowDimensions,
 } from "react-native";
 import { BlurView, BlurTint } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -23,22 +24,24 @@ import { useTheme } from "../hooks/useTheme";
 
 export function glassTokens(isDark: boolean) {
   return {
-    intensity: isDark ? 20 : 70,
+    intensity: isDark ? 20 : 90,
     tint: (isDark
       ? "systemUltraThinMaterialDark"
-      : "systemUltraThinMaterialLight") as BlurTint,
+      : "systemThinMaterialLight") as BlurTint,
     // flat fill kept for consumers that paint their own glass
-    fill: isDark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.22)",
+    fill: isDark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.82)",
     fillGradient: (isDark
       ? ["rgba(255,255,255,0.04)", "rgba(255,255,255,0.0)"]
-      : ["rgba(255,255,255,0.34)", "rgba(255,255,255,0.10)"]) as [
+      : ["rgba(255,255,255,0.94)", "rgba(255,255,255,0.78)"]) as [
       string,
       string,
     ],
-    sheen: isDark ? "rgba(255,255,255,0)" : "rgba(255,255,255,0.26)",
-    border: isDark ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.78)",
-    borderDim: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.45)",
-    highlight: isDark ? "rgba(255,255,255,0.34)" : "rgba(255,255,255,0.95)",
+    whiteBase: isDark ? "transparent" : "rgba(255,255,255,0.55)",
+    sheen: isDark ? "rgba(255,255,255,0)" : "rgba(255,255,255,0.45)",
+    border: isDark ? "rgba(255,255,255,0.18)" : "#e4e7ec",
+    borderDim: isDark ? "rgba(255,255,255,0.07)" : "#d1d5db",
+    highlight: isDark ? "rgba(255,255,255,0.34)" : "#f8f9fb",
+    borderWidth: isDark ? StyleSheet.hairlineWidth * 2 : 1,
     shadow: isDark ? "#000000" : "#0f172a",
   };
 }
@@ -56,6 +59,7 @@ type GlassBackdropInfo = {
   source: ImageSourcePropType;
   width: number;
   height: number;
+  imageOpacity: number;
   bgRef: React.RefObject<View | null>;
 };
 
@@ -67,23 +71,50 @@ export function GlassBackdrop({
   source,
   style,
   children,
+  imageOpacity = 1,
 }: {
   source: ImageSourcePropType;
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
+  imageOpacity?: number;
 }) {
   const bgRef = useRef<View>(null);
-  const [dims, setDims] = useState({ width: 0, height: 0 });
+  const { width: screenW, height: screenH } = useWindowDimensions();
+  const [dims, setDims] = useState({
+    width: screenW,
+    height: screenH,
+  });
+
+  const bgWidth = dims.width > 0 ? dims.width : screenW;
+  const bgHeight = Math.max(dims.height, screenH);
 
   const value = useMemo(
-    () => (dims.width > 0 ? { source, ...dims, bgRef } : null),
-    [source, dims],
+    () =>
+      bgWidth > 0
+        ? {
+            source,
+            width: bgWidth,
+            height: bgHeight,
+            imageOpacity,
+            bgRef,
+          }
+        : null,
+    [source, bgWidth, bgHeight, imageOpacity],
   );
+
+  const bgImageStyle = {
+    position: "absolute" as const,
+    top: 0,
+    left: 0,
+    width: bgWidth,
+    height: bgHeight,
+    opacity: imageOpacity,
+  };
 
   return (
     <View
       ref={bgRef}
-      style={style}
+      style={[style, { overflow: "hidden" }]}
       onLayout={(e) =>
         setDims({
           width: e.nativeEvent.layout.width,
@@ -91,11 +122,7 @@ export function GlassBackdrop({
         })
       }
     >
-      <Image
-        source={source}
-        resizeMode="cover"
-        style={StyleSheet.absoluteFill}
-      />
+      <Image source={source} resizeMode="cover" style={bgImageStyle} />
       <GlassBackdropContext.Provider value={value}>
         {children}
       </GlassBackdropContext.Provider>
@@ -137,6 +164,7 @@ function useBackdropSample(rootRef: React.RefObject<View | null>) {
           left: -pos.x,
           width: backdrop.width,
           height: backdrop.height,
+          opacity: backdrop.imageOpacity,
         }}
       />
     ),
@@ -190,6 +218,15 @@ export function GlassSurface({
       onLayout={onLayout}
       style={[styles.root, { borderRadius }, style]}
     >
+      {!isDark && (
+        <View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: glass.whiteBase },
+          ]}
+        />
+      )}
       {sample ?? (
         <BlurView
           intensity={intensity ?? glass.intensity}
@@ -224,6 +261,7 @@ export function GlassSurface({
           styles.rim,
           {
             borderRadius,
+            borderWidth: glass.borderWidth,
             borderColor: glass.border,
             borderTopColor: glass.highlight,
             borderBottomColor: glass.borderDim,
@@ -325,7 +363,13 @@ export function GlassPill({
   const glass = glassTokens(theme.mode === "dark");
 
   return (
-    <View style={[styles.pill, { borderColor: glass.border }, style]}>
+    <View
+      style={[
+        styles.pill,
+        { borderColor: glass.border, borderWidth: glass.borderWidth },
+        style,
+      ]}
+    >
       <GlassSurface intensity={intensity} borderRadius={22} />
       <View style={styles.pillContent}>{children}</View>
     </View>
@@ -363,9 +407,18 @@ export function GlassButton({
       onPressOut={onPressOut}
       style={[styles.button, style, { transform: [{ scale }] }]}
     >
+      {!isDark && (
+        <View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: glass.whiteBase },
+          ]}
+        />
+      )}
       {sample ?? (
         <BlurView
-          intensity={isDark ? 32 : 48}
+          intensity={isDark ? 32 : 72}
           tint={glass.tint}
           style={StyleSheet.absoluteFill}
         />
@@ -392,10 +445,12 @@ export function GlassButton({
         style={[
           styles.buttonRim,
           {
+            borderWidth: glass.borderWidth,
             borderColor: active
               ? (activeColor ?? glass.highlight)
               : glass.border,
             borderTopColor: glass.highlight,
+            borderBottomColor: glass.borderDim,
           },
         ]}
       />
@@ -413,7 +468,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderCurve: "continuous",
     overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth * 2,
   },
   pillContent: {
     zIndex: 1,
@@ -421,7 +475,6 @@ const styles = StyleSheet.create({
   rim: {
     ...StyleSheet.absoluteFillObject,
     borderCurve: "continuous",
-    borderWidth: StyleSheet.hairlineWidth * 2,
   },
   sheen: {
     position: "absolute",
@@ -458,7 +511,6 @@ const styles = StyleSheet.create({
   },
   buttonRim: {
     ...StyleSheet.absoluteFillObject,
-    borderWidth: StyleSheet.hairlineWidth * 2,
     borderRadius: 999,
   },
   buttonContent: {

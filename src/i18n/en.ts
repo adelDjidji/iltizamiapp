@@ -203,6 +203,8 @@ export default {
     fastingNafl: "Voluntary Fasting",
     fastingFard: "Obligatory Fasting",
     fastingQada: "Make-up Fasting",
+    charities: "Charity",
+    otherWorks: "Other Works",
     no: "No",
     yes: "Yes",
   },

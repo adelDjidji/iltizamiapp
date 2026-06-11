@@ -198,6 +198,8 @@ export default {
     fastingNafl: "صيام التطوع",
     fastingFard: "صيام الفرض",
     fastingQada: "صيام القضاء",
+    charities: "الصدقات",
+    otherWorks: "أعمال أخرى",
     no: "لا",
     yes: "نعم",
   },

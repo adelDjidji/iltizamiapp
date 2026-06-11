@@ -16,7 +16,7 @@ import Text from "../components/Text";
 import dayjs from "dayjs";
 import Colors from "../constants/Colors";
 import * as ScreenOrientation from "expo-screen-orientation";
-import { Indicators } from "../constants";
+import { Indicators, getSectionScore } from "../constants";
 import { useTranslation } from "react-i18next";
 import { useRTL } from "../hooks/useRTL";
 import { useTheme } from "../hooks/useTheme";
@@ -297,8 +297,8 @@ export default function Stats({ navigation }: any) {
 
   const dates = sorted.map((res: any) => res.date);
   const datas: number[][] = sorted.map((res: any) =>
-    res.data.map((section: number[]) =>
-      section.reduce((a: number, b: number) => a + b, 0),
+    res.data.map((section: number[], j: number) =>
+      getSectionScore(Indicators[j], section),
     ),
   );
 
